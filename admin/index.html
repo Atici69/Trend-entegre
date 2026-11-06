@@ -57,7 +57,57 @@ main{min-width:0}.topbar{height:70px;background:#fff;border-bottom:1px solid var
 <section class="page" id="payments"><div class="head"><div><h1>Ödeme Yönetimi</h1><p>Abonelik tahsilatları ve ödeme bildirimleri.</p></div></div><div class="notice">iyzico entegrasyonu henüz yapılmadı. Kart bilgileri bu statik sayfada alınmaz veya saklanmaz.</div><div class="empty-state"><b>Ödeme kayıtları henüz yok.</b><br>iyzico API, sunucu tarafı ödeme oluşturma ve imzalı bildirim doğrulaması tamamlandığında işlemler burada listelenecek.</div></section>
 <section class="page" id="accounting"><div class="head"><div><h1>Muhasebe</h1><p>Gelir-gider, bayi komisyonları, tahsilat ve finansal kayıtlar.</p></div><span class="tag gray">MODÜL PASİF</span></div><div class="notice"><b>Muhasebe modülü henüz aktif edilmemiştir.</b> Bu bölüm yönetim panelinde hazır tutulmaktadır. Aktifleştirme yapılana kadar kayıt oluşturma, düzenleme, silme ve finansal hesaplama işlemleri kapalıdır.</div><div class="grid"><div class="metric"><label>Muhasebe Genel Bakış</label><strong>—</strong><small class="state">Pasif</small></div><div class="metric"><label>Gelir – Gider Takibi</label><strong>—</strong><small class="state">Pasif</small></div><div class="metric"><label>Bayi Komisyonları</label><strong>—</strong><small class="state">Pasif</small></div><div class="metric"><label>Tahsilat Raporları</label><strong>—</strong><small class="state">Pasif</small></div></div><div class="card" style="margin-top:15px"><h2>Finansal kayıt alanları</h2><div class="tablebox"><table><thead><tr><th>Alt bölüm</th><th>Durum</th><th>Açıklama</th></tr></thead><tbody><tr><td>Gelir – Gider Takibi</td><td><span class="tag gray">Pasif</span></td><td>Gelir ve gider kayıtları</td></tr><tr><td>Bayi Komisyonları</td><td><span class="tag gray">Pasif</span></td><td>Bayi / alt bayi hakedişleri</td></tr><tr><td>Tahsilat Raporları</td><td><span class="tag gray">Pasif</span></td><td>Ödeme ve tahsilat dökümleri</td></tr><tr><td>Fatura ve Ödeme Kayıtları</td><td><span class="tag gray">Pasif</span></td><td>Fatura ve ödeme geçmişi</td></tr></tbody></table></div><p class="section-note">Modül, ileride güvenli veritabanı ve muhasebe iş kuralları bağlandığında yönetici tarafından etkinleştirilebilir.</p></div></section>
 <section class="page" id="ads"><div class="head"><div><h1>Reklam Alanları</h1><p>Ana sayfa slider, banner ve tanıtım alanlarının taslak yönetimi.</p></div></div><div class="two"><div class="card"><h2>Ana sayfa slider</h2><div class="field"><label>Başlık</label><input value="Pazaryerlerinde büyümeye hazır mısınız?" disabled></div><div class="field"><label>Açıklama</label><textarea disabled>Tek XML kaynağından farklı pazaryerlerine uygun ürün verisi hazırlayın.</textarea></div><button class="btn" disabled>Taslağı kaydet</button></div><div class="card"><h2>Reklam yerleşimleri</h2><p class="section-note">Üst banner, paketler arası tanıtım, BuyBox tanıtım alanı ve alt sayfa reklamları.</p><span class="tag">Yayın bağlantısı kurulmadı</span></div></div></section>
-<section class="page" id="settings"><div class="head"><div><h1>Sistem Ayarları</h1><p>Güvenlik, roller ve uygulama servisleri.</p></div></div><div class="card"><h2>Güvenlik kontrol listesi</h2><p>Yönetici girişi ve çok faktörlü doğrulama <span class="tag">Kurulacak</span></p><p>Rol bazlı yetkilendirme <span class="tag">Kurulacak</span></p><p>Sunucu tarafı oturum yönetimi <span class="tag">Kurulacak</span></p><p>KVKK süreçleri ve kayıt politikası <span class="tag">Planlanacak</span></p><p>İşlem kayıtları ve denetim izi <span class="tag">Kurulacak</span></p><p class="section-note">GitHub Pages yalnızca statik site barındırır. Gerçek admin girişi ve veriler için ayrı bir güvenli backend gerekir.</p></div></section>
+<section class="page" id="settings">
+<div class="head"><div><h1>Sistem Ayarları</h1><p>Trend-Entegre platformunun genel yapılandırması ve güvenlik politikaları.</p></div><span class="tag">YAPILANDIRMA TASLAĞI</span></div>
+<div class="notice"><b>Önemli:</b> Bu bölüm şu anda arayüz taslağıdır. Kaydetme, gerçek kullanıcı/şirket verilerini değiştirmez. Canlı ayarlar için güvenli sunucu API'si ve yönetici yetkilendirmesi bağlanmalıdır. API anahtarlarını bu sayfaya veya GitHub deposuna yazmayın.</div>
+<div class="two">
+<div class="card"><h2>Genel platform bilgileri</h2>
+<div class="field"><label>Platform adı</label><input value="Trend-Entegre" disabled></div>
+<div class="field"><label>Web sitesi adresi</label><input value="https://atici69.github.io/Trend-entegre/" disabled></div>
+<div class="field"><label>Destek e-posta adresi</label><input placeholder="destek alan adı ve e-posta tanımlanacak" disabled></div>
+<div class="field"><label>WhatsApp destek hattı</label><input value="905458959469" disabled></div>
+<p class="section-note">İletişim bilgileri merkezi ayar servisine bağlandığında web sitesi ve uygulamalarda ortak kullanılacak.</p>
+</div>
+<div class="card"><h2>Platform ve uygulama ayarları</h2>
+<div class="field"><label>Web platformu</label><select disabled><option>Yayında – GitHub Pages</option></select></div>
+<div class="field"><label>Android uygulaması</label><select disabled><option>APK geliştirme ve test aşamasında</option></select></div>
+<div class="field"><label>iOS uygulaması</label><select disabled><option>Geliştirme / App Store hazırlığı</option></select></div>
+<div class="field"><label>Bakım modu</label><select disabled><option>Kapalı (taslak)</option><option>Açık</option></select></div>
+<p class="section-note">Web, Android ve iOS aynı kullanıcı hesabı ve servis altyapısını kullanacak şekilde planlanır.</p>
+</div>
+<div class="card"><h2>Güvenlik ve erişim</h2>
+<div class="tablebox"><table><thead><tr><th>Güvenlik kontrolü</th><th>Hedef durum</th><th>Açıklama</th></tr></thead><tbody>
+<tr><td>Yönetici girişi</td><td><span class="tag">Backend gerekli</span></td><td>Güvenli kimlik doğrulama</td></tr>
+<tr><td>Çok faktörlü doğrulama</td><td><span class="tag">Kurulacak</span></td><td>Yönetici hesaplarında MFA</td></tr>
+<tr><td>Rol bazlı yetki</td><td><span class="tag">Kurulacak</span></td><td>Admin, bayi ve destek rolleri</td></tr>
+<tr><td>Oturum yönetimi</td><td><span class="tag">Kurulacak</span></td><td>Sunucu taraflı oturum ve süre aşımı</td></tr>
+<tr><td>İşlem kayıtları</td><td><span class="tag">Kurulacak</span></td><td>Kim, ne zaman, hangi işlemi yaptı</td></tr>
+</tbody></table></div></div>
+<div class="card"><h2>Entegrasyon servisleri</h2>
+<div class="tablebox"><table><thead><tr><th>Servis</th><th>Yapılandırma</th><th>Güvenli bağlantı</th></tr></thead><tbody>
+<tr><td>Veritabanı</td><td>Proje ve erişim bilgileri gerekli</td><td><span class="tag">Sunucu tarafında</span></td></tr>
+<tr><td>iyzico</td><td>Üye işyeri hesabı ve API kurulumu gerekli</td><td><span class="tag">Gizli anahtar backend'de</span></td></tr>
+<tr><td>Pazaryeri API'leri</td><td>Her pazaryeri için ayrı yetkilendirme</td><td><span class="tag">Şifreli saklama</span></td></tr>
+<tr><td>E-posta / bildirim</td><td>Gönderim servisi seçilecek</td><td><span class="tag">Sunucu tarafında</span></td></tr>
+</tbody></table></div>
+<p class="section-note">API anahtarları, şifreler ve ödeme sırları tarayıcı kodunda, HTML dosyasında veya herkese açık GitHub deposunda tutulmayacak.</p></div>
+<div class="card"><h2>Bildirim ve operasyon tercihleri</h2>
+<div class="tablebox"><table><thead><tr><th>Bildirim</th><th>Kapsam</th><th>Durum</th></tr></thead><tbody>
+<tr><td>Yeni bayi başvurusu</td><td>Yönetici bildirimi</td><td><span class="tag">Planlandı</span></td></tr>
+<tr><td>Yeni müşteri kaydı</td><td>Yönetici bildirimi</td><td><span class="tag">Planlandı</span></td></tr>
+<tr><td>Başarılı / başarısız ödeme</td><td>Yönetici ve müşteri</td><td><span class="tag">Planlandı</span></td></tr>
+<tr><td>Abonelik bitiş uyarısı</td><td>Müşteri ve bayi</td><td><span class="tag">Planlandı</span></td></tr>
+</tbody></table></div></div>
+<div class="card"><h2>KVKK ve veri yönetimi</h2>
+<p class="section-note">Aydınlatma metni, açık rıza gerektiren süreçler, saklama-imha politikası, veri başvuru kanalı ve işlem kayıtları canlıya geçmeden önce hazırlanmalı. Gereklilikler işlenen veri ve hizmet akışına göre hukuk danışmanıyla doğrulanmalı.</p>
+<span class="tag">Canlıya geçiş öncesi kontrol</span></div>
+<div class="card"><h2>Yapılandırma durumu</h2><div class="grid">
+<div class="metric"><label>Web arayüzü</label><strong>Hazır</strong><small>Mevcut site</small></div>
+<div class="metric"><label>Admin arayüzü</label><strong>Taslak</strong><small>Bu panel</small></div>
+<div class="metric"><label>Backend</label><strong>Gerekli</strong><small>Henüz bağlanmadı</small></div>
+<div class="metric"><label>Ortak mobil servis</label><strong>Planlandı</strong><small>Android + iOS</small></div>
+</div></div>
+</section>
 </div></main></div>
 <script>
 const titles={home:"Genel Bakış",customers:"Müşteri Yönetimi",subscriptions:"Paketler ve Abonelikler",dealers:"Bayi Ağı",marketplaces:"Pazaryeri Entegrasyonları",xml:"XML İşlemleri",buybox:"BuyBox Yönetimi",payments:"Ödeme Yönetimi",accounting:"Muhasebe",ads:"Reklam Alanları",settings:"Sistem Ayarları"};
