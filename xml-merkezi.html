@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101b3f"><title>XML Ürün Merkezi | Trend-Entegre</title>
+<style>
+:root{--n:#101b3f;--o:#ff7628;--t:#17213b;--m:#66708a;--bg:#f5f7fc;--l:#e5e9f2}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:15px system-ui,Arial,sans-serif;line-height:1.5}.w{width:min(1080px,calc(100% - 30px));margin:auto}header{background:#fff;border-bottom:1px solid var(--l)}.nav{height:68px;display:flex;align-items:center;justify-content:space-between}.brand{font-weight:950;color:var(--n);font-size:20px}.brand span{color:var(--o)}a{color:inherit;text-decoration:none}.back{font-weight:750;color:#465271}.hero{background:linear-gradient(120deg,#101b3f,#2b478f);color:white;padding:38px 0}.hero h1{font-size:clamp(29px,5vw,42px);margin:0 0 8px}.hero p{margin:0;color:#dce4fa;max-width:700px}.main{padding:26px 0 60px}.panel{background:#fff;border:1px solid var(--l);border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 8px 26px #101b3f08}.panel h2{font-size:18px;color:var(--n);margin:0 0 12px}.muted{color:var(--m);font-size:13px}.field{display:grid;gap:7px;margin:12px 0}.field label{font-weight:800;font-size:13px}.field input{width:100%;padding:13px;border:1px solid #d9deea;border-radius:10px;font:inherit}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.btn{border:0;background:var(--o);color:#fff;border-radius:10px;padding:12px 17px;font-weight:850;font:inherit;cursor:pointer}.btn.secondary{background:#edf1fa;color:var(--n)}.btn:disabled{opacity:.45;cursor:not-allowed}.status{padding:11px 13px;border-radius:10px;background:#f0f3fa;color:#465271;font-size:13px;margin-top:12px}.status.error{background:#fff0ed;color:#a13b25}.status.ok{background:#eaf7f0;color:#176344}.stats{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.stat{background:#f4f6fb;border-radius:10px;padding:9px 13px;font-size:13px}.stat b{color:var(--n)}.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0}.tools select{padding:10px;border:1px solid #d9deea;border-radius:9px;background:#fff;font:inherit}.tablewrap{overflow:auto;border:1px solid var(--l);border-radius:11px}table{border-collapse:collapse;width:100%;min-width:680px;font-size:12px}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--l);vertical-align:top;max-width:260px;overflow-wrap:anywhere}th{background:#f6f7fb;color:#4e5870}tr:last-child td{border-bottom:0}.empty{text-align:center;padding:30px;color:var(--m)}.note{font-size:12px;color:var(--m);margin-top:12px}@media(max-width:560px){.panel{padding:15px}.nav{height:60px}}
+</style></head><body>
+<header><div class="w nav"><a class="brand" href="index.html">TREND<span>•</span>ENTEGRE</a><a class="back" href="index.html">← Ana sayfa</a></div></header>
+<section class="hero"><div class="w"><h1>XML Ürün Merkezi</h1><p>XML dosyanızı yükleyin veya bağlantıyı deneyin. Ürün alanlarını görüntüleyin, ilk 10 / 30 / 100 ürünü seçin ve Excel'de açılabilen CSV dosyası olarak dışa aktarın.</p></div></section>
+<main class="w main">
+<section class="panel"><h2>1. XML kaynağını seçin</h2>
+<div class="field"><label for="url">XML bağlantısı</label><input id="url" type="url" placeholder="https://tedarikci.com/urunler.xml" value="https://www.teknodayim.com/wp-content/uploads/woo-feed/custom/xml/teknodayim.xml"></div>
+<div class="row"><button class="btn" id="fetch">Bağlantıyı dene</button><span class="muted">Bağlantı okuma, tedarikçi sunucusunun tarayıcı erişimine (CORS) izin vermesine bağlıdır.</span></div>
+<div class="field"><label for="file">Veya cihazınızdan XML dosyası seçin</label><input id="file" type="file" accept=".xml,.rss,.atom,application/xml,text/xml"></div>
+<div id="status" class="status" role="status">Henüz XML yüklenmedi.</div></section>
+<section class="panel"><h2>2. Ürünleri inceleyin ve dışa aktarın</h2>
+<div class="stats"><div class="stat">Bulunan ürün: <b id="total">0</b></div><div class="stat">Gösterilen: <b id="shown">0</b></div><div class="stat">Algılanan alan: <b id="fields">0</b></div></div>
+<div class="tools"><label for="limit">Ürün sayısı:</label><select id="limit"><option value="10">İlk 10</option><option value="30">İlk 30</option><option value="100">İlk 100</option><option value="all">Tümü</option></select><button class="btn" id="export" disabled>CSV / Excel'e aktar</button></div>
+<div id="table" class="empty">Önce bir XML dosyası yükleyin veya bağlantıyı deneyin.</div>
+<p class="note">CSV dosyası Excel ile açılabilir. Bu sürüm dosyayı cihazınızda tarayıcı içinde işler; veriler bir sunucuya gönderilmez. Bağlantı CORS nedeniyle engellenirse XML dosyasını tedarikçiden indirip yukarıdan seçmeniz gerekir. Gerçek XLSX çıktısı ve pazaryeri dönüşümü sonraki geliştirme aşamasıdır.</p>
+</section></main>
+<script>
+(function(){
+let products=[],headers=[];
+const $=id=>document.getElementById(id);
+function setStatus(msg,kind){$('status').textContent=msg;$('status').className='status '+(kind||'');}
+function localName(n){return (n.localName||n.nodeName||'').replace(/^.*:/,'');}
+function flatten(el,prefix,out){
+ for(const a of Array.from(el.attributes||[])){out[(prefix?prefix+'.':'')+'@'+localName(a)]=a.value;}
+ const kids=Array.from(el.children||[]);
+ if(!kids.length){const v=(el.textContent||'').trim();if(v)out[prefix||localName(el)]=v;return;}
+ for(const child of kids){const key=(prefix?prefix+'.':'')+localName(child);flatten(child,key,out);}
+}
+function parse(xmlText){
+ const doc=new DOMParser().parseFromString(xmlText,'application/xml');
+ if(doc.querySelector('parsererror')) throw new Error('XML biçimi hatalı veya eksik.');
+ let nodes=[];
+ const all=Array.from(doc.getElementsByTagName('*'));
+ nodes=all.filter(n=>['item','product','entry'].includes(localName(n).toLowerCase()) && n.children.length);
+ if(!nodes.length){
+  const containers=all.filter(n=>['products','urunler','catalog','channel','feed'].includes(localName(n).toLowerCase()));
+  for(const c of containers){const candidates=Array.from(c.children).filter(n=>n.children.length>0);if(candidates.length>1){nodes=candidates;break;}}
+ }
+ if(!nodes.length) throw new Error('Ürün kayıtları otomatik bulunamadı. XML farklı bir şema kullanıyor olabilir.');
+ products=nodes.map(n=>{const o={};flatten(n,'',o);return o;});
+ headers=Array.from(new Set(products.flatMap(p=>Object.keys(p))));
+ if(!headers.length)throw new Error('Ürün alanları bulunamadı.');
+ render();setStatus('XML başarıyla okundu. Ürünleri inceleyebilirsiniz.','ok');
+}
+function render(){
+ const limit=$('limit').value;const shown=limit==='all'?products.length:Math.min(products.length,Number(limit));const rows=products.slice(0,shown);
+ $('total').textContent=products.length.toLocaleString('tr-TR');$('shown').textContent=rows.length.toLocaleString('tr-TR');$('fields').textContent=headers.length;
+ $('export').disabled=!products.length;
+ const wrap=document.createElement('div');wrap.className='tablewrap';const table=document.createElement('table');
+ const thead=document.createElement('thead'),hr=document.createElement('tr');
+ for(const h of headers){const th=document.createElement('th');th.textContent=h;hr.appendChild(th);}thead.appendChild(hr);table.appendChild(thead);
+ const tbody=document.createElement('tbody');
+ for(const p of rows){const tr=document.createElement('tr');for(const h of headers){const td=document.createElement('td');td.textContent=p[h]||'';tr.appendChild(td);}tbody.appendChild(tr);}
+ table.appendChild(tbody);wrap.appendChild(table);$('table').replaceChildren(wrap);
+}
+function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"';}
+function exportCsv(){
+ const limit=$('limit').value;const rows=limit==='all'?products:products.slice(0,Number(limit));
+ const csv='\uFEFF'+[headers.map(csvCell).join(';'),...rows.map(p=>headers.map(h=>csvCell(p[h])).join(';'))].join('\r\n');
+ const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='trend-entegre-urunler.csv';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+}
+$('file').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;setStatus('Dosya okunuyor…');try{parse(await f.text());}catch(err){setStatus(err.message,'error');}});
+$('fetch').addEventListener('click',async()=>{const url=$('url').value.trim();if(!url)return setStatus('Önce XML bağlantısını girin.','error');try{const u=new URL(url);if(!['https:'].includes(u.protocol))throw new Error('Yalnızca HTTPS bağlantıları kabul edilir.');setStatus('Bağlantı deneniyor…');const r=await fetch(u.href,{mode:'cors'});if(!r.ok)throw new Error('Tedarikçi sunucusu HTTP '+r.status+' yanıtı verdi.');parse(await r.text());}catch(err){setStatus('Bağlantı okunamadı: '+err.message+' Bu genellikle CORS kısıtlamasından kaynaklanır. XML dosyasını indirip dosya seçme alanından yükleyebilirsiniz.','error');}});
+$('limit').addEventListener('change',()=>{if(products.length)render();});$('export').addEventListener('click',exportCsv);
+})();
+</script></body></html>
