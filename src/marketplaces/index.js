@@ -1,6 +1,6 @@
 const integrations = [
   { id: 'trendyol', name: 'Trendyol', credentials: ['TRENDYOL_SUPPLIER_ID', 'TRENDYOL_API_KEY', 'TRENDYOL_API_SECRET'] },
-  { id: 'hepsiburada', name: 'Hepsiburada', credentials: ['HEPSIBURADA_MERCHANT_ID', 'HEPSIBURADA_USERNAME', 'HEPSIBURADA_PASSWORD'] },
+  { id: 'hepsiburada', name: 'Hepsiburada', credentials: ['HEPSIBURADA_CLIENT_ID', 'HEPSIBURADA_CLIENT_SECRET'] },
   { id: 'n11', name: 'n11', credentials: ['N11_API_KEY', 'N11_API_SECRET'] },
   { id: 'amazon', name: 'Amazon', credentials: ['AMAZON_SELLER_ID', 'AMAZON_CLIENT_ID', 'AMAZON_CLIENT_SECRET', 'AMAZON_REFRESH_TOKEN', 'AMAZON_MARKETPLACE_ID'] },
   { id: 'pazarama', name: 'Pazarama', credentials: ['PAZARAMA_API_KEY', 'PAZARAMA_API_SECRET'] },
