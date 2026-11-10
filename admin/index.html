@@ -1,125 +1,33 @@
-<!doctype html>
-<html lang="tr">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#111b3b"><title>Trend-Entegre | Yönetim Merkezi</title>
-<style>
-:root{--navy:#111b3b;--navy2:#1b2b58;--orange:#ff7628;--bg:#f4f6fa;--line:#e6eaf1;--ink:#17213b;--muted:#778198;--white:#fff;--green:#13845c;--amber:#a96012}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif}button,input,select{font:inherit}button{cursor:pointer}
-.shell{min-height:100vh;display:grid;grid-template-columns:250px 1fr}.sidebar{background:var(--navy);color:white;padding:23px 16px;display:flex;flex-direction:column}.logo{font-size:19px;font-weight:950;letter-spacing:-.6px;padding:8px 12px 27px}.logo b{color:var(--orange)}.group{color:#8290b5;font-size:10px;font-weight:900;letter-spacing:1.4px;padding:13px 12px 8px}.nav{display:grid;gap:4px}.nav button{border:0;background:transparent;color:#d9e0f3;text-align:left;padding:12px;border-radius:10px;font-weight:700}.nav button:hover,.nav button.active{background:#ffffff18;color:#fff}.nav .ico{display:inline-block;width:27px;color:#ff9a61}.side-note{margin-top:auto;padding:16px 12px;color:#aab5d2;font-size:11px;line-height:1.6}
-main{min-width:0}.topbar{height:70px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 30px}.topbar strong{font-size:14px}.top-right{display:flex;align-items:center;gap:12px}.preview{border:1px solid #ffd8c4;background:#fff3eb;color:#a84d19;padding:7px 10px;border-radius:20px;font-size:10px;font-weight:900}.avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#e9edf8;color:var(--navy);font-weight:900}
-.wrap{max-width:1300px;margin:auto;padding:28px}.notice{padding:13px 15px;border:1px solid #f0d7a9;background:#fff9eb;color:#72521c;border-radius:12px;font-size:12px;line-height:1.55;margin-bottom:22px}.head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:22px}.head h1{font-size:26px;letter-spacing:-.8px;margin:0 0 6px;color:var(--navy)}.head p{margin:0;color:var(--muted)}.btn{border:0;border-radius:9px;background:var(--orange);color:white;padding:11px 15px;font-weight:850}.btn.light{background:white;border:1px solid var(--line);color:var(--navy)}
-.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.metric,.card{background:white;border:1px solid var(--line);border-radius:14px;padding:17px}.metric label{font-size:11px;color:var(--muted);font-weight:750}.metric strong{display:block;font-size:25px;color:var(--navy);margin:9px 0 4px}.metric small{font-size:11px;color:var(--muted)}.metric .state{color:var(--amber);font-weight:800}.columns{display:grid;grid-template-columns:1.25fr 1fr;gap:15px;margin-top:15px}.card h2{font-size:15px;color:var(--navy);margin:0 0 14px}.empty-state{border:1px dashed #d9deea;border-radius:11px;padding:25px;text-align:center;color:var(--muted);line-height:1.7}.empty-state b{color:var(--navy)}.quick{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.quick button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:14px;text-align:left;color:var(--navy);font-weight:800}.quick button span{display:block;color:var(--muted);font-weight:500;font-size:11px;margin-top:5px}
-.page{display:none}.page.active{display:block}.tablebox{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:13px}table{border-collapse:collapse;width:100%;min-width:620px}th,td{text-align:left;padding:13px 15px;border-bottom:1px solid var(--line)}th{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);background:#fafbfe}td{font-size:12px}tr:last-child td{border:0}.tag{display:inline-block;padding:5px 8px;border-radius:20px;background:#fff4e7;color:#a96012;font-size:10px;font-weight:850}.tag.green{background:#eaf7f0;color:var(--green)}.tag.gray{background:#f0f2f6;color:#667087}.toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:13px}.toolbar input,.toolbar select,.field input,.field textarea,.field select{border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:white;min-width:190px}.field{display:grid;gap:6px;margin:12px 0}.field label{font-size:11px;color:var(--muted);font-weight:800}.field textarea{min-height:90px}.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.section-note{color:var(--muted);font-size:12px;line-height:1.6}.package-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.package{border:1px solid var(--line);border-radius:12px;padding:16px;background:#fff}.package h3{margin:0 0 7px;color:var(--navy)}.package strong{font-size:23px;color:var(--navy)}.package p{font-size:12px;color:var(--muted);min-height:32px}.mobile-menu{display:none}
-@media(max-width:900px){.shell{grid-template-columns:75px 1fr}.sidebar{padding:16px 8px}.logo{font-size:0;padding:8px;text-align:center}.logo:first-letter{font-size:23px}.group{font-size:0;padding:12px 0}.nav button{font-size:0;text-align:center;padding:13px 5px}.nav .ico{font-size:18px;width:auto}.side-note{font-size:0;padding:5px}.grid{grid-template-columns:repeat(2,1fr)}.columns{grid-template-columns:1fr}.package-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:560px){.topbar{height:60px;padding:0 13px}.wrap{padding:19px 13px}.head{display:block}.head .btn{margin-top:12px}.head h1{font-size:22px}.grid{gap:8px}.metric{padding:12px}.metric strong{font-size:21px}.quick{grid-template-columns:1fr}.package-grid,.two{grid-template-columns:1fr}.preview{font-size:9px}}
-</style></head>
-<body><div class="shell">
-<aside class="sidebar"><div class="logo">TREND<b>•</b>ENTEGRE</div>
-<div class="group">YÖNETİM MERKEZİ</div><nav class="nav">
-<button class="active" data-page="home"><span class="ico">▦</span> Genel Bakış</button>
-<button data-page="customers"><span class="ico">♙</span> Müşteriler</button>
-<button data-page="subscriptions"><span class="ico">▣</span> Abonelikler</button>
-<button data-page="store-packages"><span class="ico">▤</span> E-Ticaret Paketleri</button>
-<button data-page="dealers"><span class="ico">♧</span> Bayi Ağı</button>
-<button data-page="marketplaces"><span class="ico">⇄</span> Pazaryeri Entegrasyonları</button>
-<button data-page="xml"><span class="ico">⌘</span> XML İşlemleri</button>
-<button data-page="buybox"><span class="ico">◈</span> BuyBox</button>
-<button data-page="payments"><span class="ico">₺</span> Ödemeler</button>
-<button data-page="accounting"><span class="ico">▤</span> Muhasebe <span class="tag" style="margin-left:5px">PASİF</span></button>
-<button data-page="ads"><span class="ico">▧</span> Reklam Alanları</button>
-<button data-page="settings"><span class="ico">⚙</span> Sistem Ayarları</button>
-</nav><div class="side-note">Trend-Entegre<br>Yönetim Merkezi · Arayüz taslağı</div></aside>
-<main><header class="topbar"><strong id="pageTitle">Genel Bakış</strong><div class="top-right"><span class="preview">TASLAK · CANLI SİSTEME BAĞLI DEĞİL</span><span class="avatar">Y</span></div></header>
-<div class="wrap">
-<div class="notice"><b>Geliştirme notu:</b> Bu sayfa yönetim panelinin yeniden tasarlanmış arayüz taslağıdır. Henüz gerçek müşteri, ödeme veya entegrasyon verisi göstermez. Güvenli giriş, sunucu tarafı yetkilendirme ve veritabanı kurulmadan gerçek yönetim paneli olarak kullanılmamalıdır.</div>
-<section class="page active" id="home"><div class="head"><div><h1>Yönetim Merkezi</h1><p>Trend-Entegre hizmetlerini tek noktadan yönetmek için tasarlandı.</p></div><button class="btn" onclick="go('customers')">Müşterileri görüntüle →</button></div>
-<div class="grid">
-<div class="metric"><label>Müşteri kayıtları</label><strong>—</strong><small>Veritabanı bağlantısı bekleniyor</small></div>
-<div class="metric"><label>Aktif abonelikler</label><strong>—</strong><small>Abonelik servisi bağlanmadı</small></div>
-<div class="metric"><label>Bayi başvuruları</label><strong>—</strong><small>Bayi modülü hazırlanıyor</small></div>
-<div class="metric"><label>Ödeme durumu</label><strong>—</strong><small>iyzico bağlantısı bekleniyor</small></div>
-</div>
-<div class="columns"><div class="card"><h2>Sistem bağlantıları</h2><div class="tablebox"><table><thead><tr><th>Modül</th><th>Durum</th></tr></thead><tbody><tr><td>Üye girişi ve yetkilendirme</td><td><span class="tag">Kurulum gerekli</span></td></tr><tr><td>Veritabanı</td><td><span class="tag">Kurulum gerekli</span></td></tr><tr><td>iyzico ödeme altyapısı</td><td><span class="tag">Bağlantı bekliyor</span></td></tr><tr><td>Pazaryeri API servisleri</td><td><span class="tag">Bağlantı bekliyor</span></td></tr><tr><td>XML dönüştürme motoru</td><td><span class="tag">Geliştirme gerekli</span></td></tr></tbody></table></div></div>
-<div class="card"><h2>Hızlı erişim</h2><div class="quick"><button onclick="go('subscriptions')">Paket ve abonelikler<span>Ürün paketlerini düzenle</span></button><button onclick="go('dealers')">Bayi ağı<span>Bayi ve alt bayi yapısı</span></button><button onclick="go('xml')">XML işlemleri<span>Aktarım iş akışları</span></button><button onclick="go('ads')">Reklam alanları<span>Slider ve banner taslakları</span></button></div></div></div>
+<section class="page" id="marketplaces">
+  <div class="head">
+    <div>
+      <h1>Pazaryeri Entegrasyonları</h1>
+      <p>Pazaryeri bağlantılarını görüntüleyin ve bağlantı testlerini çalıştırın.</p>
+    </div>
+    <button class="btn light" onclick="loadMarketplaceStatus()">Durumları Yenile</button>
+  </div>
+
+  <div class="notice">
+    Hepsiburada bağlantısı sunucu üzerinden test edilir. API anahtarları bu ekranda gösterilmez.
+    Şu an Hepsiburada SIT test ortamı kullanılmaktadır.
+  </div>
+
+  <div id="marketplaceMessage" class="notice" style="display:none"></div>
+
+  <div class="tablebox">
+    <table>
+      <thead>
+        <tr>
+          <th>Pazaryeri</th>
+          <th>Kimlik Bilgileri</th>
+          <th>Bağlantı Durumu</th>
+          <th>İşlem</th>
+        </tr>
+      </thead>
+      <tbody id="marketplaceRows">
+        <tr><td colspan="4">Bağlantı durumları yükleniyor...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="section-note" id="marketplaceUpdated"></p>
 </section>
-<section class="page" id="customers"><div class="head"><div><h1>Müşteri Yönetimi</h1><p>Müşteri kayıtları, firma bilgileri ve hesap durumları.</p></div><button class="btn" onclick="alert('Müşteri kayıt formu, güvenli veritabanı bağlantısı kurulduğunda etkinleştirilecek.')">+ Müşteri ekle</button></div><div class="toolbar"><input placeholder="Firma veya müşteri ara" disabled><select disabled><option>Hesap durumu: tümü</option></select></div><div class="empty-state"><b>Henüz canlı müşteri kaydı yok.</b><br>Müşteri listesi veritabanı bağlandığında burada görüntülenecek.</div></section>
-<section class="page" id="subscriptions"><div class="head"><div><h1>Paketler ve Abonelikler</h1><p>E-ticaret mağazası, pazaryeri entegrasyonu, BuyBox ve XML hizmetlerini ayrı kategorilerde yönetin.</p></div></div>
-<div class="notice"><b>Entegrasyon ve ek hizmet abonelikleri:</b> Pazaryeri, XML ve BuyBox hizmetleri bu bölümden ayrı takip edilir.</div>
-<h2 style="font-size:17px;color:var(--navy);margin:24px 0 12px">Mevcut entegrasyon ve ek hizmet paketleri</h2><div class="package-grid">
-<article class="package"><h3>Tek Pazaryeri</h3><strong>799 TL / ay</strong><p>Tek pazaryeri entegrasyonu için başlangıç paketi.</p><span class="tag">Mevcut web tarifesi</span></article>
-<article class="package"><h3>Çoklu Pazaryeri</h3><strong>4.999 TL / ay</strong><p>Tüm desteklenen pazaryerleri için paket.</p><span class="tag">Mevcut web tarifesi</span></article>
-<article class="package"><h3>BuyBox Pro</h3><strong>2.399 TL / ay</strong><p>Rakip fiyat ve BuyBox takip hizmeti.</p><span class="tag">Mevcut web tarifesi</span></article>
-<article class="package"><h3>Full Paket</h3><strong>9.999 TL / ay</strong><p>Entegrasyon, XML ve BuyBox hizmetleri birlikte.</p><span class="tag">Mevcut web tarifesi</span></article>
-<article class="package"><h3>XML Veri Aktarımı</h3><strong>Teklif Al</strong><p>XML içe aktarma, dönüştürme ve dışa aktarma.</p><span class="tag">Kullanıma göre teklif</span></article>
-</div><p class="section-note">Ürün limitleri ve fiyatlar önerilen lansman tarifesidir. Alan adı, ödeme kuruluşu komisyonu, kargo gönderi bedeli ve üçüncü taraf servis kontörleri ayrıca hesaplanır. Bu statik panelde fiyat güncellemesi yapmak canlı abonelik kaydı oluşturmaz.</p></section>
-<section class="page" id="store-packages"><div class="head"><div><h1>E-Ticaret Mağazası Paketleri</h1><p>İnternet mağazası aboneliklerini ve mağaza özelliklerini diğer entegrasyon paketlerinden bağımsız yönetin.</p></div></div><div class="notice"><b>Ayrı ürün kategorisi:</b> Bu paketler e-ticaret sitesi kurulum ve yönetim hizmetini kapsar. Pazaryeri, XML ve BuyBox abonelikleri ayrı kategorilerdir. Bu ekran şu an arayüz taslağıdır; fiyat değişiklikleri ödeme sistemine otomatik aktarılmaz.</div><h2 style="font-size:17px;color:var(--navy);margin:0 0 12px">E-ticaret mağazası paketleri</h2><div class="package-grid">
-<article class="package"><h3>Başlangıç</h3><strong>1.490 TL / ay + KDV</strong><p>250 ürün; mobil uyumlu mağaza, ürün / sipariş yönetimi, temel SEO.</p><span class="tag">Web sitesine eklendi · ödeme bağlantısı bekliyor</span></article>
-<article class="package"><h3>Büyüme</h3><strong>2.990 TL / ay + KDV</strong><p>2.500 ürün; kampanya alanları, satış raporları, 1 XML kaynağı ve 1 pazaryeri modülü için uygun.</p><span class="tag">Web sitesine eklendi · ödeme bağlantısı bekliyor</span></article>
-<article class="package"><h3>Profesyonel</h3><strong>5.990 TL / ay + KDV</strong><p>20.000 ürün; 5 XML kaynağına ve 5 pazaryeri modülüne kadar, API altyapısı ve çok kullanıcılı yönetim.</p><span class="tag">Web sitesine eklendi · ödeme bağlantısı bekliyor</span></article>
-<article class="package"><h3>Kurumsal</h3><strong>Teklif Al</strong><p>Özel limitler, çoklu mağaza, B2B, özel API / XML ve hizmet seviyesi seçenekleri.</p><span class="tag">Teklif usulü</span></article>
-</div>
-</section><section class="page" id="dealers"><div class="head"><div><h1>Bayi Ağı</h1><p>Ana yönetim → bayi → alt bayi hiyerarşisi.</p></div><button class="btn" onclick="alert('Bayi başvuru ve hesap açma akışı sonraki geliştirme aşamasında.')">Bayi ekle</button></div><div class="grid"><div class="metric"><label>Ana bayi seviyesi</label><strong>1</strong><small>Merkez yönetim</small></div><div class="metric"><label>Bayi seviyesi</label><strong>2</strong><small>Ana bayiler</small></div><div class="metric"><label>Alt bayi seviyesi</label><strong>3</strong><small>Alt bayi ağı</small></div><div class="metric"><label>Komisyon takibi</label><strong>—</strong><small>Hesaplama modülü kapalı</small></div></div><div class="empty-state" style="margin-top:14px"><b>Bayi kayıtları henüz bağlı değil.</b><br>Komisyon ve alt bayi yönetimi, gerçek kayıt ve yetki sistemi kurulduğunda açılacak. Muhasebe modülü şimdilik devre dışı tutulacak.</div></section>
-<section class="page" id="marketplaces"><div class="head"><div><h1>Pazaryeri Entegrasyonları</h1><p>Desteklenecek pazaryerlerinin bağlantı ve servis durumları.</p></div></div><div class="tablebox"><table><thead><tr><th>Pazaryeri</th><th>Servis</th><th>Bağlantı</th></tr></thead><tbody><tr><td>Trendyol</td><td>Ürün / sipariş</td><td><span class="tag">API bağlantısı gerekli</span></td></tr><tr><td>Hepsiburada</td><td>Ürün / sipariş</td><td><span class="tag">API bağlantısı gerekli</span></td></tr><tr><td>N11</td><td>Ürün / sipariş</td><td><span class="tag">API bağlantısı gerekli</span></td></tr><tr><td>Amazon</td><td>Ürün / sipariş</td><td><span class="tag">API bağlantısı gerekli</span></td></tr><tr><td>Pazarama</td><td>Ürün / sipariş</td><td><span class="tag">API bağlantısı gerekli</span></td></tr><tr><td>Ozon</td><td>Ürün / sipariş</td><td><span class="tag">API bağlantısı gerekli</span></td></tr></tbody></table></div></section>
-<section class="page" id="xml"><div class="head"><div><h1>XML İşlemleri</h1><p>Kaynak XML, pazaryerine göre dönüştürme ve Excel aktarımı.</p></div></div><div class="two"><div class="card"><h2>XML içe aktarma</h2><div class="field"><label>XML kaynak adresi</label><input placeholder="https://tedarikci.com/urunler.xml" disabled></div><button class="btn" disabled>Kaynağı kontrol et</button><p class="section-note">Standart paketlerin mevcut XML ve ürün limitleri korunur.</p></div><div class="card"><h2>Dışa aktarma</h2><div class="field"><label>Çıktı biçimi</label><select disabled><option>Excel / XLSX</option><option>CSV</option><option>Pazaryeri XML</option></select></div><button class="btn" disabled>Dosya oluştur</button></div></div><div class="card" style="margin-top:14px"><h2>Ücretli ek hizmet · URL ile büyük XML aktarımı</h2><p class="section-note">Müşteri XML bağlantısını girer. Sunucu XML kaynağını güvenli şekilde indirir, akış halinde işler ve seçilen ürünleri Excel (XLSX) olarak dışa aktarır.</p><div class="two"><div><div class="field"><label>Hedef dosya boyutu üst sınırı</label><input value="100 MB (önerilen başlangıç limiti)" disabled></div><div class="field"><label>Ürün / kayıt limiti</label><input value="Yönetici tarafından paket bazında belirlenir" disabled></div></div><div><div class="field"><label>Ücretlendirme</label><input value="Ayrı ücretli ek hizmet · fiyat yönetici tarafından belirlenir" disabled></div><div class="field"><label>Erişim kontrolü</label><input value="Aktif ücretli hak / abonelik doğrulaması gerekir" disabled></div></div></div><span class="tag">Backend, ödeme doğrulaması ve yetkilendirme gerekli</span></div><p class="section-note">Bu panel şu an arayüz taslağıdır. XML indirme, güvenli URL kontrolü, akış işleme, XLSX üretimi ve ücretli erişim denetimi henüz çalışır durumda değildir.</p></section>
-<section class="page" id="buybox"><div class="head"><div><h1>BuyBox Yönetimi</h1><p>Rakip fiyat izleme ve BuyBox hizmetlerinin operasyon alanı.</p></div></div><div class="empty-state"><b>BuyBox servisi henüz bağlı değil.</b><br>Ürün eşleştirme, fiyat izleme sıklığı, bildirim ve raporlama modülleri servis altyapısıyla birlikte geliştirilecek.</div></section>
-<section class="page" id="payments"><div class="head"><div><h1>Ödeme Yönetimi</h1><p>Abonelik tahsilatları ve ödeme bildirimleri.</p></div></div><div class="notice">iyzico entegrasyonu henüz yapılmadı. Kart bilgileri bu statik sayfada alınmaz veya saklanmaz.</div><div class="empty-state"><b>Ödeme kayıtları henüz yok.</b><br>iyzico API, sunucu tarafı ödeme oluşturma ve imzalı bildirim doğrulaması tamamlandığında işlemler burada listelenecek.</div></section>
-<section class="page" id="accounting"><div class="head"><div><h1>Muhasebe</h1><p>Gelir-gider, bayi komisyonları, tahsilat ve finansal kayıtlar.</p></div><span class="tag gray">MODÜL PASİF</span></div><div class="notice"><b>Muhasebe modülü henüz aktif edilmemiştir.</b> Bu bölüm yönetim panelinde hazır tutulmaktadır. Aktifleştirme yapılana kadar kayıt oluşturma, düzenleme, silme ve finansal hesaplama işlemleri kapalıdır.</div><div class="grid"><div class="metric"><label>Muhasebe Genel Bakış</label><strong>—</strong><small class="state">Pasif</small></div><div class="metric"><label>Gelir – Gider Takibi</label><strong>—</strong><small class="state">Pasif</small></div><div class="metric"><label>Bayi Komisyonları</label><strong>—</strong><small class="state">Pasif</small></div><div class="metric"><label>Tahsilat Raporları</label><strong>—</strong><small class="state">Pasif</small></div></div><div class="card" style="margin-top:15px"><h2>Finansal kayıt alanları</h2><div class="tablebox"><table><thead><tr><th>Alt bölüm</th><th>Durum</th><th>Açıklama</th></tr></thead><tbody><tr><td>Gelir – Gider Takibi</td><td><span class="tag gray">Pasif</span></td><td>Gelir ve gider kayıtları</td></tr><tr><td>Bayi Komisyonları</td><td><span class="tag gray">Pasif</span></td><td>Bayi / alt bayi hakedişleri</td></tr><tr><td>Tahsilat Raporları</td><td><span class="tag gray">Pasif</span></td><td>Ödeme ve tahsilat dökümleri</td></tr><tr><td>Fatura ve Ödeme Kayıtları</td><td><span class="tag gray">Pasif</span></td><td>Fatura ve ödeme geçmişi</td></tr></tbody></table></div><p class="section-note">Modül, ileride güvenli veritabanı ve muhasebe iş kuralları bağlandığında yönetici tarafından etkinleştirilebilir.</p></div></section>
-<section class="page" id="ads"><div class="head"><div><h1>Reklam Alanları</h1><p>Ana sayfa slider, banner ve tanıtım alanlarının taslak yönetimi.</p></div></div><div class="two"><div class="card"><h2>Ana sayfa slider</h2><div class="field"><label>Başlık</label><input value="Pazaryerlerinde büyümeye hazır mısınız?" disabled></div><div class="field"><label>Açıklama</label><textarea disabled>Tek XML kaynağından farklı pazaryerlerine uygun ürün verisi hazırlayın.</textarea></div><button class="btn" disabled>Taslağı kaydet</button></div><div class="card"><h2>Reklam yerleşimleri</h2><p class="section-note">Üst banner, paketler arası tanıtım, BuyBox tanıtım alanı ve alt sayfa reklamları.</p><span class="tag">Yayın bağlantısı kurulmadı</span></div></div></section>
-<section class="page" id="settings">
-<div class="head"><div><h1>Sistem Ayarları</h1><p>Trend-Entegre platformunun genel yapılandırması ve güvenlik politikaları.</p></div><span class="tag">YAPILANDIRMA TASLAĞI</span></div>
-<div class="notice"><b>Önemli:</b> Bu bölüm şu anda arayüz taslağıdır. Kaydetme, gerçek kullanıcı/şirket verilerini değiştirmez. Canlı ayarlar için güvenli sunucu API'si ve yönetici yetkilendirmesi bağlanmalıdır. API anahtarlarını bu sayfaya veya GitHub deposuna yazmayın.</div>
-<div class="two">
-<div class="card"><h2>Genel platform bilgileri</h2>
-<div class="field"><label>Platform adı</label><input value="Trend-Entegre" disabled></div>
-<div class="field"><label>Web sitesi adresi</label><input value="https://atici69.github.io/Trend-entegre/" disabled></div>
-<div class="field"><label>Destek e-posta adresi</label><input placeholder="destek alan adı ve e-posta tanımlanacak" disabled></div>
-<div class="field"><label>WhatsApp destek hattı</label><input value="905458959469" disabled></div>
-<p class="section-note">İletişim bilgileri merkezi ayar servisine bağlandığında web sitesi ve uygulamalarda ortak kullanılacak.</p>
-</div>
-<div class="card"><h2>Platform ve uygulama ayarları</h2>
-<div class="field"><label>Web platformu</label><select disabled><option>Yayında – GitHub Pages</option></select></div>
-<div class="field"><label>Android uygulaması</label><select disabled><option>APK geliştirme ve test aşamasında</option></select></div>
-<div class="field"><label>iOS uygulaması</label><select disabled><option>Geliştirme / App Store hazırlığı</option></select></div>
-<div class="field"><label>Bakım modu</label><select disabled><option>Kapalı (taslak)</option><option>Açık</option></select></div>
-<p class="section-note">Web, Android ve iOS aynı kullanıcı hesabı ve servis altyapısını kullanacak şekilde planlanır.</p>
-</div>
-<div class="card"><h2>Güvenlik ve erişim</h2>
-<div class="tablebox"><table><thead><tr><th>Güvenlik kontrolü</th><th>Hedef durum</th><th>Açıklama</th></tr></thead><tbody>
-<tr><td>Yönetici girişi</td><td><span class="tag">Backend gerekli</span></td><td>Güvenli kimlik doğrulama</td></tr>
-<tr><td>Çok faktörlü doğrulama</td><td><span class="tag">Kurulacak</span></td><td>Yönetici hesaplarında MFA</td></tr>
-<tr><td>Rol bazlı yetki</td><td><span class="tag">Kurulacak</span></td><td>Admin, bayi ve destek rolleri</td></tr>
-<tr><td>Oturum yönetimi</td><td><span class="tag">Kurulacak</span></td><td>Sunucu taraflı oturum ve süre aşımı</td></tr>
-<tr><td>İşlem kayıtları</td><td><span class="tag">Kurulacak</span></td><td>Kim, ne zaman, hangi işlemi yaptı</td></tr>
-</tbody></table></div></div>
-<div class="card"><h2>Entegrasyon servisleri</h2>
-<div class="tablebox"><table><thead><tr><th>Servis</th><th>Yapılandırma</th><th>Güvenli bağlantı</th></tr></thead><tbody>
-<tr><td>Veritabanı</td><td>Proje ve erişim bilgileri gerekli</td><td><span class="tag">Sunucu tarafında</span></td></tr>
-<tr><td>iyzico</td><td>Üye işyeri hesabı ve API kurulumu gerekli</td><td><span class="tag">Gizli anahtar backend'de</span></td></tr>
-<tr><td>Pazaryeri API'leri</td><td>Her pazaryeri için ayrı yetkilendirme</td><td><span class="tag">Şifreli saklama</span></td></tr>
-<tr><td>E-posta / bildirim</td><td>Gönderim servisi seçilecek</td><td><span class="tag">Sunucu tarafında</span></td></tr>
-</tbody></table></div>
-<p class="section-note">API anahtarları, şifreler ve ödeme sırları tarayıcı kodunda, HTML dosyasında veya herkese açık GitHub deposunda tutulmayacak.</p></div>
-<div class="card"><h2>Bildirim ve operasyon tercihleri</h2>
-<div class="tablebox"><table><thead><tr><th>Bildirim</th><th>Kapsam</th><th>Durum</th></tr></thead><tbody>
-<tr><td>Yeni bayi başvurusu</td><td>Yönetici bildirimi</td><td><span class="tag">Planlandı</span></td></tr>
-<tr><td>Yeni müşteri kaydı</td><td>Yönetici bildirimi</td><td><span class="tag">Planlandı</span></td></tr>
-<tr><td>Başarılı / başarısız ödeme</td><td>Yönetici ve müşteri</td><td><span class="tag">Planlandı</span></td></tr>
-<tr><td>Abonelik bitiş uyarısı</td><td>Müşteri ve bayi</td><td><span class="tag">Planlandı</span></td></tr>
-</tbody></table></div></div>
-<div class="card"><h2>KVKK ve veri yönetimi</h2>
-<p class="section-note">Aydınlatma metni, açık rıza gerektiren süreçler, saklama-imha politikası, veri başvuru kanalı ve işlem kayıtları canlıya geçmeden önce hazırlanmalı. Gereklilikler işlenen veri ve hizmet akışına göre hukuk danışmanıyla doğrulanmalı.</p>
-<span class="tag">Canlıya geçiş öncesi kontrol</span></div>
-<div class="card"><h2>Yapılandırma durumu</h2><div class="grid">
-<div class="metric"><label>Web arayüzü</label><strong>Hazır</strong><small>Mevcut site</small></div>
-<div class="metric"><label>Admin arayüzü</label><strong>Taslak</strong><small>Bu panel</small></div>
-<div class="metric"><label>Backend</label><strong>Gerekli</strong><small>Henüz bağlanmadı</small></div>
-<div class="metric"><label>Ortak mobil servis</label><strong>Planlandı</strong><small>Android + iOS</small></div>
-</div></div>
-</section>
-</div></main></div>
-<script>
-const titles={home:"Genel Bakış",customers:"Müşteri Yönetimi",subscriptions:"Entegrasyon Paketleri ve Abonelikler","store-packages":"E-Ticaret Mağazası Paketleri",dealers:"Bayi Ağı",marketplaces:"Pazaryeri Entegrasyonları",xml:"XML İşlemleri",buybox:"BuyBox Yönetimi",payments:"Ödeme Yönetimi",accounting:"Muhasebe",ads:"Reklam Alanları",settings:"Sistem Ayarları"};
-function go(id){document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===id));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===id));document.getElementById("pageTitle").textContent=titles[id]||"Yönetim Merkezi";window.scrollTo({top:0,behavior:"smooth"})}
-document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.page)));
-</script></body></html>
