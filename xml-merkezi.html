@@ -17,13 +17,13 @@
 <p class="muted">.xlsx, .xls veya .csv dosyanızı yükleyin. İlk satır sütun başlıkları olarak kullanılır; her satır bir XML ürün kaydına dönüştürülür.</p>
 <div class="field"><label for="excelFile">Excel / CSV dosyası</label><input id="excelFile" type="file" accept=".xlsx,.xls,.csv"></div>
 <div class="row"><button class="btn" id="makeXml" disabled>XML dosyası oluştur ve indir</button><span class="muted" id="excelInfo">Henüz Excel dosyası seçilmedi.</span></div>
-<div id="excelPreview" class="empty">Excel dosyanızı seçtiğinizde ilk ürünler burada görüntülenir.</div>
+
 <p class="note">Bu işlem genel ürün XML'i oluşturur. Pazaryerine özel XML şemaları için hedef pazaryerinin zorunlu alanları ayrıca eşleştirilmelidir. Dosya tarayıcınızda işlenir.</p>
 </section>
-<section class="panel"><h2>2. Ürünleri inceleyin ve dışa aktarın</h2>
-<div class="stats"><div class="stat">Bulunan ürün: <b id="total">0</b></div><div class="stat">Gösterilen: <b id="shown">0</b></div><div class="stat">Algılanan alan: <b id="fields">0</b></div></div>
-<div class="tools"><label for="limit">Ürün sayısı:</label><select id="limit"><option value="10">İlk 10</option><option value="30">İlk 30</option><option value="100">İlk 100</option><option value="all">Tümü</option></select><label for="priceIncrease">Fiyat artışı (%):</label><input id="priceIncrease" type="number" min="-100" max="10000" step="0.1" value="0" style="width:105px;padding:10px;border:1px solid #d9deea;border-radius:9px;font:inherit"><label style="display:flex;gap:7px;align-items:center;font-weight:700"><input id="stockOnly" type="checkbox"> Yalnızca stokta olanlar</label><button class="btn" id="export" disabled>Fiyatları uygula ve XLSX indir</button></div><p class="note">Yüzde artış tanınan fiyat alanlarına uygulanır. Orijinal fiyatlar korunur; dışa aktarılan dosyada ayrıca yeni fiyat sütunları bulunur.</p>
-<div id="table" class="empty">Önce bir XML dosyası yükleyin veya bağlantıyı deneyin.</div>
+<section class="panel"><h2>2. Dışa aktarma ayarları</h2>
+<div class="stats"><div class="stat">Bulunan ürün: <b id="total">0</b></div><div class="stat">Algılanan alan: <b id="fields">0</b></div></div>
+<div class="tools"><label for="limit">Ürün sayısı:</label><select id="limit"><option value="10">İlk 10</option><option value="30">İlk 30</option><option value="100">İlk 100</option><option value="1000">İlk 1000</option><option value="all">Tümü</option></select><label for="priceIncrease">Fiyat artışı (%):</label><input id="priceIncrease" type="number" min="-100" max="10000" step="0.1" value="0" style="width:105px;padding:10px;border:1px solid #d9deea;border-radius:9px;font:inherit"><label style="display:flex;gap:7px;align-items:center;font-weight:700"><input id="stockOnly" type="checkbox"> Yalnızca stokta olanlar</label><button class="btn" id="export" disabled>Fiyatları uygula ve XLSX indir</button></div><p class="note">Yüzde artış tanınan fiyat alanlarına uygulanır. Orijinal fiyatlar korunur; dışa aktarılan dosyada ayrıca yeni fiyat sütunları bulunur.</p>
+
 <p class="note">Excel (.xlsx) dosyası cihazınızda oluşturulur; orijinal fiyatlar korunur ve artış uygulanmış fiyatlar ayrı sütunlara eklenir. XML tarayıcıda işlenir, sunucuya gönderilmez. Bağlantı CORS nedeniyle engellenirse XML dosyasını indirip yükleyin.</p>
 </section></main>
 <script>
@@ -52,7 +52,7 @@ function parse(xmlText){
  products=nodes.map(n=>{const o={};flatten(n,'',o);return o;});
  headers=Array.from(new Set(products.flatMap(p=>Object.keys(p))));
  if(!headers.length)throw new Error('Ürün alanları bulunamadı.');
- render();setStatus('XML başarıyla okundu. Ürünleri inceleyebilirsiniz.','ok');
+ render();setStatus('XML başarıyla okundu. Ürünler arka planda hazırlandı.','ok');
 }
 function stockValue(p){
  const entries=Object.entries(p);
@@ -71,15 +71,9 @@ function increaseRate(){const n=Number($('priceIncrease').value);return Number.i
 function adjustedValue(value){const n=priceNumber(value);return n===null?'':(n*(1+increaseRate()/100)).toFixed(2).replace('.',',');}
 function render(){
  const selected=filteredProducts();
- const limit=$('limit').value;const shown=limit==='all'?selected.length:Math.min(selected.length,Number(limit));const rows=selected.slice(0,shown);const prices=priceFields();const displayHeaders=[...headers,...prices.map(h=>'Yeni '+h+' ('+increaseRate()+'%)')];
- $('total').textContent=selected.length.toLocaleString('tr-TR');$('shown').textContent=rows.length.toLocaleString('tr-TR');$('fields').textContent=headers.length;
+ $('total').textContent=selected.length.toLocaleString('tr-TR');
+ $('fields').textContent=headers.length;
  $('export').disabled=!products.length;
- const wrap=document.createElement('div');wrap.className='tablewrap';const table=document.createElement('table');
- const thead=document.createElement('thead'),hr=document.createElement('tr');
- for(const h of displayHeaders){const th=document.createElement('th');th.textContent=h;hr.appendChild(th);}thead.appendChild(hr);table.appendChild(thead);
- const tbody=document.createElement('tbody');
- for(const p of rows){const tr=document.createElement('tr');for(const h of headers){const td=document.createElement('td');td.textContent=p[h]||'';tr.appendChild(td);}for(const h of prices){const td=document.createElement('td');td.textContent=adjustedValue(p[h]);tr.appendChild(td);}tbody.appendChild(tr);}
- table.appendChild(tbody);wrap.appendChild(table);$('table').replaceChildren(wrap);
 }
 function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"';}
 function exportCsv(){
@@ -99,7 +93,7 @@ $('limit').addEventListener('change',()=>{if(products.length)render();});$('pric
 </script>
 <script>
 (function(){
- const input=document.getElementById('excelFile'),button=document.getElementById('makeXml'),info=document.getElementById('excelInfo'),preview=document.getElementById('excelPreview');
+ const input=document.getElementById('excelFile'),button=document.getElementById('makeXml'),info=document.getElementById('excelInfo');
  if(!input||!button||!window.XLSX)return;
  let rows=[],headers=[];
  const xmlEscape=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
@@ -115,15 +109,9 @@ $('limit').addEventListener('change',()=>{if(products.length)render();});$('pric
    rows=matrix.slice(1).filter(r=>r.some(v=>String(v??'').trim()!==''));
    if(!rows.length)throw new Error('Excel içinde dönüştürülecek ürün satırı bulunamadı.');
    const tags=headers.map(tagName);
-   const table=document.createElement('div');table.className='tablewrap';
-   const t=document.createElement('table'),thead=document.createElement('thead'),tr=document.createElement('tr');
-   headers.forEach(h=>{const th=document.createElement('th');th.textContent=h;tr.appendChild(th)});thead.appendChild(tr);t.appendChild(thead);
-   const tb=document.createElement('tbody');
-   rows.slice(0,5).forEach(r=>{const rr=document.createElement('tr');headers.forEach((_,i)=>{const td=document.createElement('td');td.textContent=String(r[i]??'');rr.appendChild(td)});tb.appendChild(rr)});
-   t.appendChild(tb);table.appendChild(t);preview.replaceChildren(table);
    info.textContent=rows.length.toLocaleString('tr-TR')+' ürün · '+headers.length+' sütun · '+book.SheetNames[0]+' sayfası';
    button.disabled=false;
-  }catch(err){rows=[];button.disabled=true;info.textContent=err.message;preview.textContent=err.message;}
+  }catch(err){rows=[];button.disabled=true;info.textContent=err.message;}
  });
  button.addEventListener('click',()=>{
   if(!rows.length||!headers.length)return;
