@@ -97,6 +97,34 @@ footer{background:#111936}
 footer i{color:#ffd36e}
 @media(max-width:800px){.commerce-card:hover,.card:hover{transform:none}}
 </style>
+<style id="commerce-package-differentiation">
+/* E-ticaret paketlerini birbirinden belirgin biçimde ayır */
+#eticaret-paketleri .commerce-grid{gap:18px;align-items:stretch}
+#eticaret-paketleri .commerce-card{position:relative;overflow:hidden;border:1px solid transparent;border-radius:22px;padding:25px;transition:transform .2s ease,box-shadow .2s ease}
+#eticaret-paketleri .commerce-card:before{content:"";position:absolute;inset:0 0 auto;height:7px;background:var(--pack-accent)}
+#eticaret-paketleri .commerce-card:after{content:"";position:absolute;width:150px;height:150px;border-radius:50%;right:-65px;top:35px;background:var(--pack-glow);pointer-events:none}
+#eticaret-paketleri .commerce-card:nth-child(1){--pack-accent:#0e9f9a;--pack-glow:#0e9f9a12;background:linear-gradient(155deg,#e5f8f5 0%,#fff 72%);border-color:#b9e8df}
+#eticaret-paketleri .commerce-card:nth-child(2){--pack-accent:#6657d9;--pack-glow:#6657d91c;background:linear-gradient(150deg,#29265f 0%,#5146b8 58%,#7669df 100%);border-color:#5146b8;color:#fff;box-shadow:0 20px 42px #5146b833}
+#eticaret-paketleri .commerce-card:nth-child(3){--pack-accent:#e4a52b;--pack-glow:#e4a52b20;background:linear-gradient(155deg,#fff4d9 0%,#fff 74%);border-color:#f1d99d}
+#eticaret-paketleri .commerce-card:nth-child(4){--pack-accent:#273653;--pack-glow:#8295b51c;background:linear-gradient(145deg,#202c48 0%,#354767 100%);border-color:#354767;color:#fff}
+#eticaret-paketleri .commerce-card h3{font-size:24px;position:relative;z-index:1}
+#eticaret-paketleri .commerce-card .popular{position:relative;z-index:1;border-radius:8px;letter-spacing:.35px}
+#eticaret-paketleri .commerce-card:nth-child(1) .popular{background:#c9f0e8;color:#087c75}
+#eticaret-paketleri .commerce-card:nth-child(2) .popular{background:#ffd66f;color:#443514}
+#eticaret-paketleri .commerce-card:nth-child(3) .popular{background:#ffebbb;color:#875a08}
+#eticaret-paketleri .commerce-card:nth-child(4) .popular{background:#ffffff20;color:#fff;border:1px solid #ffffff35}
+#eticaret-paketleri .commerce-card:nth-child(2) h3,#eticaret-paketleri .commerce-card:nth-child(2) .price,#eticaret-paketleri .commerce-card:nth-child(4) h3,#eticaret-paketleri .commerce-card:nth-child(4) .price{color:#fff}
+#eticaret-paketleri .commerce-card:nth-child(2) .muted,#eticaret-paketleri .commerce-card:nth-child(4) .muted{color:#e0e5ff}
+#eticaret-paketleri .commerce-card:nth-child(2) ul,#eticaret-paketleri .commerce-card:nth-child(4) ul{color:#f0f2ff}
+#eticaret-paketleri .commerce-card:nth-child(2) .price small,#eticaret-paketleri .commerce-card:nth-child(4) .price small{color:#e0e5ff}
+#eticaret-paketleri .commerce-card:nth-child(1) .btn{background:linear-gradient(105deg,#087f89,#0eaaa0)}
+#eticaret-paketleri .commerce-card:nth-child(2) .btn{background:linear-gradient(105deg,#ffd36e,#ffb84d);color:#332b54;box-shadow:0 8px 20px #11123d40}
+#eticaret-paketleri .commerce-card:nth-child(3) .btn{background:linear-gradient(105deg,#d89517,#f0b943);color:#342608}
+#eticaret-paketleri .commerce-card:nth-child(4) .btn{background:linear-gradient(105deg,#8295b5,#b8c5dc);color:#17213b}
+#eticaret-paketleri .commerce-card:hover{transform:translateY(-5px);box-shadow:0 20px 40px #202d5020}
+#eticaret-paketleri .commerce-card:nth-child(2):hover{box-shadow:0 24px 48px #5146b84a}
+@media(max-width:800px){#eticaret-paketleri .commerce-card:hover{transform:none}}
+</style>
 </head><body>
 <header><div class="w nav"><a href="#" aria-label="Trend-Entegre ana sayfa"><img class="brand-logo" src="assets/trend-entegre-logo.svg" alt="Trend-Entegre — Tek XML, tüm pazaryerleri"></a><nav><a href="#cozum">Çözümümüz</a><a href="#nasil">Nasıl çalışır?</a><a href="#eticaret-paketleri">E-Ticaret Mağazası</a><a href="#entegrasyon-paketleri">Entegrasyon</a><a href="#buybox-paketleri">Buybox</a><a href="#xml-paketleri">XML Aktarımı</a><a href="xml-merkezi.html">XML Ürün Merkezi</a></nav><a class="btn" href="#entegrasyon-paketleri">Paketleri incele →</a></div></header>
 <main><section class="hero"><div class="w hg"><div><span class="tag">XML'DEN PAZARYERLERİNE TEK MERKEZ</span><h1>Ürünlerinizi <em>pazaryerlerinde</em> büyütün.</h1><p>Tedarikçinizin XML ürün kaynağını alın; ürün verilerinizi farklı pazaryerlerinin ihtiyaçlarına göre düzenleyip satış yapacağınız pazaryerlerine hazırlayın. Daha az operasyon, daha kontrollü ürün yönetimi.</p><div class="actions"><a class="btn" href="#entegrasyon-paketleri">Paketleri keşfet →</a><a class="btn light" href="#nasil">Nasıl çalışır?</a></div></div><div class="mock"><h3>XML → Pazaryeri Dönüşümü</h3><div class="flow"><div class="tile"><span>📦</span><b>Tedarikçi XML</b><small>Ürün · Stok · Fiyat</small></div><div class="arr">➜</div><div class="tile"><span>⚙️</span><b>Trend-Entegre</b><small>Düzenle · Dönüştür</small></div></div><div class="channels" aria-label="Desteklenen pazaryerleri">
