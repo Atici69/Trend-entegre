@@ -4,6 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { marketplaceStatus } from './src/marketplaces/index.js';
+import { testHepsiburadaConnection } from './src/marketplaces/hepsiburada.js';
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -29,6 +30,12 @@ app.get('/health', (_req, res) => {
 // This endpoint reveals only whether credentials are configured, never their values.
 app.get('/api/v1/marketplaces/status', (_req, res) => {
   res.json({ marketplaces: marketplaceStatus() });
+});
+
+// Performs a read-only authentication handshake; credentials are read only from server env.
+app.post('/api/v1/marketplaces/hepsiburada/test', async (_req, res) => {
+  const result = await testHepsiburadaConnection();
+  res.status(result.ok ? 200 : result.status === 'not_configured' ? 424 : 502).json(result);
 });
 
 app.use((err, _req, res, _next) => {
