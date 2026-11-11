@@ -13,8 +13,34 @@ main{min-width:0}.topbar{height:70px;background:#fff;border-bottom:1px solid var
 .page{display:none}.page.active{display:block}.tablebox{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:13px}table{border-collapse:collapse;width:100%;min-width:620px}th,td{text-align:left;padding:13px 15px;border-bottom:1px solid var(--line)}th{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);background:#fafbfe}td{font-size:12px}tr:last-child td{border:0}.tag{display:inline-block;padding:5px 8px;border-radius:20px;background:#fff4e7;color:#a96012;font-size:10px;font-weight:850}.tag.green{background:#eaf7f0;color:var(--green)}.tag.gray{background:#f0f2f6;color:#667087}.toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:13px}.toolbar input,.toolbar select,.field input,.field textarea,.field select{border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:white;min-width:190px}.field{display:grid;gap:6px;margin:12px 0}.field label{font-size:11px;color:var(--muted);font-weight:800}.field textarea{min-height:90px}.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.section-note{color:var(--muted);font-size:12px;line-height:1.6}.package-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.package{border:1px solid var(--line);border-radius:12px;padding:16px;background:#fff}.package h3{margin:0 0 7px;color:var(--navy)}.package strong{font-size:23px;color:var(--navy)}.package p{font-size:12px;color:var(--muted);min-height:32px}.mobile-menu{display:none}
 @media(max-width:900px){.shell{grid-template-columns:75px 1fr}.sidebar{padding:16px 8px}.logo{font-size:0;padding:8px;text-align:center}.logo:first-letter{font-size:23px}.group{font-size:0;padding:12px 0}.nav button{font-size:0;text-align:center;padding:13px 5px}.nav .ico{font-size:18px;width:auto}.side-note{font-size:0;padding:5px}.grid{grid-template-columns:repeat(2,1fr)}.columns{grid-template-columns:1fr}.package-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.topbar{height:60px;padding:0 13px}.wrap{padding:19px 13px}.head{display:block}.head .btn{margin-top:12px}.head h1{font-size:22px}.grid{gap:8px}.metric{padding:12px}.metric strong{font-size:21px}.quick{grid-template-columns:1fr}.package-grid,.two{grid-template-columns:1fr}.preview{font-size:9px}}
+
+.auth-screen{min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(135deg,#101a38,#263b70)}
+.auth-card{width:min(100%,430px);background:#fff;border-radius:18px;padding:30px;box-shadow:0 24px 70px #08112b55}
+.auth-brand{font-weight:950;font-size:20px;color:var(--navy);margin-bottom:8px}.auth-brand b{color:var(--orange)}
+.auth-card h1{font-size:23px;color:var(--navy);margin:24px 0 7px}.auth-card p{color:var(--muted);line-height:1.6;font-size:13px}
+.auth-card label{display:block;font-size:11px;font-weight:800;color:var(--muted);margin:16px 0 6px}
+.auth-card input{width:100%;padding:12px;border:1px solid var(--line);border-radius:9px}
+.auth-card .btn{width:100%;margin-top:18px}.auth-error{display:none;margin-top:13px;padding:11px;border-radius:9px;background:#fff0ed;color:#a52d20;font-size:12px;line-height:1.5}
+.auth-hint{font-size:11px!important;margin-top:18px}.logout-btn{border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:8px;padding:8px 10px;font-weight:800;font-size:11px}
+@media(max-width:560px){.auth-card{padding:23px}}
 </style></head>
-<body><div class="shell">
+<body>
+<section class="auth-screen" id="authScreen">
+  <form class="auth-card" id="adminLoginForm">
+    <div class="auth-brand">TREND<b>•</b>ENTEGRE</div>
+    <p>Yönetim Merkezi</p>
+    <h1>Yönetici girişi</h1>
+    <p>Bu alan yalnızca yetkili yönetici hesaplarına açıktır. Yeni hesap oluşturma bu ekrandan yapılmaz.</p>
+    <label for="adminEmail">E-posta adresi</label>
+    <input id="adminEmail" type="email" autocomplete="username" required placeholder="yonetici@ornek.com">
+    <label for="adminPassword">Şifre</label>
+    <input id="adminPassword" type="password" autocomplete="current-password" required placeholder="Hesap şifreniz">
+    <button class="btn" id="adminLoginButton" type="submit">Güvenli giriş yap</button>
+    <div class="auth-error" id="authError" role="alert"></div>
+    <p class="auth-hint" id="authSetupHint">Güvenli oturum servisi kontrol ediliyor…</p>
+  </form>
+</section>
+<div class="shell" id="adminShell" style="display:none">
 <aside class="sidebar"><div class="logo">TREND<b>•</b>ENTEGRE</div>
 <div class="group">YÖNETİM MERKEZİ</div><nav class="nav">
 <button class="active" data-page="home"><span class="ico">▦</span> Genel Bakış</button>
@@ -30,15 +56,15 @@ main{min-width:0}.topbar{height:70px;background:#fff;border-bottom:1px solid var
 <button data-page="ads"><span class="ico">▧</span> Reklam Alanları</button>
 <button data-page="settings"><span class="ico">⚙</span> Sistem Ayarları</button>
 </nav><div class="side-note">Trend-Entegre<br>Yönetim Merkezi · Arayüz taslağı</div></aside>
-<main><header class="topbar"><strong id="pageTitle">Genel Bakış</strong><div class="top-right"><span class="preview">TASLAK · CANLI SİSTEME BAĞLI DEĞİL</span><span class="avatar">Y</span></div></header>
+<main><header class="topbar"><strong id="pageTitle">Genel Bakış</strong><div class="top-right"><span class="preview">YÖNETİCİ OTURUMU</span><button class="logout-btn" type="button" onclick="adminLogout()">Güvenli çıkış</button><span class="avatar">Y</span></div></header>
 <div class="wrap">
 <div class="notice"><b>Geliştirme notu:</b> Bu sayfa yönetim panelinin yeniden tasarlanmış arayüz taslağıdır. Henüz gerçek müşteri, ödeme veya entegrasyon verisi göstermez. Güvenli giriş, sunucu tarafı yetkilendirme ve veritabanı kurulmadan gerçek yönetim paneli olarak kullanılmamalıdır.</div>
 <section class="page active" id="home"><div class="head"><div><h1>Yönetim Merkezi</h1><p>Trend-Entegre hizmetlerini tek noktadan yönetmek için tasarlandı.</p></div><button class="btn" onclick="go('customers')">Müşterileri görüntüle →</button></div>
 <div class="grid">
-<div class="metric"><label>Müşteri kayıtları</label><strong>—</strong><small>Veritabanı bağlantısı bekleniyor</small></div>
-<div class="metric"><label>Aktif abonelikler</label><strong>—</strong><small>Abonelik servisi bağlanmadı</small></div>
-<div class="metric"><label>Bayi başvuruları</label><strong>—</strong><small>Bayi modülü hazırlanıyor</small></div>
-<div class="metric"><label>Ödeme durumu</label><strong>—</strong><small>iyzico bağlantısı bekleniyor</small></div>
+<div class="metric"><label>Müşteri kayıtları</label><strong id="metricCustomers">—</strong><small>Veritabanından canlı kayıt</small></div>
+<div class="metric"><label>Aktif abonelikler</label><strong id="metricSubscriptions">—</strong><small>Aktif abonelik</small></div>
+<div class="metric"><label>Bayi başvuruları</label><strong id="metricDealers">—</strong><small>Kayıtlı bayi</small></div>
+<div class="metric"><label>Ödeme durumu</label><strong id="metricPayments">—</strong><small>Ödeme kaydı</small></div>
 </div>
 <div class="columns"><div class="card"><h2>Sistem bağlantıları</h2><div class="tablebox"><table><thead><tr><th>Modül</th><th>Durum</th></tr></thead><tbody><tr><td>Üye girişi ve yetkilendirme</td><td><span class="tag">Kurulum gerekli</span></td></tr><tr><td>Veritabanı</td><td><span class="tag">Kurulum gerekli</span></td></tr><tr><td>iyzico ödeme altyapısı</td><td><span class="tag">Bağlantı bekliyor</span></td></tr><tr><td>Pazaryeri API servisleri</td><td><span class="tag">Bağlantı bekliyor</span></td></tr><tr><td>XML dönüştürme motoru</td><td><span class="tag">Geliştirme gerekli</span></td></tr></tbody></table></div></div>
 <div class="card"><h2>Hızlı erişim</h2><div class="quick"><button onclick="go('subscriptions')">Paket ve abonelikler<span>Ürün paketlerini düzenle</span></button><button onclick="go('dealers')">Bayi ağı<span>Bayi ve alt bayi yapısı</span></button><button onclick="go('xml')">XML işlemleri<span>Aktarım iş akışları</span></button><button onclick="go('ads')">Reklam alanları<span>Slider ve banner taslakları</span></button></div></div></div>
@@ -141,6 +167,8 @@ main{min-width:0}.topbar{height:70px;background:#fff;border-bottom:1px solid var
 </div></main></div>
 <script>
 const API_BASE_URL = "https://trend-entegre.onrender.com";
+const ADMIN_TOKEN_KEY = "trend_admin_access_token";
+let supabasePublicConfig = null;
 let hepsiburadaTestedThisSession = false;
 
 const titles={home:"Genel Bakış",customers:"Müşteri Yönetimi",subscriptions:"Entegrasyon Paketleri ve Abonelikler","store-packages":"E-Ticaret Mağazası Paketleri",dealers:"Bayi Ağı",marketplaces:"Pazaryeri Entegrasyonları",xml:"XML İşlemleri",buybox:"BuyBox Yönetimi",payments:"Ödeme Yönetimi",accounting:"Muhasebe",ads:"Reklam Alanları",settings:"Sistem Ayarları"};
@@ -153,6 +181,97 @@ function go(id){
   if(id==="marketplaces") loadMarketplaceStatus();
 }
 document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.page)));
+
+
+function authMessage(message){
+  const box=document.getElementById("authError");
+  box.textContent=message;
+  box.style.display="block";
+}
+function clearAuthMessage(){
+  const box=document.getElementById("authError");
+  box.textContent="";
+  box.style.display="none";
+}
+function adminToken(){return sessionStorage.getItem(ADMIN_TOKEN_KEY);}
+async function adminApi(path){
+  const response=await fetch(API_BASE_URL+path,{headers:{Authorization:"Bearer "+adminToken()}});
+  if(response.status===401 || response.status===403){adminLogout("Oturum süreniz doldu veya yönetici yetkiniz bulunmuyor. Yeniden giriş yapın.");throw new Error("Yönetici oturumu doğrulanamadı.");}
+  const data=await response.json().catch(()=>({error:"Sunucudan geçerli yanıt alınamadı."}));
+  if(!response.ok) throw new Error(data.error||"İstek tamamlanamadı.");
+  return data;
+}
+function showAdminApp(user){
+  document.getElementById("authScreen").style.display="none";
+  document.getElementById("adminShell").style.display="grid";
+  const avatar=document.querySelector(".avatar");
+  if(avatar) avatar.textContent=(user.email||"Y").trim().charAt(0).toUpperCase();
+  loadAdminOverview();
+}
+function adminLogout(message=""){
+  sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+  document.getElementById("adminShell").style.display="none";
+  document.getElementById("authScreen").style.display="grid";
+  document.getElementById("adminPassword").value="";
+  if(message) authMessage(message); else clearAuthMessage();
+}
+async function loadAdminOverview(){
+  try{
+    const data=await adminApi("/api/v1/admin/overview");
+    document.getElementById("metricCustomers").textContent=data.counts.customers;
+    document.getElementById("metricSubscriptions").textContent=data.counts.activeSubscriptions;
+    document.getElementById("metricDealers").textContent=data.counts.dealers;
+    document.getElementById("metricPayments").textContent=data.counts.payments;
+  }catch(error){
+    const note=document.querySelector("#home .notice");
+    if(note){note.textContent="Yönetici girişi başarılı. Veritabanı özeti alınamadı: "+error.message+" Supabase SQL migration ve sunucu anahtarlarını kontrol edin.";}
+  }
+}
+async function initAdminAuth(){
+  const hint=document.getElementById("authSetupHint");
+  const form=document.getElementById("adminLoginForm");
+  const button=document.getElementById("adminLoginButton");
+  try{
+    const response=await fetch(API_BASE_URL+"/api/v1/admin/config");
+    const config=await response.json();
+    if(!response.ok || !config.enabled){
+      hint.textContent="Giriş henüz etkin değil. Sunucuda SUPABASE_URL, SUPABASE_ANON_KEY ve ADMIN_EMAILS yapılandırılmalı.";
+      button.disabled=true;
+      return;
+    }
+    supabasePublicConfig=config;
+    hint.textContent="Supabase kimlik doğrulaması ve yönetici izin listesi kullanılır.";
+    const saved=adminToken();
+    if(saved){
+      try{
+        const session=await adminApi("/api/v1/admin/session");
+        showAdminApp(session.user);
+      }catch(_error){sessionStorage.removeItem(ADMIN_TOKEN_KEY);}
+    }
+  }catch(error){
+    hint.textContent="API sunucusuna ulaşılamadı. Yönetici servisi hazır olduğunda giriş açılacak.";
+    button.disabled=true;
+  }
+  form.addEventListener("submit",async event=>{
+    event.preventDefault();clearAuthMessage();button.disabled=true;button.textContent="Giriş doğrulanıyor…";
+    try{
+      const login=await fetch(supabasePublicConfig.supabaseUrl+"/auth/v1/token?grant_type=password",{
+        method:"POST",headers:{"Content-Type":"application/json","apikey":supabasePublicConfig.anonKey},
+        body:JSON.stringify({email:document.getElementById("adminEmail").value.trim(),password:document.getElementById("adminPassword").value})
+      });
+      const result=await login.json().catch(()=>({}));
+      if(!login.ok || !result.access_token) throw new Error(result.msg||result.message||result.error_description||"E-posta veya şifre doğrulanamadı.");
+      sessionStorage.setItem(ADMIN_TOKEN_KEY,result.access_token);
+      const verified=await adminApi("/api/v1/admin/session");
+      document.getElementById("adminPassword").value="";
+      showAdminApp(verified.user);
+    }catch(error){
+      sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+      authMessage(error.message||"Giriş başarısız.");
+    }finally{button.disabled=false;button.textContent="Güvenli giriş yap";}
+  });
+}
+window.addEventListener("DOMContentLoaded",initAdminAuth);
 
 function escapeHtml(value){
   return String(value ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
