@@ -23,6 +23,7 @@ const $ = (id) => document.getElementById(id);
 const modal = $("authModal");
 const form = $("authForm");
 const nameInput = $("authName");
+const phoneInput = $("authPhone");
 const emailInput = $("authEmail");
 const passwordInput = $("authPassword");
 const submitButton = $("authSubmitBtn");
@@ -48,6 +49,8 @@ function setMode(nextMode) {
   $("authRegisterTab").classList.toggle("active", registering);
   nameInput.hidden = !registering;
   nameInput.required = registering;
+  phoneInput.hidden = !registering;
+  phoneInput.required = false;
   passwordInput.autocomplete = registering ? "new-password" : "current-password";
   submitButton.textContent = registering ? "Hesap oluştur" : "Giriş yap";
   $("authResetBtn").hidden = registering;
@@ -101,9 +104,11 @@ form.addEventListener("submit", async (event) => {
     const password = passwordInput.value;
     if (mode === "register") {
       const fullName = nameInput.value.trim();
+      const phone = phoneInput.value.trim();
       if (fullName.length < 2) throw new Error("Lütfen adınızı ve soyadınızı girin.");
       const credential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(credential.user, { displayName: fullName });
+      if (phone) localStorage.setItem("trendPendingCustomerPhone", phone);
       await sendEmailVerification(credential.user);
       await signOut(auth);
       setMode("login");
