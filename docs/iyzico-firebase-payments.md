@@ -49,4 +49,4 @@ Plan referans kodları ve tutarları iyzico panelindeki fiyat planlarıyla bireb
 5. Sandbox testini tamamlamadan production API adresi veya canlı anahtar kullanmayın.
 6. Canlı anahtarlar daha önce sohbet içinde paylaşıldıysa iyzico panelinden iptal edip yenilerini oluşturun.
 
-**Önemli:** Bu API uç noktaları Firebase ile oturum açmış kullanıcı gerektirir. Mevcut statik tanıtım sayfasındaki WhatsApp bağlantıları henüz ödeme butonuna dönüştürülmedi; web/mobil arayüzünde Firebase giriş ve Checkout Form gösterimi ayrıca bağlanmalıdır. Bu dalda gerçek ödeme başlatmak için iyzico plan referansları ve Render ortam değişkenleri gereklidir.
+**Önemli:** Tanıtım sayfasına Firebase e-posta/şifre kayıt ve giriş arayüzü eklendi. Yeni hesaplarda e-posta doğrulaması zorunludur. Ödeme API'si yalnızca Firebase ID token'ı ve doğrulanmış e-posta kabul eder. iyzico Checkout Form'un paket seçimi ve müşteri/fatura formuyla arayüze bağlanması, Render ortam değişkenlerinin eklenmesi ve sandbox testleri hâlâ tamamlanmalıdır; canlı ödeme etkin değildir.
