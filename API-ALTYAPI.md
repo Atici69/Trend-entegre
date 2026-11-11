@@ -33,3 +33,16 @@ GitHub Pages statik dosyaları sunar; Node.js API veya Postgres çalıştırmaz.
 - `POST /api/v1/marketplaces/hepsiburada/test`: Salt okunur SIT bağlantı testi.
 
 Pazaryeri anahtarlarını HTML, GitHub veya tarayıcı koduna eklemeyin.
+
+## Yönetici veri modülleri
+Tüm aşağıdaki uç noktalar Supabase Auth JWT ve `ADMIN_EMAILS` listesi ile korumalıdır:
+- `GET /api/v1/admin/customers`: sayfalı müşteri listesi ve arama.
+- `POST /api/v1/admin/customers`, `PATCH /api/v1/admin/customers/:id`: müşteri oluşturma ve düzenleme.
+- `DELETE /api/v1/admin/customers/:id`: kaydı silmeden pasife alma.
+- `GET/POST/PATCH/DELETE /api/v1/admin/subscriptions`: abonelik yönetimi; DELETE iptal durumuna alır.
+- `GET/POST/PATCH/DELETE /api/v1/admin/dealers`: bayi yönetimi; DELETE pasife alır.
+- `GET /api/v1/admin/payments`: ödeme kayıtlarını salt okunur listeler. Gerçek tahsilat/iade ödeme sağlayıcısı entegrasyonu olmadan yapılmaz.
+- Yönetici oluşturma, güncelleme ve pasife alma işlemleri `admin_audit_logs` tablosuna yazılır.
+
+## Android APK oluşturma
+Depoda Capacitor Android platformu yapılandırılmıştır. GitHub Actions `Android APK build` iş akışı debug APK üretir ve Actions artifact olarak saklar. APK'yı indirmek için başarılı iş akışındaki Artifacts bölümünü açın. Debug APK test ve doğrudan kurulum içindir; Google Play yayını için Android release imzası ve Play Console süreci ayrıca tamamlanmalıdır.
