@@ -7,7 +7,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAaHp6NRiMkEGn2IBwfCaS7gxMrJqslU",
+  apiKey: "AIzaSyAaHp6NRiMkEGn2IBwfCaS7gxMrkJoqslU",
   authDomain: "trend-entegre.firebaseapp.com",
   databaseURL: "https://trend-entegre-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "trend-entegre",
