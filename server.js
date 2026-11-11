@@ -12,8 +12,11 @@ import { registerIyzicoRoutes } from './src/payments/iyzico.js';
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
-const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000')
-  .split(',').map((origin) => origin.trim()).filter(Boolean);
+const allowedOrigins = [...new Set([
+  'https://atici69.github.io',
+  'http://localhost:3000',
+  ...(process.env.CORS_ORIGINS || '').split(',').map((origin) => origin.trim()).filter(Boolean),
+])];
 
 app.disable('x-powered-by');
 app.use(helmet());
