@@ -235,7 +235,7 @@ footer i{color:#ffd36e}
     </div>
     <form class="auth-form" id="authForm">
       <input id="authName" type="text" autocomplete="name" placeholder="Ad soyad" hidden>
-      <input id="authPhone" type="tel" autocomplete="tel" placeholder="Telefon (isteğe bağlı)" hidden>
+      <input id="authPhone" type="tel" autocomplete="tel" placeholder="Telefon numarası (isteğe bağlı)" style="display:none">
       <input id="authEmail" type="email" autocomplete="email" placeholder="E-posta adresi" required>
       <input id="authPassword" type="password" autocomplete="current-password" placeholder="Şifre (en az 6 karakter)" minlength="6" required>
       <button class="btn" id="authSubmitBtn" type="submit">Giriş yap</button>
@@ -246,6 +246,6 @@ footer i{color:#ffd36e}
 </div>
 
 
-<script type="module" src="./src/firebase-auth.js"></script>
+<script type="module" src="./src/firebase-auth.js?v=20261112-phone"></script>
 <script type="module" src="./src/firebase-customer-sync.js"></script>
 </body></html>
