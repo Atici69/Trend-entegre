@@ -367,7 +367,7 @@ async function createRecord(resource){
 }
 async function editRecord(resource,id){
  const fields=resourceFields[resource];if(!fields)return;
- const rows=await adminApi('/api/v1/admin/'+resource+'?limit=100');const item=rows.items.find(x=>x.id===id);if(!item)return alert('Kayıt bulunamadı.');
+ const rows=await adminApi('/api/v1/admin/'+resource+'?limit=100&page='+resourceState[resource].page);const item=rows.items.find(x=>x.id===id);if(!item)return alert('Kayıt bulunamadı.');
  const payload={};
  for(const [key,label] of fields){const value=prompt(label,item[key]??'');if(value===null)return;if(value.trim()!==String(item[key]??''))payload[key]=['amount','commission_rate'].includes(key)?Number(value):value.trim()||null;}
  if(!Object.keys(payload).length)return;
