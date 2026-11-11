@@ -321,7 +321,8 @@ async function testHepsiburada(button){
     if(!result.ok || result.status!=="connected")
       throw new Error(result.message||"Hepsiburada SIT testi başarısız.");
     hepsiburadaTestedThisSession=true;
-    showMarketplaceMessage("Hepsiburada SIT bağlantı testi başarılı. HTTP "+result.httpStatus+". Bu sonuç canlı mağaza bağlantısını doğrulamaz.");
+    const orderSummary=result.orderItemsReturned===null?result.message:(result.message+" Gelen sipariş kalemi: "+result.orderItemsReturned+(result.totalOrderItems!==null?" / Toplam: "+result.totalOrderItems:""));
+    showMarketplaceMessage("Hepsiburada SIT testi: HTTP "+result.httpStatus+". "+orderSummary+" Canlı mağaza bağlantısı ayrıca doğrulanmalıdır.");
     await loadMarketplaceStatus();
   }catch(error){
     showMarketplaceMessage("Hepsiburada SIT bağlantı testi başarısız: "+error.message,true);
