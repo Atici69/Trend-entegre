@@ -109,6 +109,7 @@ form.addEventListener("submit", async (event) => {
       if (fullName.length < 2) throw new Error("Lütfen adınızı ve soyadınızı girin.");
       const credential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(credential.user, { displayName: fullName });
+      localStorage.setItem("trendPendingCustomerName", fullName);
       if (phone) localStorage.setItem("trendPendingCustomerPhone", phone);
       await sendEmailVerification(credential.user);
       await signOut(auth);
