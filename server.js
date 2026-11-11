@@ -60,7 +60,7 @@ app.get('/health', (_req, res) => {
 
 app.post('/api/v1/auth/register', async (req, res) => {
   try {
-    const token = req.headers.authorization?.match(/^Bearer\\s+(.+)$/i)?.[1];
+    const token = req.headers.authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
     const firebase = getFirebaseAdmin();
     if (!firebase || !token) {
       return res.status(401).json({ error: 'Kullanıcı oturumu doğrulanamadı.' });
