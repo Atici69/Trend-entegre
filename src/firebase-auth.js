@@ -49,7 +49,8 @@ function setMode(nextMode) {
   $("authRegisterTab").classList.toggle("active", registering);
   nameInput.hidden = !registering;
   nameInput.required = registering;
-  phoneInput.hidden = !registering;
+  phoneInput.hidden = false;
+  phoneInput.style.display = registering ? "block" : "none";
   phoneInput.required = false;
   passwordInput.autocomplete = registering ? "new-password" : "current-password";
   submitButton.textContent = registering ? "Hesap oluştur" : "Giriş yap";
