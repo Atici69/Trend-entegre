@@ -26,6 +26,7 @@ app.use(cors({
 app.use(express.json({ limit: '256kb' }));
 app.use(express.urlencoded({ extended: false, limit: '64kb' }));
 app.use('/api', rateLimit({ windowMs: 60_000, limit: 120, standardHeaders: 'draft-7', legacyHeaders: false }));
+app.use('/api/v1/auth', rateLimit({ windowMs: 15 * 60_000, limit: 20, standardHeaders: 'draft-7', legacyHeaders: false }));
 app.use('/api/v1/admin', rateLimit({ windowMs: 15 * 60_000, limit: 30, standardHeaders: 'draft-7', legacyHeaders: false }));
 
 function firebasePublicConfig() {
@@ -54,6 +55,62 @@ function getFirebaseAdmin() {
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'trend-entegre-api', timestamp: new Date().toISOString() });
+});
+
+
+app.post('/api/v1/auth/register', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.match(/^Bearer\\s+(.+)$/i)?.[1];
+    const firebase = getFirebaseAdmin();
+    if (!firebase || !token) {
+      return res.status(401).json({ error: 'Kullanıcı oturumu doğrulanamadı.' });
+    }
+
+    const decoded = await firebase.auth.verifyIdToken(token);
+    const email = decoded.email?.trim().toLowerCase();
+    const fullName = String(req.body?.full_name || decoded.name || '').trim().slice(0, 120);
+    if (!decoded.uid || !email || fullName.length < 2) {
+      return res.status(400).json({ error: 'Geçerli kullanıcı adı ve e-posta bilgisi gerekli.' });
+    }
+
+    const userRef = firebase.db.collection('users').doc(decoded.uid);
+    const customerRef = firebase.db.collection('customers').doc(decoded.uid);
+    const previousUser = await userRef.get();
+    const previousCustomer = await customerRef.get();
+    const previousData = previousUser.exists ? previousUser.data() : {};
+    const now = new Date().toISOString();
+    const createdAt = previousData.created_at || (previousCustomer.exists ? previousCustomer.data().created_at : null) || now;
+    const role = previousData.role || 'customer';
+    const status = previousData.status || 'active';
+
+    const userData = {
+      uid: decoded.uid,
+      full_name: fullName,
+      email,
+      role,
+      status,
+      email_verified: Boolean(decoded.email_verified),
+      created_at: createdAt,
+      updated_at: now,
+    };
+    const batch = firebase.db.batch();
+    batch.set(userRef, userData, { merge: true });
+    if (role === 'customer') {
+      batch.set(customerRef, {
+        user_id: decoded.uid,
+        full_name: fullName,
+        email,
+        status,
+        created_at: createdAt,
+        updated_at: now,
+      }, { merge: true });
+    }
+    await batch.commit();
+    return res.json({ ok: true, uid: decoded.uid, role });
+  } catch (error) {
+    console.error('Customer registration sync failed:', error?.message || 'Unknown error');
+    return res.status(401).json({ error: 'Kullanıcı kaydı doğrulanamadı veya Firestore kaydı yazılamadı.' });
+  }
 });
 
 app.get('/api/v1/admin/config', (_req, res) => {
