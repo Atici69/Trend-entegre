@@ -17,11 +17,13 @@ async function syncCustomer(user) {
         Authorization: `Bearer ${token}`
       },
       body: JSON.stringify({
-        full_name: (user.displayName || user.email?.split("@")[0] || "Müşteri").trim()
+        full_name: (user.displayName || user.email?.split("@")[0] || "Müşteri").trim(),
+        phone: localStorage.getItem("trendPendingCustomerPhone") || ""
       })
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || "Firestore kayıt eşitlemesi başarısız.");
+    localStorage.removeItem("trendPendingCustomerPhone");
     window.dispatchEvent(new CustomEvent("trend-customer-sync", { detail: { ok: true, uid: user.uid } }));
   } catch (error) {
     syncedUsers.delete(user.uid);
