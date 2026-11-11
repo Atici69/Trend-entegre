@@ -1,0 +1,6 @@
+{
+  "appId": "com.trendentegre.app",
+  "appName": "Trend-Entegre",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

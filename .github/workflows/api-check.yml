@@ -1,0 +1,28 @@
+name: Trend-Entegre API checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [feature/admin-secure-dashboard]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - name: Check server JavaScript syntax
+        run: |
+          node --check server.js
+          node --check src/marketplaces/index.js
+          node --check src/marketplaces/hepsiburada.js
+      - name: Check admin inline JavaScript syntax
+        run: |
+          node --input-type=module -e "import fs from 'node:fs'; import vm from 'node:vm'; const html=fs.readFileSync('admin/index.html','utf8'); const scripts=[...html.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/gi)]; if (!scripts.length) throw new Error('No inline scripts found'); for (const match of scripts) new vm.Script(match[1]); console.log('Admin inline JavaScript syntax OK');"
+      - name: Build website
+        run: npm run build
