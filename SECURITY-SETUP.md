@@ -7,8 +7,7 @@ Bu depodaki kurallar tarayıcıdan Firestore ve Realtime Database erişimini var
 Yetkili proje yöneticisi önce Firebase Console'da doğru projenin `trend-entegre` olduğunu doğrulamalı, ardından Firebase CLI ile:
 
 ```bash
-firebase use trend-entegre
-firebase deploy --only firestore:rules,database
+firebase deploy --project trend-entegre --only firestore:rules,database
 ```
 
 Yayınlamadan sonra giriş/kayıt akışı ve sunucu API'si test edilmelidir. Tarayıcıdan doğrudan veri erişimi ileride gerekirse, genel erişim açmak yerine kullanıcı UID'si ve belge sahipliğine dayalı dar kapsamlı kurallar yazılmalıdır.
