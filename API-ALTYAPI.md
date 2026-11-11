@@ -1,30 +1,35 @@
-# Trend-Entegre API altyapısı
+# Trend-Entegre API ve yönetici paneli
 
 ## Gereksinimler
 - Node.js 20 veya üzeri
 - npm
+- Supabase projesi (Auth + Postgres)
+- Node destekleyen bir API barındırma servisi
 
 ## Yerel çalıştırma
 1. `npm install`
 2. `.env.example` dosyasını `.env` olarak kopyalayın.
-3. Gerçek API bilgilerini yalnızca yerel `.env` dosyanıza veya hosting sağlayıcısının Secret/Environment ayarlarına girin.
-4. `npm run dev`
+3. Supabase URL, anon key, service-role key ve ADMIN_EMAILS değerlerini yalnızca sunucu ortam değişkenlerine girin.
+4. Supabase Auth bölümünde yönetici hesabını oluşturun; `ADMIN_EMAILS` listesine aynı e-posta adresini ekleyin.
+5. `supabase/migrations/202611110001_admin_foundation.sql` dosyasını Supabase SQL Editor üzerinden uygulayın.
+6. `npm start`
 
-## Uç noktalar
-- `GET /health`: Servis sağlık kontrolü.
-- `GET /api/v1/marketplaces/status`: Pazaryerlerinin gerekli kimlik bilgilerinin sunucuda tanımlı olup olmadığını gösterir. Gizli değerleri döndürmez.
-- `POST /api/v1/marketplaces/hepsiburada/test`: Hepsiburada OAuth kimlik doğrulamasını salt okunur şekilde test eder. Kimlik bilgileri yalnızca sunucu ortam değişkenlerinden alınır.
+## Yönetici güvenliği
+- `GET /api/v1/admin/config`: Sadece Supabase URL ve anon key gibi istemcide paylaşılabilen yapılandırmayı verir.
+- `GET /api/v1/admin/session`: Bearer token'ı Supabase Auth ile doğrular ve e-posta adresinin `ADMIN_EMAILS` listesinde olmasını zorunlu tutar.
+- `GET /api/v1/admin/overview`: Doğrulanmış yönetici oturumu ile müşteri, aktif abonelik, bayi ve ödeme sayılarını döndürür.
+- Panel parolayı saklamaz. Erişim belirteci yalnızca sekme oturumu boyunca sessionStorage'da tutulur.
+- Yönetici hesabı panelden kaydedilemez; hesap Supabase Auth üzerinden önceden oluşturulmalıdır.
+- `SUPABASE_SERVICE_ROLE_KEY` hiçbir koşulda tarayıcıya gönderilmez. Yalnızca API sunucusunda kullanılır.
 
-## Hepsiburada bağlantı testi
-Developer Portal'dan alınan SIT/test `Client ID` ve `Client Secret` değerlerini sunucuda `HEPSIBURADA_CLIENT_ID` ve `HEPSIBURADA_CLIENT_SECRET` olarak tanımlayın. Test endpoint'i `https://api.hepsiburada.com/v3/auth` adresine `client_credentials` grant türüyle istek gönderir. Erişim belirteci istemciye döndürülmez veya kalıcı olarak saklanmaz; yalnızca kimlik doğrulamanın başarılı olup olmadığı bildirilir.
+## Veritabanı
+İlk yönetim tabloları `supabase/migrations/202611110001_admin_foundation.sql` içindedir. SQL dosyasını Supabase SQL Editor'da uygulayın. Tablolar RLS ile korunur; istemci rollerine doğrudan erişim verilmez. Sunucu, JWT ve yönetici izin listesini doğruladıktan sonra service-role anahtarıyla işlem yapar.
 
-## Güvenlik
-- `.env` Git'e gönderilmez; yalnızca boş değişken adları `.env.example` içinde bulunur.
-- API anahtarları ön yüzde saklanmamalı ve tarayıcıya gönderilmemelidir.
-- HTTPS zorunlu olmalıdır.
-- `CORS_ORIGINS` yalnızca gerçek ön yüz alan adlarını içermelidir.
-- Kimlik bilgileri veya sağlayıcı yanıt gövdeleri loglara yazılmamalıdır.
+## Hosting
+GitHub Pages statik dosyaları sunar; Node.js API veya Postgres çalıştırmaz. API ayrı bir Node hosting ortamında çalışmalıdır. Hosting ortamında `.env.example` içindeki değişkenleri tanımlayın. `CORS_ORIGINS` içine `https://atici69.github.io` adresini ekleyin.
 
-## Aşamalı entegrasyon
-Sıra: Trendyol → Hepsiburada → n11 → Amazon SP-API → Pazarama → Ozon.
-Her adaptör için kimlik doğrulama testi, ürün aktarımı, stok/fiyat güncelleme ve sipariş okuma ayrı ayrı geliştirilecek. Hepsiburada için bu aşamada yalnızca OAuth bağlantı testi bulunur; ürün, stok ve sipariş işlemleri henüz uygulanmamıştır.
+## Pazaryeri uç noktaları
+- `GET /api/v1/marketplaces/status`: Sunucuda kimlik bilgilerinin tanımlı olup olmadığını gösterir; sırları döndürmez.
+- `POST /api/v1/marketplaces/hepsiburada/test`: Salt okunur SIT bağlantı testi.
+
+Pazaryeri anahtarlarını HTML, GitHub veya tarayıcı koduna eklemeyin.
