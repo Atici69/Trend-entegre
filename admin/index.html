@@ -58,7 +58,7 @@ main{min-width:0}.topbar{height:70px;background:#fff;border-bottom:1px solid var
 </nav><div class="side-note">Trend-Entegre<br>Yönetim Merkezi · Güvenli yönetim</div></aside>
 <main><header class="topbar"><strong id="pageTitle">Genel Bakış</strong><div class="top-right"><span class="preview">YÖNETİCİ OTURUMU</span><button class="logout-btn" type="button" onclick="adminLogout()">Güvenli çıkış</button><span class="avatar">Y</span></div></header>
 <div class="wrap">
-<div class="notice"><b>Geliştirme notu:</b> Yönetici işlemleri sunucu tarafında doğrulanır. Kayıtların görüntülenmesi için Supabase migration ve sunucu ortam anahtarlarının etkin olması gerekir.</div>
+<div class="notice"><b>Geliştirme notu:</b> Yönetici işlemleri Firebase Authentication ve Firestore üzerinden sunucu tarafında doğrulanır.</div>
 <section class="page active" id="home"><div class="head"><div><h1>Yönetim Merkezi</h1><p>Trend-Entegre hizmetlerini tek noktadan yönetmek için tasarlandı.</p></div><button class="btn" onclick="go('customers')">Müşterileri görüntüle →</button></div>
 <div class="grid">
 <div class="metric"><label>Müşteri kayıtları</label><strong id="metricCustomers">—</strong><small>Veritabanından canlı kayıt</small></div>
@@ -165,10 +165,12 @@ main{min-width:0}.topbar{height:70px;background:#fff;border-bottom:1px solid var
 </div></div>
 </section>
 </div></main></div>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script>
 const API_BASE_URL = "https://trend-entegre.onrender.com";
 const ADMIN_TOKEN_KEY = "trend_admin_access_token";
-let supabasePublicConfig = null;
+let firebasePublicConfig = null;
 let hepsiburadaTestedThisSession = false;
 
 const titles={home:"Genel Bakış",customers:"Müşteri Yönetimi",subscriptions:"Entegrasyon Paketleri ve Abonelikler","store-packages":"E-Ticaret Mağazası Paketleri",dealers:"Bayi Ağı",marketplaces:"Pazaryeri Entegrasyonları",xml:"XML İşlemleri",buybox:"BuyBox Yönetimi",payments:"Ödeme Yönetimi",accounting:"Muhasebe",ads:"Reklam Alanları",settings:"Sistem Ayarları"};
@@ -225,7 +227,7 @@ async function loadAdminOverview(){
     document.getElementById("metricPayments").textContent=data.counts.payments;
   }catch(error){
     const note=document.querySelector("#home .notice");
-    if(note){note.textContent="Yönetici girişi başarılı. Veritabanı özeti alınamadı: "+error.message+" Supabase SQL migration ve sunucu anahtarlarını kontrol edin.";}
+    if(note){note.textContent="Yönetici girişi başarılı. Veritabanı özeti alınamadı: "+error.message+" Firebase Admin ve Firestore sunucu ayarlarını kontrol edin.";}
   }
 }
 async function initAdminAuth(){
@@ -236,12 +238,13 @@ async function initAdminAuth(){
     const response=await fetch(API_BASE_URL+"/api/v1/admin/config");
     const config=await response.json();
     if(!response.ok || !config.enabled){
-      hint.textContent="Giriş henüz etkin değil. Sunucuda SUPABASE_URL, SUPABASE_ANON_KEY ve ADMIN_EMAILS yapılandırılmalı.";
+      hint.textContent="Giriş henüz etkin değil. Render ortamında Firebase ve yönetici ayarları tamamlanmalı.";
       button.disabled=true;
       return;
     }
-    supabasePublicConfig=config;
-    hint.textContent="Supabase kimlik doğrulaması ve yönetici izin listesi kullanılır.";
+    firebasePublicConfig=config.firebaseConfig;
+    if(!firebase.apps.length) firebase.initializeApp(firebasePublicConfig);
+    hint.textContent="Firebase kimlik doğrulaması ve sunucu taraflı yönetici izin listesi kullanılır.";
     const saved=adminToken();
     if(saved){
       try{
@@ -256,13 +259,9 @@ async function initAdminAuth(){
   form.addEventListener("submit",async event=>{
     event.preventDefault();clearAuthMessage();button.disabled=true;button.textContent="Giriş doğrulanıyor…";
     try{
-      const login=await fetch(supabasePublicConfig.supabaseUrl+"/auth/v1/token?grant_type=password",{
-        method:"POST",headers:{"Content-Type":"application/json","apikey":supabasePublicConfig.anonKey},
-        body:JSON.stringify({email:document.getElementById("adminEmail").value.trim(),password:document.getElementById("adminPassword").value})
-      });
-      const result=await login.json().catch(()=>({}));
-      if(!login.ok || !result.access_token) throw new Error(result.msg||result.message||result.error_description||"E-posta veya şifre doğrulanamadı.");
-      sessionStorage.setItem(ADMIN_TOKEN_KEY,result.access_token);
+      const credential=await firebase.auth().signInWithEmailAndPassword(document.getElementById("adminEmail").value.trim(),document.getElementById("adminPassword").value);
+      const token=await credential.user.getIdToken(true);
+      sessionStorage.setItem(ADMIN_TOKEN_KEY,token);
       const verified=await adminApi("/api/v1/admin/session");
       document.getElementById("adminPassword").value="";
       showAdminApp(verified.user);
