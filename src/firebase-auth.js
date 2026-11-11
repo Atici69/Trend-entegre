@@ -29,7 +29,9 @@ const submitButton = $("authSubmitBtn");
 const message = $("authMessage");
 let mode = "login";
 
-await setPersistence(auth, browserLocalPersistence);
+setPersistence(auth, browserLocalPersistence).catch((error) => {
+  console.error('Firebase oturum kalıcılığı ayarlanamadı:', error);
+});
 
 function showMessage(text, type = "ok") {
   message.textContent = text;
