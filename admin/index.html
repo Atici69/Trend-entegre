@@ -178,7 +178,8 @@ function go(id){
   document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===id));
   document.getElementById("pageTitle").textContent=titles[id]||"Yönetim Merkezi";
   window.scrollTo({top:0,behavior:"smooth"});
-  if(id==="marketplaces") loadMarketplaceStatus();\n  if(["customers","subscriptions","dealers","payments"].includes(id)) loadResource(id);
+  if(id==="marketplaces") loadMarketplaceStatus();
+  if(["customers","subscriptions","dealers","payments"].includes(id)) loadResource(id);
 }
 document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.page)));
 
