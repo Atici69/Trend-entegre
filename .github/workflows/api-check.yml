@@ -1,0 +1,26 @@
+name: Trend-Entegre API checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [feature/admin-secure-dashboard]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm install
+      - name: Check server JavaScript syntax
+        run: |
+          node --check server.js
+          node --check src/marketplaces/index.js
+          node --check src/marketplaces/hepsiburada.js
+      - name: Build website
+        run: npm run build
