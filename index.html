@@ -74,6 +74,29 @@
   .hero p{font-size:16px}
 }
 
+
+.auth-actions{display:flex;align-items:center;gap:10px}
+.auth-user{font-size:12px;color:#52607d;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.auth-modal{position:fixed;inset:0;z-index:50;background:#07112bd9;display:none;align-items:center;justify-content:center;padding:18px}
+.auth-modal.open{display:flex}
+.auth-panel{width:min(440px,100%);background:#fff;border-radius:20px;padding:26px;box-shadow:0 24px 80px #0005;position:relative}
+.auth-panel h2{font-size:26px;margin:0 32px 6px 0}
+.auth-panel p{color:#65708a;font-size:13px;margin:0 0 18px}
+.auth-close{position:absolute;right:16px;top:14px;border:0;background:#f0f2f7;border-radius:9px;width:34px;height:34px;font-size:20px;cursor:pointer}
+.auth-tabs{display:flex;gap:8px;margin:18px 0}
+.auth-tabs button{flex:1;border:1px solid #dfe4ee;border-radius:10px;background:#f7f8fb;padding:10px;font-weight:800;color:#52607d;cursor:pointer}
+.auth-tabs button.active{background:#101b3f;color:white;border-color:#101b3f}
+.auth-form{display:grid;gap:11px}
+.auth-form input{width:100%;border:1px solid #dfe4ee;border-radius:10px;padding:13px;font:inherit;outline-color:#ff7628}
+.auth-form .btn{width:100%;margin-top:4px}
+.auth-message{font-size:13px;line-height:1.5;margin-top:13px;padding:10px;border-radius:9px;display:none}
+.auth-message.show{display:block}
+.auth-message.error{background:#fff0ef;color:#a52b24}
+.auth-message.ok{background:#eef9f1;color:#176b37}
+.auth-links{display:flex;justify-content:space-between;gap:12px;margin-top:14px;font-size:12px;color:#465987}
+.auth-links button{border:0;background:none;color:#465987;text-decoration:underline;cursor:pointer;padding:0}
+@media(max-width:800px){.auth-actions .auth-user{display:none}.auth-actions .btn{padding:10px 12px}}
+
 </style>
 <style id="trend-entegre-color-refresh">
 :root{--n:#172044;--b:#5146b8;--o:#0ea5a4;--t:#202945;--m:#68738d;--bg:#f2f5fb;--l:#dfe5f0}
@@ -155,7 +178,7 @@ footer i{color:#ffd36e}
 @media(max-width:800px){#eticaret-paketleri .commerce-card:hover{transform:none}}
 </style>
 </head><body>
-<header><div class="w nav"><a href="#" aria-label="Trend-Entegre ana sayfa"><img class="brand-logo" src="assets/trend-entegre-logo.svg" alt="Trend-Entegre — Tek XML, tüm pazaryerleri"></a><nav><a href="#cozum">Çözümümüz</a><a href="#nasil">Nasıl çalışır?</a><a href="#eticaret-paketleri">E-Ticaret Mağazası</a><a href="#entegrasyon-paketleri">Entegrasyon</a><a href="#buybox-paketleri">Buybox</a><a href="#xml-paketleri">XML Aktarımı</a><a href="xml-merkezi.html">XML Ürün Merkezi</a></nav><a class="btn" href="#entegrasyon-paketleri">Paketleri incele →</a></div></header>
+<header><div class="w nav"><a href="#" aria-label="Trend-Entegre ana sayfa"><img class="brand-logo" src="assets/trend-entegre-logo.svg" alt="Trend-Entegre — Tek XML, tüm pazaryerleri"></a><nav><a href="#cozum">Çözümümüz</a><a href="#nasil">Nasıl çalışır?</a><a href="#eticaret-paketleri">E-Ticaret Mağazası</a><a href="#entegrasyon-paketleri">Entegrasyon</a><a href="#buybox-paketleri">Buybox</a><a href="#xml-paketleri">XML Aktarımı</a><a href="xml-merkezi.html">XML Ürün Merkezi</a></nav><div class="auth-actions"><span class="auth-user" id="authUserLabel"></span><button class="btn" id="authOpenBtn" type="button">Giriş / Kayıt</button></div></div></header>
 <main><section class="hero"><div class="w hg"><div><span class="tag">XML'DEN PAZARYERLERİNE TEK MERKEZ</span><h1>Ürünlerinizi <em>pazaryerlerinde</em> büyütün.</h1><p>Tedarikçinizin XML ürün kaynağını alın; ürün verilerinizi farklı pazaryerlerinin ihtiyaçlarına göre düzenleyip satış yapacağınız pazaryerlerine hazırlayın. Daha az operasyon, daha kontrollü ürün yönetimi.</p><div class="actions"><a class="btn" href="#entegrasyon-paketleri">Paketleri keşfet →</a><a class="btn light" href="#nasil">Nasıl çalışır?</a></div></div><div class="mock"><h3>XML → Pazaryeri Dönüşümü</h3><div class="flow"><div class="tile"><span>📦</span><b>Tedarikçi XML</b><small>Ürün · Stok · Fiyat</small></div><div class="arr">➜</div><div class="tile"><span>⚙️</span><b>Trend-Entegre</b><small>Düzenle · Dönüştür</small></div></div><div class="channels" aria-label="Desteklenen pazaryerleri">
 <div class="market-logo trendyol" aria-label="Trendyol"><svg viewBox="0 0 150 34" role="img" aria-label="Trendyol"><text x="75" y="25" text-anchor="middle" fill="currentColor" font-size="25">Trendyol</text></svg></div>
 <div class="market-logo hepsi" aria-label="Hepsiburada"><svg viewBox="0 0 160 34" role="img" aria-label="Hepsiburada"><text x="80" y="23" text-anchor="middle" fill="currentColor" font-size="20">hepsiburada</text></svg></div>
@@ -189,4 +212,27 @@ footer i{color:#ffd36e}
 </div>
 </footer>
 <a class="wa-launch" href="https://wa.me/905458959469?text=Merhaba%2C%20Trend-Entegre%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum." target="_blank" rel="noopener noreferrer" aria-label="WhatsApp canlı desteğe bağlan"><span aria-hidden="true">◉</span> WhatsApp Canlı Destek</a>
-<script>document.getElementById('y').textContent=new Date().getFullYear();function pay(p){alert(p+' paketi seçildi. Bu ön sürümde ödeme tahsilatı yapılmaz. iyzico bağlantısı tamamlandığında ödeme etkinleştirilecektir.');}</script></body></html>
+
+<div class="auth-modal" id="authModal" aria-hidden="true">
+  <section class="auth-panel" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <button class="auth-close" id="authCloseBtn" type="button" aria-label="Kapat">×</button>
+    <h2 id="authTitle">Trend-Entegre hesabın</h2>
+    <p id="authSubtitle">Pazaryeri işlemlerini yönetmek için giriş yap veya hesap oluştur.</p>
+    <div class="auth-tabs">
+      <button type="button" class="active" id="authLoginTab">Giriş yap</button>
+      <button type="button" id="authRegisterTab">Hesap oluştur</button>
+    </div>
+    <form class="auth-form" id="authForm">
+      <input id="authName" type="text" autocomplete="name" placeholder="Ad soyad" hidden>
+      <input id="authEmail" type="email" autocomplete="email" placeholder="E-posta adresi" required>
+      <input id="authPassword" type="password" autocomplete="current-password" placeholder="Şifre (en az 6 karakter)" minlength="6" required>
+      <button class="btn" id="authSubmitBtn" type="submit">Giriş yap</button>
+    </form>
+    <div class="auth-links"><button type="button" id="authResetBtn">Şifremi unuttum</button><button type="button" id="authLogoutBtn" hidden>Çıkış yap</button></div>
+    <div class="auth-message" id="authMessage" role="status" aria-live="polite"></div>
+  </section>
+</div>
+
+<script>document.getElementById('y').textContent=new Date().getFullYear();function pay(p){alert(p+' paketi seçildi. Bu ön sürümde ödeme tahsilatı yapılmaz. iyzico bağlantısı tamamlandığında ödeme etkinleştirilecektir.');}</script>
+<script type="module" src="./src/firebase-auth.js"></script>
+</body></html>
