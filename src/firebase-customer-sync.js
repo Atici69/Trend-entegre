@@ -6,6 +6,8 @@ const auth = getAuth(getApp());
 const syncedUsers = new Set();
 
 async function syncCustomer(user) {
+  // Do not sync the temporary account state before profile details are saved and email is verified.
+  if (!user.emailVerified) return;
   if (syncedUsers.has(user.uid)) return;
   syncedUsers.add(user.uid);
   try {
@@ -17,13 +19,14 @@ async function syncCustomer(user) {
         Authorization: `Bearer ${token}`
       },
       body: JSON.stringify({
-        full_name: (user.displayName || user.email?.split("@")[0] || "Müşteri").trim(),
+        full_name: (localStorage.getItem("trendPendingCustomerName") || user.displayName || user.email?.split("@")[0] || "Müşteri").trim(),
         phone: localStorage.getItem("trendPendingCustomerPhone") || ""
       })
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || "Firestore kayıt eşitlemesi başarısız.");
     localStorage.removeItem("trendPendingCustomerPhone");
+    localStorage.removeItem("trendPendingCustomerName");
     window.dispatchEvent(new CustomEvent("trend-customer-sync", { detail: { ok: true, uid: user.uid } }));
   } catch (error) {
     syncedUsers.delete(user.uid);
