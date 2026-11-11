@@ -194,8 +194,8 @@ function clearAuthMessage(){
   box.style.display="none";
 }
 function adminToken(){return sessionStorage.getItem(ADMIN_TOKEN_KEY);}
-async function adminApi(path){
-  const response=await fetch(API_BASE_URL+path,{headers:{Authorization:"Bearer "+adminToken()}});
+async function adminApi(path,options={}){
+  const response=await fetch(API_BASE_URL+path,{...options,headers:{...(options.headers||{}),Authorization:"Bearer "+adminToken()}});
   if(response.status===401 || response.status===403){adminLogout("Oturum süreniz doldu veya yönetici yetkiniz bulunmuyor. Yeniden giriş yapın.");throw new Error("Yönetici oturumu doğrulanamadı.");}
   const data=await response.json().catch(()=>({error:"Sunucudan geçerli yanıt alınamadı."}));
   if(!response.ok) throw new Error(data.error||"İstek tamamlanamadı.");
@@ -290,9 +290,7 @@ async function loadMarketplaceStatus(){
   if(!rows) return;
   rows.innerHTML='<tr><td colspan="4">Durumlar yükleniyor...</td></tr>';
   try{
-    const response=await fetch(API_BASE_URL+"/api/v1/marketplaces/status");
-    if(!response.ok) throw new Error("Sunucu HTTP "+response.status);
-    const data=await response.json();
+    const data=await adminApi("/api/v1/marketplaces/status");
     if(!Array.isArray(data.marketplaces)) throw new Error("API beklenen pazaryeri listesini döndürmedi.");
     rows.innerHTML=data.marketplaces.map(item=>{
       const configured=Boolean(item.configured);
@@ -319,10 +317,9 @@ async function testHepsiburada(button){
   button.disabled=true;
   button.textContent="Test ediliyor...";
   try{
-    const response=await fetch(API_BASE_URL+"/api/v1/marketplaces/hepsiburada/test",{method:"POST"});
-    const result=await response.json().catch(()=>({message:"Sunucudan geçerli JSON yanıtı alınamadı."}));
-    if(!response.ok || !result.ok || result.status!=="connected")
-      throw new Error(result.message||("Sunucu HTTP "+response.status));
+    const result=await adminApi("/api/v1/marketplaces/hepsiburada/test",{method:"POST"});
+    if(!result.ok || result.status!=="connected")
+      throw new Error(result.message||"Hepsiburada SIT testi başarısız.");
     hepsiburadaTestedThisSession=true;
     showMarketplaceMessage("Hepsiburada SIT bağlantı testi başarılı. HTTP "+result.httpStatus+". Bu sonuç canlı mağaza bağlantısını doğrulamaz.");
     await loadMarketplaceStatus();
