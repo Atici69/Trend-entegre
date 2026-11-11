@@ -101,7 +101,7 @@ export function registerIyzicoRoutes(app) {
       const firebase = getFirebaseServices();
       if (!firebase || !token) return res.status(401).json({ error: 'Ödeme için Firebase kullanıcı oturumu gerekli.' });
       const decoded = await firebase.auth.verifyIdToken(token);
-      if (!decoded.uid || !decoded.email) return res.status(401).json({ error: 'Doğrulanmış e-posta adresi gerekli.' });
+      if (!decoded.uid || !decoded.email || decoded.email_verified !== true) return res.status(403).json({ error: 'Ödeme için e-posta adresinizi doğrulamanız gerekir.' });
       req.firebaseUser = { uid: decoded.uid, email: decoded.email };
       req.firestore = firebase.db;
       next();
@@ -212,8 +212,8 @@ export function registerIyzicoRoutes(app) {
       const result = await callIyzico(client.subscriptionCheckoutForm, 'retrieve', { checkoutFormToken: token });
       const subscriptionReferenceCode = result.subscriptionReferenceCode;
       const isConfirmed = result.status === 'success'
-        && Boolean(subscriptionReferenceCode)
-        && !['UNPAID', 'CANCELED', 'EXPIRED'].includes(result.subscriptionStatus);
+        && result.subscriptionStatus === 'ACTIVE'
+        && Boolean(subscriptionReferenceCode);
 
       if (!isConfirmed) {
         await attemptRef.set({
