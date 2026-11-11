@@ -21,5 +21,8 @@ jobs:
           node --check server.js
           node --check src/marketplaces/index.js
           node --check src/marketplaces/hepsiburada.js
+      - name: Check admin inline JavaScript syntax
+        run: |
+          node --input-type=module -e "import fs from 'node:fs'; import vm from 'node:vm'; const html=fs.readFileSync('admin/index.html','utf8'); const scripts=[...html.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/gi)]; if (!scripts.length) throw new Error('No inline scripts found'); for (const match of scripts) new vm.Script(match[1]); console.log('Admin inline JavaScript syntax OK');"
       - name: Build website
         run: npm run build
