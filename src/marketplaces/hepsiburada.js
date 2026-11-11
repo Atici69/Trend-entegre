@@ -16,6 +16,7 @@ export async function testHepsiburadaConnection() {
   const authorization = Buffer.from(`${merchantId}:${secretKey}`, 'utf8').toString('base64');
   const url = new URL(`/orders/merchantid/${encodeURIComponent(merchantId)}`, API_BASE_URL);
   url.searchParams.set('limit', '1');
+  url.searchParams.set('offset', '0');
 
   let response;
   try {
@@ -39,6 +40,14 @@ export async function testHepsiburadaConnection() {
     };
   }
 
+  const responseText = await response.text();
+  let responseData = null;
+  try {
+    responseData = responseText ? JSON.parse(responseText) : null;
+  } catch {
+    responseData = null;
+  }
+
   if (!response.ok) {
     return {
       ok: false,
@@ -52,11 +61,26 @@ export async function testHepsiburadaConnection() {
     };
   }
 
+  const orderItems = Array.isArray(responseData?.items)
+    ? responseData.items
+    : Array.isArray(responseData)
+      ? responseData
+      : null;
+  const totalCount = Number.isFinite(Number(responseData?.totalCount))
+    ? Number(responseData.totalCount)
+    : null;
+
   return {
     ok: true,
     status: 'connected',
     environment: 'SIT',
     httpStatus: response.status,
-    message: 'Hepsiburada SIT Basic Auth bağlantısı başarılı.',
+    orderItemsReturned: orderItems?.length ?? null,
+    totalOrderItems: totalCount,
+    message: orderItems
+      ? orderItems.length > 0
+        ? 'Hepsiburada SIT bağlantısı başarılı; sipariş kalemi verisi alındı.'
+        : 'Hepsiburada SIT bağlantısı başarılı; bu yanıtta sipariş kalemi bulunamadı.'
+      : 'Hepsiburada SIT bağlantısı başarılı; yanıt alındı ancak sipariş sayısı okunamadı.',
   };
 }
