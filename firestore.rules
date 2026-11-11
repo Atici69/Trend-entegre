@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Application data is accessed through the server using Firebase Admin SDK.
+    // Admin SDK requests bypass these client rules. Deny browser access by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
