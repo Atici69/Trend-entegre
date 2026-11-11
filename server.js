@@ -72,6 +72,7 @@ app.post('/api/v1/auth/register', async (req, res) => {
     const decoded = await firebase.auth.verifyIdToken(token);
     const email = decoded.email?.trim().toLowerCase();
     const fullName = String(req.body?.full_name || decoded.name || '').trim().slice(0, 120);
+    const phone = String(req.body?.phone || '').trim().slice(0, 30);
     if (!decoded.uid || !email || fullName.length < 2) {
       return res.status(400).json({ error: 'Geçerli kullanıcı adı ve e-posta bilgisi gerekli.' });
     }
@@ -93,6 +94,7 @@ app.post('/api/v1/auth/register', async (req, res) => {
       role,
       status,
       email_verified: Boolean(decoded.email_verified),
+      ...(phone ? { phone } : {}),
       created_at: createdAt,
       updated_at: now,
     };
@@ -103,6 +105,7 @@ app.post('/api/v1/auth/register', async (req, res) => {
         user_id: decoded.uid,
         full_name: fullName,
         email,
+        ...(phone ? { phone } : {}),
         status,
         created_at: createdAt,
         updated_at: now,
