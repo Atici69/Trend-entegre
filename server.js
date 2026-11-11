@@ -102,12 +102,12 @@ app.get('/api/v1/admin/overview', requireAdmin, async (req, res) => {
 });
 
 // Marketplace status reveals only whether server-side credentials exist.
-app.get('/api/v1/marketplaces/status', (_req, res) => {
+app.get('/api/v1/marketplaces/status', requireAdmin, (_req, res) => {
   res.json({ marketplaces: marketplaceStatus() });
 });
 
 // Read-only SIT authentication handshake. Credentials stay in server environment variables.
-app.post('/api/v1/marketplaces/hepsiburada/test', async (_req, res) => {
+app.post('/api/v1/marketplaces/hepsiburada/test', requireAdmin, async (_req, res) => {
   const result = await testHepsiburadaConnection();
   res.status(result.ok ? 200 : result.status === 'not_configured' ? 424 : 502).json(result);
 });
