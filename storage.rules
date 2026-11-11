@@ -1,0 +1,10 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // No direct client file access until explicit owner-scoped rules are designed.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
