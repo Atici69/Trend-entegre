@@ -126,6 +126,7 @@ form.addEventListener("submit", async (event) => {
       }
       showMessage("Giriş başarılı. Hesabınız hazır.");
       closeModal();
+      await ensureBillingProfile(credential.user);
     }
   } catch (error) {
     showMessage(error.message && !error.code ? error.message : friendlyError(error), "error");
@@ -244,7 +245,7 @@ checkoutForm.addEventListener('submit',async event=>{
  try{
   const data=Object.fromEntries(new FormData(checkoutForm).entries());
   data.name=String(data.name||'').trim();data.surname=String(data.surname||'').trim();
-  data.gsmNumber=String(data.gsmNumber||'').trim();data.identityNumber=String(data.identityNumber||'').trim();
+  data.gsmNumber=String(data.gsmNumber||'').trim();data.identityNumber=String(data.identityNumber||'').trim();data.taxOffice=savedBillingProfile?.tax_office||'';data.companyType=savedBillingProfile?.company_type||'';
   data.city=String(data.city||'').trim();data.district=String(data.district||'').trim();
   data.address=String(data.address||'').trim();data.zipCode=String(data.zipCode||'').trim();
   const token=await user.getIdToken(true);
@@ -272,6 +273,79 @@ window.addEventListener('trend:purchase',event=>{
  const parts=(user.displayName||'').trim().split(/\s+/);
  document.getElementById('billName').value=parts.shift()||'';
  document.getElementById('billSurname').value=parts.join(' ');
+ if(savedBillingProfile?.billing_profile_completed){
+  document.getElementById('billName').value=(savedBillingProfile.full_name||user.displayName||'').split(/\\s+/)[0]||'';
+  document.getElementById('billSurname').value=(savedBillingProfile.full_name||user.displayName||'').split(/\\s+/).slice(1).join(' ');
+  document.getElementById('billCompany').value=savedBillingProfile.company_name||'';
+  document.getElementById('billPhone').value=savedBillingProfile.phone||'';
+  document.getElementById('billIdentity').value=savedBillingProfile.tax_number||'';
+  cityInput.value=savedBillingProfile.city||'';districtInput.value=savedBillingProfile.district||'';
+  addressInput.value=savedBillingProfile.address||'';
+  document.getElementById('billZip').value=savedBillingProfile.zip_code||'';
+ }
  checkoutModal.classList.add('open');checkoutModal.setAttribute('aria-hidden','false');
+});
+const profileModal=document.getElementById('profileModal');
+const profileForm=document.getElementById('profileForm');
+const profileSave=document.getElementById('profileSave');
+const profileError=document.getElementById('profileError');
+const profileType=document.getElementById('profileCompanyType');
+const profileTaxOffice=document.getElementById('profileTaxOffice');
+const profileTaxOfficeWrap=document.getElementById('profileTaxOfficeWrap');
+const profileTaxNumber=document.getElementById('profileTaxNumber');
+const profileTaxNumberLabel=document.getElementById('profileTaxNumberLabel');
+let savedBillingProfile=null;
+let profileCheckUid='';
+function updateProfileTaxFields(){
+ const sole=profileType.value==='sole_proprietor';
+ profileTaxNumber.maxLength=sole?11:10;
+ profileTaxNumber.minLength=sole?11:10;
+ profileTaxNumberLabel.textContent=sole?'T.C. kimlik numarası (11 hane) *':'Vergi numarası (10 hane) *';
+ profileTaxOfficeWrap.style.display=sole?'none':'block';
+ profileTaxOffice.required=!sole;
+}
+profileType.addEventListener('change',updateProfileTaxFields);
+async function profileRequest(method='GET',body){
+ const user=auth.currentUser;if(!user)throw new Error('Önce giriş yapmalısınız.');
+ const token=await user.getIdToken(true);
+ const response=await fetch('https://trend-entegre.onrender.com/api/v1/customer/profile',{method,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
+ const result=await response.json().catch(()=>({}));
+ if(!response.ok)throw new Error(result.error||'Profil işlemi tamamlanamadı.');
+ return result;
+}
+function fillProfileForm(profile){
+ const map={full_name:'profileFullName',phone:'profilePhone',company_name:'profileCompany',company_type:'profileCompanyType',tax_office:'profileTaxOffice',tax_number:'profileTaxNumber',city:'profileCity',district:'profileDistrict',address:'profileAddress',zip_code:'profileZip'};
+ for(const [key,id] of Object.entries(map))document.getElementById(id).value=profile?.[key]||'';
+ updateProfileTaxFields();
+}
+function openProfile(profile){
+ fillProfileForm(profile||{});
+ profileError.classList.remove('show');profileError.textContent='';
+ profileModal.classList.add('open');profileModal.setAttribute('aria-hidden','false');
+}
+async function ensureBillingProfile(user){
+ if(!user||!user.emailVerified||profileCheckUid===user.uid)return;
+ profileCheckUid=user.uid;
+ try{
+  const result=await profileRequest();
+  savedBillingProfile=result.profile||{};
+  if(!savedBillingProfile.billing_profile_completed)openProfile(savedBillingProfile);
+ }catch(error){
+  profileCheckUid='';
+  showMessage('Firma/fatura profili kontrol edilemedi: '+error.message,'error');
+ }
+}
+profileForm.addEventListener('submit',async event=>{
+ event.preventDefault();profileError.classList.remove('show');profileSave.disabled=true;profileSave.textContent='Kaydediliyor…';
+ try{
+  const data=Object.fromEntries(new FormData(profileForm).entries());
+  for(const key of Object.keys(data))data[key]=String(data[key]||'').trim();
+  if(data.company_type==='sole_proprietor'){data.tax_office='';}
+  const result=await profileRequest('PUT',data);
+  savedBillingProfile={...result.profile,billing_profile_completed:true};
+  profileModal.classList.remove('open');profileModal.setAttribute('aria-hidden','true');
+  showMessage('Firma ve fatura profiliniz kaydedildi. Artık siparişlerde otomatik kullanılacak.');
+ }catch(error){profileError.textContent=error.message||'Profil kaydedilemedi.';profileError.classList.add('show');}
+ finally{profileSave.disabled=false;profileSave.textContent='Profili kaydet';}
 });
 const paymentResult=new URLSearchParams(window.location.search).get('payment');if(paymentResult){const messages={success:'Ödemeniz doğrulandı. 12 aylık üyeliğiniz etkinleştirildi.',failed:'Ödeme tamamlanmadı.',error:'Ödeme sonucu doğrulanamadı. Destek ekibiyle iletişime geçin.'};alert(messages[paymentResult]||'Ödeme sonucu alındı.');const clean=new URL(window.location.href);clean.searchParams.delete('payment');clean.searchParams.delete('plan');window.history.replaceState({},'',clean.toString());}
