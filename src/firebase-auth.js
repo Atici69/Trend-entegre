@@ -163,6 +163,7 @@ onAuthStateChanged(auth, (user) => {
     label.textContent = user.displayName || user.email;
     button.textContent = "Hesabım";
     logout.hidden = false;
+    ensureBillingProfile(user).catch(error => console.warn("Fatura profili kontrolü:", error));
   } else {
     label.textContent = "";
     button.textContent = "Giriş / Kayıt";
@@ -270,6 +271,7 @@ window.addEventListener('trend:purchase',event=>{
  checkoutSubmit.disabled=false;checkoutSubmit.textContent='Ödeme tutarını hesapla';
  const user=auth.currentUser;
  if(!user||!user.emailVerified){setMode('login');openModal();showMessage('Sipariş için önce giriş yapıp e-posta adresinizi doğrulayın.','error');return;}
+ if(!savedBillingProfile?.billing_profile_completed){await ensureBillingProfile(user);if(!savedBillingProfile?.billing_profile_completed)return;}
  const parts=(user.displayName||'').trim().split(/\s+/);
  document.getElementById('billName').value=parts.shift()||'';
  document.getElementById('billSurname').value=parts.join(' ');
