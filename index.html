@@ -225,28 +225,28 @@ footer i{color:#ffd36e}
 </footer>
 <a class="wa-launch" href="https://wa.me/905458959469?text=Merhaba%2C%20Trend-Entegre%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum." target="_blank" rel="noopener noreferrer" aria-label="WhatsApp canlı desteğe bağlan"><span aria-hidden="true">◉</span> WhatsApp Canlı Destek</a>
 <script>document.getElementById('y').textContent=new Date().getFullYear();function pay(planId){window.dispatchEvent(new CustomEvent('trend:purchase',{detail:{planId}}));}</script><style>
-#checkoutModal{display:none;position:fixed;inset:0;z-index:10001;background:rgba(8,15,32,.72);backdrop-filter:blur(5px);padding:22px;overflow:auto;align-items:center;justify-content:center}
-#checkoutModal.open{display:flex}
-#checkoutModal .checkout-panel{width:min(720px,100%);max-height:calc(100vh - 44px);overflow:auto;background:#fff;color:#172033;border-radius:20px;padding:28px;box-shadow:0 24px 80px #0005;position:relative}
-#checkoutModal h2{font-size:25px;margin:0 40px 8px 0;color:#15213b}
-#checkoutModal .checkout-lead{color:#65718a;margin:0 0 22px;line-height:1.5}
+#checkoutModal,#profileModal{display:none;position:fixed;inset:0;z-index:10001;background:rgba(8,15,32,.72);backdrop-filter:blur(5px);padding:22px;overflow:auto;align-items:center;justify-content:center}
+#checkoutModal.open,#profileModal.open{display:flex}
+#checkoutModal .checkout-panel,#profileModal .checkout-panel{width:min(720px,100%);max-height:calc(100vh - 44px);overflow:auto;background:#fff;color:#172033;border-radius:20px;padding:28px;box-shadow:0 24px 80px #0005;position:relative}
+#checkoutModal h2,#profileModal h2{font-size:25px;margin:0 40px 8px 0;color:#15213b}
+#checkoutModal .checkout-lead,#profileModal .checkout-lead{color:#65718a;margin:0 0 22px;line-height:1.5}
 #checkoutModal .checkout-close{position:absolute;right:18px;top:15px;border:0;background:#eef1f7;border-radius:50%;width:38px;height:38px;font-size:24px;cursor:pointer}
-#checkoutModal .checkout-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-#checkoutModal label{display:block;font-size:13px;font-weight:700;color:#35415a;margin-bottom:6px}
-#checkoutModal input,#checkoutModal select{width:100%;height:46px;border:1px solid #d6dce8;border-radius:10px;padding:0 12px;font:inherit;color:#18243a;background:#fff;box-sizing:border-box}
-#checkoutModal .checkout-field.full{grid-column:1/-1}
+#checkoutModal .checkout-grid,#profileModal .checkout-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+#checkoutModal label,#profileModal label{display:block;font-size:13px;font-weight:700;color:#35415a;margin-bottom:6px}
+#checkoutModal input,#checkoutModal select,#profileModal input,#profileModal select{width:100%;height:46px;border:1px solid #d6dce8;border-radius:10px;padding:0 12px;font:inherit;color:#18243a;background:#fff;box-sizing:border-box}
+#checkoutModal .checkout-field.full,#profileModal .checkout-field.full{grid-column:1/-1}
 #checkoutModal .checkout-field small{display:block;margin-top:5px}
 #checkoutModal .checkout-summary{display:none;margin-top:20px;padding:16px;border-radius:13px;background:#f2f6ff;border:1px solid #dce6ff}
 #checkoutModal .checkout-summary.show{display:block}
 #checkoutModal .checkout-summary-row{display:flex;justify-content:space-between;gap:12px;margin:7px 0}
 #checkoutModal .checkout-summary-row.total{border-top:1px solid #ccd8f1;padding-top:12px;margin-top:12px;font-size:18px;font-weight:800}
-#checkoutModal .checkout-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:22px;flex-wrap:wrap}
-#checkoutModal .checkout-actions button{border:0;border-radius:11px;padding:13px 20px;font-weight:800;cursor:pointer}
+#checkoutModal .checkout-actions,#profileModal .checkout-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:22px;flex-wrap:wrap}
+#checkoutModal .checkout-actions button,#profileModal .checkout-actions button{border:0;border-radius:11px;padding:13px 20px;font-weight:800;cursor:pointer}
 #checkoutModal #checkoutSubmit{background:linear-gradient(100deg,#08a69a,#26205f);color:white;min-width:230px}
 #checkoutModal #checkoutCancel{background:#eef1f7;color:#34415b}
-#checkoutModal .checkout-note{font-size:12px;color:#738098;margin-top:14px;line-height:1.5}
-#checkoutModal .checkout-error{display:none;color:#b42318;background:#fff1f0;padding:10px 12px;border-radius:9px;margin-top:12px}
-#checkoutModal .checkout-error.show{display:block}
+#checkoutModal .checkout-note,#profileModal .checkout-note{font-size:12px;color:#738098;margin-top:14px;line-height:1.5}
+#checkoutModal .checkout-error,#profileModal .checkout-error{display:none;color:#b42318;background:#fff1f0;padding:10px 12px;border-radius:9px;margin-top:12px}
+#checkoutModal .checkout-error.show,#profileModal .checkout-error.show{display:block}
 @media(max-width:600px){#checkoutModal{padding:10px}#checkoutModal .checkout-panel{padding:22px 16px;border-radius:16px}#checkoutModal .checkout-grid{grid-template-columns:1fr}#checkoutModal .checkout-field.full{grid-column:auto}#checkoutModal .checkout-actions{flex-direction:column-reverse}#checkoutModal .checkout-actions button{width:100%}}
 </style>
 <div id="checkoutModal" aria-hidden="true"><section class="checkout-panel" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
@@ -275,6 +275,22 @@ footer i{color:#ffd36e}
 <div class="checkout-actions"><button type="button" id="checkoutCancel">Vazgeç</button><button type="submit" id="checkoutSubmit">Ödeme tutarını hesapla</button></div>
 <p class="checkout-note">Bilgileriniz sipariş ve fatura işlemleri için kullanılır. Kart bilgileriniz Trend-Entegre tarafından alınmaz; güvenli ödeme iyzico sayfasında tamamlanır.</p>
 </form></section></div>
+<div id="profileModal" class="checkout-modal" aria-hidden="true"><section class="checkout-panel" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+<h2 id="profileTitle">Firma ve fatura profilinizi tamamlayın</h2><p class="checkout-lead">Bu bilgileri bir kez kaydedin. Sonraki siparişlerinizde yeniden doldurmanız gerekmez.</p>
+<form id="profileForm"><div class="checkout-grid">
+<div class="checkout-field"><label for="profileFullName">Ad soyad *</label><input id="profileFullName" name="full_name" required></div>
+<div class="checkout-field"><label for="profilePhone">Telefon *</label><input id="profilePhone" name="phone" type="tel" required></div>
+<div class="checkout-field full"><label for="profileCompany">Firma unvanı *</label><input id="profileCompany" name="company_name" required></div>
+<div class="checkout-field full"><label for="profileCompanyType">Şirket türü *</label><select id="profileCompanyType" name="company_type" required><option value="">Seçin</option><option value="sole_proprietor">Şahıs işletmesi</option><option value="limited">Limited şirket</option><option value="joint_stock">Anonim şirket</option><option value="other">Diğer tüzel kişi</option></select></div>
+<div class="checkout-field" id="profileTaxNumberWrap"><label id="profileTaxNumberLabel" for="profileTaxNumber">T.C. kimlik / Vergi no *</label><input id="profileTaxNumber" name="tax_number" inputmode="numeric" required></div>
+<div class="checkout-field" id="profileTaxOfficeWrap"><label for="profileTaxOffice">Vergi dairesi *</label><input id="profileTaxOffice" name="tax_office"></div>
+<div class="checkout-field"><label for="profileCity">İl *</label><input id="profileCity" name="city" required></div>
+<div class="checkout-field"><label for="profileDistrict">İlçe *</label><input id="profileDistrict" name="district" required></div>
+<div class="checkout-field full"><label for="profileAddress">Açık adres *</label><input id="profileAddress" name="address" required></div>
+<div class="checkout-field"><label for="profileZip">Posta kodu *</label><input id="profileZip" name="zip_code" required></div>
+</div><div id="profileError" class="checkout-error" role="alert"></div><div class="checkout-actions"><button type="submit" id="profileSave">Profili kaydet</button></div></form>
+<p class="checkout-note">Vergi/T.C. kimlik bilgileriniz yalnızca fatura ve ödeme işlemleri için saklanır.</p>
+</section></div>
 <div class="auth-modal" id="authModal" aria-hidden="true">
   <section class="auth-panel" role="dialog" aria-modal="true" aria-labelledby="authTitle">
     <button class="auth-close" id="authCloseBtn" type="button" aria-label="Kapat">×</button>
