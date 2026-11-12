@@ -164,7 +164,7 @@ app.put('/api/v1/customer/profile', requireCustomer, async (req, res) => {
   }
   if (!['sole_proprietor','limited','joint_stock','other'].includes(profile.company_type)) return res.status(400).json({ error: 'Geçersiz şirket türü.' });
   const expectedTaxLength = profile.company_type === 'sole_proprietor' ? 11 : 10;
-  if (!new RegExp('^\\\\d{' + expectedTaxLength + '}$').test(profile.tax_number)) return res.status(400).json({ error: profile.company_type === 'sole_proprietor' ? 'Şahıs işletmesi için 11 haneli T.C. kimlik numarası girin.' : 'Şirketler için 10 haneli vergi numarası girin.' });
+  if (!(expectedTaxLength === 11 ? /^\\d{11}$/.test(profile.tax_number) : /^\\d{10}$/.test(profile.tax_number))) return res.status(400).json({ error: profile.company_type === 'sole_proprietor' ? 'Şahıs işletmesi için 11 haneli T.C. kimlik numarası girin.' : 'Şirketler için 10 haneli vergi numarası girin.' });
   if (profile.company_type !== 'sole_proprietor' && !profile.tax_office) return res.status(400).json({ error: 'Vergi dairesi alanını doldurun.' });
   const now = new Date().toISOString();
   const data = { ...profile, email: req.customerUser.email, billing_profile_completed: true, billing_profile_updated_at: now, updated_at: now };
