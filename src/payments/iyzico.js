@@ -277,7 +277,12 @@ export function registerIyzicoRoutes(app) {
         return res.status(403).json({ error: 'Bu kurtarma işlemi yalnızca test ödemeleri içindir.' });
       }
       if (attempt.status === 'paid' && attempt.provider_payment_id === paymentId) {
-        return res.json({ ok: true, alreadyProcessed: true, status: 'paid' });
+        const existingPaymentRef = firebase.db.collection('payments').doc(paymentId);
+        await existingPaymentRef.set({
+          paid_at: FieldValue.serverTimestamp(),
+          payment_date: FieldValue.serverTimestamp(),
+        }, { merge: true });
+        return res.json({ ok: true, alreadyProcessed: true, status: 'paid', dateUpdated: true });
       }
 
       const client = iyzicoClient();
