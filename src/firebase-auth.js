@@ -264,7 +264,7 @@ checkoutForm.addEventListener('submit',async event=>{
   checkoutError.classList.add('show');
  }finally{checkoutSubmit.disabled=false;}
 });
-window.addEventListener('trend:purchase',event=>{
+window.addEventListener('trend:purchase',async event=>{
  checkoutPlanId=String(event.detail?.planId||'');
  checkoutPaymentUrl='';
  checkoutForm.reset();checkoutSummary.classList.remove('show');checkoutError.classList.remove('show');checkoutError.textContent='';
