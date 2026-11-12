@@ -18,7 +18,7 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+export const auth = getAuth(app);
 const $ = (id) => document.getElementById(id);
 const modal = $("authModal");
 const form = $("authForm");
