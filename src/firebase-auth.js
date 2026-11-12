@@ -3,7 +3,7 @@ import {
   getAuth, setPersistence, browserLocalPersistence,
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
   sendEmailVerification, sendPasswordResetEmail, signOut,
-  updateProfile, onAuthStateChanged
+  updateProfile, onAuthStateChanged, reload
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -110,10 +110,11 @@ form.addEventListener("submit", async (event) => {
       showMessage("Hesabınız oluşturuldu. Giriş yapmadan önce e-posta kutunuza gönderdiğimiz doğrulama bağlantısına tıklayın.");
     } else {
       const credential = await signInWithEmailAndPassword(auth, email, password);
-      if (!credential.user.emailVerified) {
-        await sendEmailVerification(credential.user);
+      await reload(credential.user);
+      const refreshedUser = auth.currentUser || credential.user;
+      if (!refreshedUser.emailVerified) {
         await signOut(auth);
-        showMessage("E-posta adresiniz henüz doğrulanmamış. Yeni doğrulama bağlantısı gönderdik; e-postanızı kontrol edin.", "error");
+        showMessage("E-posta adresiniz henüz doğrulanmamış. Gelen kutunuzdaki en son Trend-Entegre doğrulama bağlantısına tıklayın. Yeni e-posta otomatik gönderilmedi.", "error");
         return;
       }
       showMessage("Giriş başarılı. Hesabınız hazır.");
