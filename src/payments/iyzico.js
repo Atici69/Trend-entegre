@@ -313,6 +313,11 @@ export function registerIyzicoRoutes(app) {
           if (String(existing.provider_reference) !== paymentId || existing.user_id !== attempt.uid) {
             throw new Error('Payment ID başka bir kullanıcı kaydıyla eşleşiyor.');
           }
+          transaction.set(paymentRef, {
+            paid_at: existing.paid_at || FieldValue.serverTimestamp(),
+            payment_date: existing.payment_date || FieldValue.serverTimestamp(),
+            created_at: existing.created_at || FieldValue.serverTimestamp(),
+          }, { merge: true });
         } else {
           transaction.create(paymentRef, {
             customer_id: attempt.uid, user_id: attempt.uid, provider: 'iyzico',
@@ -321,6 +326,7 @@ export function registerIyzicoRoutes(app) {
             payment_type: 'test_product', net_amount: attempt.net_amount_minor / 100,
             vat_amount: attempt.vat_amount_minor / 100, amount: attempt.gross_amount_minor / 100,
             currency: 'TRY', created_at: FieldValue.serverTimestamp(),
+            paid_at: FieldValue.serverTimestamp(), payment_date: FieldValue.serverTimestamp(),
           });
         }
         transaction.set(attemptDoc.ref, {
