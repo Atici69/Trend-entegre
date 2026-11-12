@@ -177,6 +177,58 @@ const checkoutError = document.getElementById('checkoutError');
 const checkoutSummary = document.getElementById('checkoutSummary');
 let checkoutPlanId = '';
 let checkoutPaymentUrl = '';
+const cityInput=document.getElementById('billCity');
+const districtInput=document.getElementById('billDistrict');
+const addressInput=document.getElementById('billAddress');
+const cityOptions=document.getElementById('billCityOptions');
+const districtOptions=document.getElementById('billDistrictOptions');
+const addressOptions=document.getElementById('billAddressOptions');
+let geoTimer=null,geoSequence=0;
+const geoCache=new Map();
+const trFeature=f=>{const p=f?.properties||{};return String(p.countrycode||'').toUpperCase()==='TR'||/^(turkey|türkiye)$/i.test(String(p.country||''));};
+const geoLabel=f=>{const p=f.properties||{};return [p.name,p.street,p.housenumber,p.district,p.city,p.state].filter((v,i,a)=>v&&a.indexOf(v)===i).join(', ');};
+async function geoSearch(query,layer){
+ const key=layer+'|'+query.toLocaleLowerCase('tr-TR');
+ if(geoCache.has(key))return geoCache.get(key);
+ const params=new URLSearchParams({q:query,lang:'tr',limit:'8'});
+ if(layer)params.set('layer',layer);
+ const response=await fetch('https://photon.komoot.io/api/?'+params.toString(),{headers:{Accept:'application/json'}});
+ if(!response.ok)throw new Error('Adres önerileri şu anda alınamadı.');
+ const json=await response.json();
+ const features=(json.features||[]).filter(trFeature);
+ geoCache.set(key,features);
+ return features;
+}
+function fillOptions(list,features){list.replaceChildren(...features.map(f=>{const option=document.createElement('option');option.value=geoLabel(f);return option;}));}
+function scheduleGeo(input,list,layer,queryBuilder,onSelect){
+ input.addEventListener('input',()=>{
+  clearTimeout(geoTimer);const query=queryBuilder(input.value);const seq=++geoSequence;
+  if(query.trim().length<2){list.replaceChildren();return;}
+  geoTimer=setTimeout(async()=>{
+   try{const results=await geoSearch(query,layer);if(seq!==geoSequence)return;fillOptions(list,results);
+    const chosen=results.find(f=>geoLabel(f)===input.value.trim());
+    if(chosen&&onSelect)onSelect(chosen);
+   }catch(error){console.warn('Adres önerisi alınamadı:',error);}
+  },350);
+ });
+ input.addEventListener('change',async()=>{
+  const query=queryBuilder(input.value);
+  try{const results=await geoSearch(query,layer);const chosen=results.find(f=>geoLabel(f)===input.value.trim())||results[0];if(chosen&&onSelect)onSelect(chosen);}catch(error){console.warn(error);}
+ });
+}
+function applyAddressFeature(feature){
+ const p=feature.properties||{};
+ const province=p.state||p.county||p.city||'';
+ const district=p.district||p.county||(p.city&&p.city!==province?p.city:'');
+ if(province)cityInput.value=province;
+ if(district)districtInput.value=district;
+ const street=[p.suburb,p.street,p.housenumber].filter(Boolean).join(' ');
+ if(street)addressInput.value=street;
+ if(p.postcode)document.getElementById('billZip').value=p.postcode;
+}
+scheduleGeo(cityInput,cityOptions,'locality',v=>v,f=>{const p=f.properties||{};cityInput.value=p.state||p.city||p.name||cityInput.value;});
+scheduleGeo(districtInput,districtOptions,'district',v=>[cityInput.value,v].filter(Boolean).join(' '),f=>{const p=f.properties||{};districtInput.value=p.district||p.name||districtInput.value;});
+scheduleGeo(addressInput,addressOptions,'street',v=>[cityInput.value,districtInput.value,v].filter(Boolean).join(' '),applyAddressFeature);
 const checkoutMoney = value => new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY'}).format(Number(value));
 function closeCheckout(){checkoutModal.classList.remove('open');checkoutModal.setAttribute('aria-hidden','true');}
 document.getElementById('checkoutClose').addEventListener('click',closeCheckout);
