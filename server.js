@@ -269,12 +269,30 @@ app.get('/api/v1/admin/overview', requireAdmin, async (req, res) => {
     const names = ['customers', 'subscriptions', 'dealers', 'payments'];
     const snapshots = await Promise.all(names.map((name) => req.firestore.collection(name).get()));
     const activeSubscriptions = snapshots[1].docs.filter((doc) => doc.data().status === 'active').length;
+    const marketplaceItems = marketplaceStatus();
+    const configuredMarketplaces = marketplaceItems.filter((item) => item.configured).length;
+    const iyzicoConfigured = Boolean(
+      process.env.IYZIPAY_API_KEY?.trim()
+      && process.env.IYZIPAY_SECRET_KEY?.trim()
+      && process.env.IYZIPAY_CALLBACK_URL?.trim()
+    );
+    const iyzicoEnvironment = (process.env.IYZIPAY_URI || 'https://sandbox-api.iyzipay.com').includes('sandbox') ? 'Sandbox test ortamı' : 'Canlı ortam';
     res.json({
       counts: {
         customers: snapshots[0].size,
         activeSubscriptions,
         dealers: snapshots[2].size,
         payments: snapshots[3].size,
+      },
+      systems: {
+        auth: { status: 'connected', detail: 'Yönetici oturumu sunucu tarafından doğrulandı.' },
+        database: { status: 'connected', detail: 'Firestore sorgusu başarıyla tamamlandı.' },
+        iyzico: { status: iyzicoConfigured ? 'configured' : 'pending', detail: iyzicoConfigured ? iyzicoEnvironment + ' · API ayarları tanımlı' : 'API anahtarı veya callback ayarı eksik.' },
+        marketplaces: {
+          status: configuredMarketplaces === 0 ? 'pending' : configuredMarketplaces === marketplaceItems.length ? 'configured' : 'partial',
+          detail: configuredMarketplaces + '/' + marketplaceItems.length + ' pazaryeri için kimlik bilgileri tanımlı; canlı bağlantı ayrıca test edilmelidir.',
+        },
+        xml: { status: 'development', detail: 'XML dönüştürme ve aktarım motoru henüz tamamlanmadı.' },
       },
     });
   } catch (error) {
