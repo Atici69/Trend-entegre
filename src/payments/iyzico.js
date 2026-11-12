@@ -144,7 +144,7 @@ export function registerIyzicoRoutes(app) {
         vat_amount_minor: vat, gross_amount_minor: gross, amount: gross / 100,
         currency: 'TRY', checkout_token_hash: hash(result.token),
         provider_conversation_id: attemptId, status: 'pending',
-        billing_name: contactName, billing_company: String(c.companyName || '').trim().slice(0, 120), billing_phone: phone, billing_identity: identity,
+        billing_name: contactName, billing_company: String(c.companyName || '').trim().slice(0, 120), billing_company_type: String(c.companyType || '').trim(), billing_tax_office: String(c.taxOffice || '').trim().slice(0, 120), billing_phone: phone, billing_identity: identity,
         billing_address: { city, district, address: fullAddress, zipCode },
         created_at: FieldValue.serverTimestamp(), updated_at: FieldValue.serverTimestamp(),
       });
