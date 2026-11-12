@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trend-Entegre | Ödeme Kaydı Kurtarma</title>
+<style>
+body{font:16px system-ui,Arial,sans-serif;background:#f4f6fa;color:#17213b;margin:0;padding:24px}
+main{max-width:520px;margin:7vh auto;background:#fff;padding:26px;border:1px solid #e4e8f0;border-radius:16px}
+h1{font-size:22px;margin:0 0 8px}p{line-height:1.55;color:#58647b}
+label{display:block;font-size:13px;font-weight:700;margin:16px 0 6px}
+input{box-sizing:border-box;width:100%;padding:12px;border:1px solid #ccd3df;border-radius:8px;font:inherit}
+button{margin-top:18px;padding:12px 16px;border:0;border-radius:8px;background:#f4772a;color:#fff;font-weight:800;font-size:15px;cursor:pointer;width:100%}
+button:disabled{opacity:.6;cursor:wait}
+#msg{margin-top:16px;padding:12px;border-radius:8px;display:none;white-space:pre-wrap}
+.warn{background:#fff5e5;color:#7a4a0c} .ok{background:#e9f7ef;color:#17633f} .err{background:#fff0f0;color:#9c2828}
+small{display:block;color:#7a8498;margin-top:16px;line-height:1.5}
+</style>
+</head>
+<body>
+<main>
+<h1>Ödeme kaydını güvenli şekilde tamamla</h1>
+<p>Bu araç yalnızca iyzico'da başarılı olduğu doğrulanan 5 TL'lik test ödemesini kontrol eder. Yeni ödeme almaz.</p>
+<form id="f">
+<label for="email">Yönetici e-posta adresi</label>
+<input id="email" type="email" autocomplete="username" required>
+<label for="password">Şifre</label>
+<input id="password" type="password" autocomplete="current-password" required>
+<label for="paymentId">iyzico ödeme numarası</label>
+<input id="paymentId" value="4301137856" inputmode="numeric" required>
+<label for="conversationId">Conversation ID</label>
+<input id="conversationId" value="d4222682-f714-4841-b62f-bf50917d5452" required>
+<button id="submit" type="submit">Ödemeyi doğrula ve kaydı tamamla</button>
+</form>
+<div id="msg"></div>
+<small>Şifren yalnızca Firebase Authentication üzerinden doğrulanır. Şifren ve oturum belirtecin bu sayfada kaydedilmez. İşlem yalnızca ADMIN_EMAILS listesinde bulunan yönetici hesabıyla yapılabilir.</small>
+</main>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
+import { getAuth, setPersistence, browserSessionPersistence, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
+const firebaseConfig = {
+ apiKey: "AIzaSyAaHp6NRiMkEGn2IBwfCaS7gxMrkJoqslU",
+ authDomain: "trend-entegre.firebaseapp.com",
+ projectId: "trend-entegre",
+ storageBucket: "trend-entegre.firebasestorage.app",
+ messagingSenderId: "520870169459",
+ appId: "1:520870169459:web:a0bd95ab18a1c6c4089306"
+};
+const auth=getAuth(initializeApp(firebaseConfig));
+const form=document.getElementById('f'), button=document.getElementById('submit'), msg=document.getElementById('msg');
+function show(text,kind){msg.textContent=text;msg.className=kind;msg.style.display='block';}
+form.addEventListener('submit',async e=>{
+ e.preventDefault();button.disabled=true;button.textContent='iyzico kontrol ediliyor…';msg.style.display='none';
+ try{
+  await setPersistence(auth,browserSessionPersistence);
+  const cred=await signInWithEmailAndPassword(auth,document.getElementById('email').value.trim(),document.getElementById('password').value);
+  const idToken=await cred.user.getIdToken(true);
+  const response=await fetch('https://trend-entegre.onrender.com/api/v1/payments/iyzico/reconcile-test',{
+   method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+idToken},
+   body:JSON.stringify({paymentId:document.getElementById('paymentId').value.trim(),conversationId:document.getElementById('conversationId').value.trim()})
+  });
+  const result=await response.json();
+  if(!response.ok)throw new Error(result.error||'Ödeme doğrulanamadı.');
+  show(result.alreadyProcessed?'Bu ödeme daha önce güvenle kaydedilmiş.':('Ödeme doğrulandı. '+result.amount+' TL ödeme kaydı oluşturuldu. Durum: '+result.status),'ok');
+  await signOut(auth);document.getElementById('password').value='';
+ }catch(err){try{await signOut(auth)}catch{};show(err.message||'İşlem başarısız.','err');}
+ finally{button.disabled=false;button.textContent='Ödemeyi doğrula ve kaydı tamamla';document.getElementById('password').value='';}
+});
+</script>
+</body>
+</html>
