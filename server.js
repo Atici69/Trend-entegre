@@ -82,10 +82,14 @@ app.post('/api/v1/auth/register', async (req, res) => {
     const previousUser = await userRef.get();
     const previousCustomer = await customerRef.get();
     const previousData = previousUser.exists ? previousUser.data() : {};
+    const previousCustomerData = previousCustomer.exists ? previousCustomer.data() : {};
     const now = new Date().toISOString();
-    const createdAt = previousData.created_at || (previousCustomer.exists ? previousCustomer.data().created_at : null) || now;
+    const createdAt = previousData.created_at || previousCustomerData.created_at || now;
     const role = previousData.role || 'customer';
     const status = previousData.status || 'active';
+    // Preserve customer details already saved by the admin panel when syncing auth data.
+    const resolvedPhone = phone || String(previousCustomerData.phone || previousData.phone || '').trim().slice(0, 30);
+    const companyName = String(req.body?.company_name || previousCustomerData.company_name || previousData.company_name || '').trim().slice(0, 160);
 
     const userData = {
       uid: decoded.uid,
@@ -94,7 +98,8 @@ app.post('/api/v1/auth/register', async (req, res) => {
       role,
       status,
       email_verified: Boolean(decoded.email_verified),
-      ...(phone ? { phone } : {}),
+      ...(resolvedPhone ? { phone: resolvedPhone } : {}),
+      ...(companyName ? { company_name: companyName } : {}),
       created_at: createdAt,
       updated_at: now,
     };
@@ -105,7 +110,8 @@ app.post('/api/v1/auth/register', async (req, res) => {
         user_id: decoded.uid,
         full_name: fullName,
         email,
-        ...(phone ? { phone } : {}),
+        ...(resolvedPhone ? { phone: resolvedPhone } : {}),
+        ...(companyName ? { company_name: companyName } : {}),
         status,
         created_at: createdAt,
         updated_at: now,
@@ -265,6 +271,20 @@ for (const [resource, config] of Object.entries(resourceConfig)) {
       if (!existing.exists) return res.status(404).json({ error: 'Kayıt bulunamadı.' });
       await ref.update({ ...payload, ...(resource === 'customers' ? { updated_at: new Date().toISOString() } : {}) });
       const updated = await ref.get();
+      if (resource === 'customers') {
+        const customer = updated.data();
+        const userId = customer.user_id || req.params.id;
+        const userFields = {};
+        for (const field of ['full_name', 'email', 'phone', 'company_name', 'status']) {
+          if (Object.hasOwn(payload, field)) userFields[field] = payload[field];
+        }
+        if (Object.keys(userFields).length) {
+          await req.firestore.collection('users').doc(userId).set({
+            ...userFields,
+            updated_at: new Date().toISOString(),
+          }, { merge: true });
+        }
+      }
       await audit(req, 'update', resource, req.params.id, { fields: Object.keys(payload) });
       res.json({ item: { id: updated.id, ...updated.data() } });
     } catch (error) {
