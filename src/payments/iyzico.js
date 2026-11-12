@@ -62,7 +62,7 @@ export function registerIyzicoRoutes(app) {
 
   async function requireVerifiedUser(req, res, next) {
     try {
-      const token = req.headers.authorization?.match(/^Bearer\\s+(.+)$/i)?.[1];
+      const token = req.headers.authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
       const firebase = firebaseServices();
       if (!firebase || !token) return res.status(401).json({ error: 'Ödeme için giriş yapmalısınız.' });
       const decoded = await firebase.auth.verifyIdToken(token);
@@ -84,10 +84,10 @@ export function registerIyzicoRoutes(app) {
     const c = req.body?.customer || {};
     const required = ['name', 'surname', 'gsmNumber', 'identityNumber', 'city', 'district', 'address', 'zipCode'];
     if (required.some((key) => typeof c[key] !== 'string' || !c[key].trim())) return res.status(400).json({ error: 'Fatura bilgileri eksik. Ad, soyad, telefon, T.C./vergi numarası ve fatura adresini tamamlayın.' });
-    const phone = c.gsmNumber.trim().replace(/[\\s()-]/g, '');
-    if (!/^\\+90\\d{10}$/.test(phone)) return res.status(400).json({ error: 'Telefonu +905XXXXXXXXX biçiminde girin.' });
+    const phone = c.gsmNumber.trim().replace(/[\s()-]/g, '');
+    if (!/^\+90\d{10}$/.test(phone)) return res.status(400).json({ error: 'Telefonu +905XXXXXXXXX biçiminde girin.' });
     const identity = c.identityNumber.trim();
-    if (!/^\\d{10,11}$/.test(identity)) return res.status(400).json({ error: 'T.C. kimlik veya vergi numarası 10 ya da 11 rakam olmalıdır.' });
+    if (!/^\d{10,11}$/.test(identity)) return res.status(400).json({ error: 'T.C. kimlik veya vergi numarası 10 ya da 11 rakam olmalıdır.' });
 
     const net = plan.annualNet;
     const vat = Math.round(net * 0.20);
