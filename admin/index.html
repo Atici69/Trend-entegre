@@ -341,7 +341,20 @@ function queueResourceSearch(resource){
  clearTimeout(resourceState[resource].timer);
  resourceState[resource].timer=setTimeout(()=>{resourceState[resource].search=document.getElementById(resource+'Search').value.trim();resourceState[resource].page=1;loadResource(resource);},350);
 }
-function formatDate(value){return value?new Date(value).toLocaleDateString('tr-TR'):'—';}
+function formatDate(value){
+ if(!value)return '—';
+ let dateValue=value;
+ if(value instanceof Date) dateValue=value;
+ else if(typeof value==='object'){
+  if(typeof value.toDate==='function') dateValue=value.toDate();
+  else if(Number.isFinite(Number(value.seconds))) dateValue=Number(value.seconds)*1000;
+  else if(Number.isFinite(Number(value._seconds))) dateValue=Number(value._seconds)*1000;
+  else if(value.type==='firestore/timestamp'&&Number.isFinite(Number(value.seconds))) dateValue=Number(value.seconds)*1000;
+  else return '—';
+ }
+ const date=new Date(dateValue);
+ return Number.isNaN(date.getTime())?'—':date.toLocaleString('tr-TR');
+}
 function recordActions(resource,item){
  return '<button class="logout-btn" onclick="editRecord(\''+resource+'\',\''+item.id+'\')">Düzenle</button> <button class="logout-btn" onclick="deactivateRecord(\''+resource+'\',\''+item.id+'\')">Pasife al</button>';
 }
