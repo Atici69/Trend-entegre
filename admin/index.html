@@ -66,7 +66,7 @@ main{min-width:0}.topbar{height:70px;background:#fff;border-bottom:1px solid var
 <div class="metric"><label>Bayi başvuruları</label><strong id="metricDealers">—</strong><small>Kayıtlı bayi</small></div>
 <div class="metric"><label>Ödeme durumu</label><strong id="metricPayments">—</strong><small>Ödeme kaydı</small></div>
 </div>
-<div class="columns"><div class="card"><h2>Sistem bağlantıları</h2><div class="tablebox"><table><thead><tr><th>Modül</th><th>Durum</th></tr></thead><tbody><tr><td>Üye girişi ve yetkilendirme</td><td><span class="tag">Kurulum gerekli</span></td></tr><tr><td>Veritabanı</td><td><span class="tag">Kurulum gerekli</span></td></tr><tr><td>iyzico ödeme altyapısı</td><td><span class="tag">Bağlantı bekliyor</span></td></tr><tr><td>Pazaryeri API servisleri</td><td><span class="tag">Bağlantı bekliyor</span></td></tr><tr><td>XML dönüştürme motoru</td><td><span class="tag">Geliştirme gerekli</span></td></tr></tbody></table></div></div>
+<div class="columns"><div class="card"><h2>Sistem bağlantıları</h2><div class="tablebox"><table><thead><tr><th>Modül</th><th>Durum</th></tr></thead><tbody id="systemStatusRows"><tr><td colspan="2">Sistem durumları sunucudan alınıyor…</td></tr></tbody></table></div></div>
 <div class="card"><h2>Hızlı erişim</h2><div class="quick"><button onclick="go('subscriptions')">Paket ve abonelikler<span>Ürün paketlerini düzenle</span></button><button onclick="go('dealers')">Bayi ağı<span>Bayi ve alt bayi yapısı</span></button><button onclick="go('xml')">XML işlemleri<span>Aktarım iş akışları</span></button><button onclick="go('ads')">Reklam alanları<span>Slider ve banner taslakları</span></button></div></div></div>
 </section>
 <section class="page" id="customers"><div class="head"><div><h1>Müşteri Yönetimi</h1><p>Müşteri kayıtları, firma bilgileri ve hesap durumları.</p></div><button class="btn" onclick="createRecord('customers')">+ Müşteri ekle</button></div><div class="toolbar"><input id="customersSearch" placeholder="Firma, müşteri veya e-posta ara" oninput="queueResourceSearch('customers')"><button class="btn light" onclick="loadResource('customers')">Yenile</button></div><div id="customersMessage" class="section-note"></div><div class="tablebox"><table><thead><tr><th>Müşteri / Firma</th><th>E-posta</th><th>Telefon</th><th>Durum</th><th>Kayıt</th><th>İşlem</th></tr></thead><tbody id="customersRows"><tr><td colspan="6">Kayıtlar yükleniyor…</td></tr></tbody></table></div><p class="section-note" id="customersPager"></p></section>
@@ -218,6 +218,26 @@ function adminLogout(message=""){
   document.getElementById("adminPassword").value="";
   if(message) authMessage(message); else clearAuthMessage();
 }
+
+function renderSystemStatuses(systems){
+  const body=document.getElementById("systemStatusRows");
+  if(!body) return;
+  const labels={connected:"Çalışıyor",configured:"Yapılandırıldı",partial:"Kısmi yapılandırma",pending:"Bağlantı bekliyor",development:"Geliştirme gerekli",error:"Kontrol edilemedi"};
+  const rows=[
+    ["Üye girişi ve yetkilendirme",systems?.auth],
+    ["Veritabanı",systems?.database],
+    ["iyzico ödeme altyapısı",systems?.iyzico],
+    ["Pazaryeri API servisleri",systems?.marketplaces],
+    ["XML dönüştürme motoru",systems?.xml],
+  ];
+  body.innerHTML=rows.map(([name,item])=>{
+    const status=item?.status||"error";
+    const detail=item?.detail?'<br><small>'+escapeHtml(item.detail)+'</small>':'';
+    const color=status==="connected"||status==="configured"?"green":status==="development"||status==="pending"?"gray":"";
+    return '<tr><td>'+name+detail+'</td><td><span class="tag '+color+'">'+(labels[status]||labels.error)+'</span></td></tr>';
+  }).join("");
+}
+
 async function loadAdminOverview(){
   try{
     const data=await adminApi("/api/v1/admin/overview");
@@ -225,6 +245,7 @@ async function loadAdminOverview(){
     document.getElementById("metricSubscriptions").textContent=data.counts.activeSubscriptions;
     document.getElementById("metricDealers").textContent=data.counts.dealers;
     document.getElementById("metricPayments").textContent=data.counts.payments;
+    renderSystemStatuses(data.systems);
   }catch(error){
     const note=document.querySelector("#home .notice");
     if(note){note.textContent="Yönetici girişi başarılı. Veritabanı özeti alınamadı: "+error.message+" Firebase Admin ve Firestore sunucu ayarlarını kontrol edin.";}
