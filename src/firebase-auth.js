@@ -29,7 +29,7 @@ const submitButton = $("authSubmitBtn");
 const message = $("authMessage");
 let mode = "login";
 
-await setPersistence(auth, browserLocalPersistence);
+const persistenceReady = setPersistence(auth, browserLocalPersistence);
 
 function showMessage(text, type = "ok") {
   message.textContent = text;
@@ -95,6 +95,7 @@ form.addEventListener("submit", async (event) => {
   submitButton.disabled = true;
   submitButton.textContent = "İşleniyor…";
   try {
+    await persistenceReady;
     const email = emailInput.value.trim();
     const password = passwordInput.value;
     if (mode === "register") {
@@ -133,6 +134,7 @@ $("authResetBtn").addEventListener("click", async () => {
     return;
   }
   try {
+    await persistenceReady;
     await sendPasswordResetEmail(auth, email);
     showMessage("Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.");
   } catch (error) {
@@ -141,6 +143,7 @@ $("authResetBtn").addEventListener("click", async () => {
 });
 
 $("authLogoutBtn").addEventListener("click", async () => {
+  await persistenceReady;
   await signOut(auth);
   showMessage("Oturum kapatıldı.");
 });
