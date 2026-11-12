@@ -19,6 +19,8 @@ const allowedOrigins = [...new Set([
 ])];
 
 app.disable('x-powered-by');
+// Trust the single reverse proxy used by Render so rate limiting can read client IPs safely.
+app.set('trust proxy', 1);
 app.use(helmet());
 app.use(cors({
   origin(origin, callback) {
