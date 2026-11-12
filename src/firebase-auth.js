@@ -170,16 +170,56 @@ onAuthStateChanged(auth, (user) => {
 });
 
 
-window.addEventListener('trend:purchase', async (event) => {
- const planId=String(event.detail?.planId||''); const user=auth.currentUser;
- if(!user||!user.emailVerified){setMode('login');openModal();showMessage('Ödeme için giriş yapıp e-posta adresinizi doğrulamanız gerekiyor.','error');return;}
- const suggested=(user.displayName||'').trim().split(/\s+/);
- const name=prompt('Fatura için adınız:',suggested[0]||'');if(name===null)return;
- const surname=prompt('Fatura için soyadınız:',suggested.slice(1).join(' '));if(surname===null)return;
- const gsmNumber=prompt('Telefon (+905XXXXXXXXX):','+90');if(gsmNumber===null)return;
- const identityNumber=prompt('T.C. kimlik veya vergi numarası (10/11 rakam):');if(identityNumber===null)return;
- const city=prompt('Fatura ili:');if(city===null)return;const district=prompt('Fatura ilçesi:');if(district===null)return;
- const address=prompt('Açık fatura adresi:');if(address===null)return;const zipCode=prompt('Posta kodu:');if(zipCode===null)return;
- try{const token=await user.getIdToken(true);const response=await fetch('https://trend-entegre.onrender.com/api/v1/payments/iyzico/initialize',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({planId,customer:{name,surname,gsmNumber,identityNumber,city,district,address,zipCode}})});const result=await response.json();if(!response.ok)throw new Error(result.error||'Ödeme başlatılamadı.');const fmt=v=>new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY'}).format(Number(v));if(!confirm('Yıllık ödeme özeti\nAra toplam: '+fmt(result.totals.net)+'\nKDV (%20): '+fmt(result.totals.vat)+'\nKarttan tek çekim: '+fmt(result.totals.total)+'\n\nÖdeme sayfasına geçilsin mi?'))return;window.location.assign(result.paymentPageUrl);}catch(error){alert(error.message||'Ödeme başlatılamadı.');}
+const checkoutModal = document.getElementById('checkoutModal');
+const checkoutForm = document.getElementById('checkoutForm');
+const checkoutSubmit = document.getElementById('checkoutSubmit');
+const checkoutError = document.getElementById('checkoutError');
+const checkoutSummary = document.getElementById('checkoutSummary');
+let checkoutPlanId = '';
+let checkoutPaymentUrl = '';
+const checkoutMoney = value => new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY'}).format(Number(value));
+function closeCheckout(){checkoutModal.classList.remove('open');checkoutModal.setAttribute('aria-hidden','true');}
+document.getElementById('checkoutClose').addEventListener('click',closeCheckout);
+document.getElementById('checkoutCancel').addEventListener('click',closeCheckout);
+checkoutModal.addEventListener('click',event=>{if(event.target===checkoutModal)closeCheckout();});
+checkoutForm.addEventListener('submit',async event=>{
+ event.preventDefault();
+ const user=auth.currentUser;
+ if(!user||!user.emailVerified){closeCheckout();setMode('login');openModal();showMessage('Siparişi tamamlamak için giriş yapıp e-posta adresinizi doğrulayın.','error');return;}
+ if(checkoutPaymentUrl){window.location.assign(checkoutPaymentUrl);return;}
+ checkoutError.classList.remove('show');checkoutError.textContent='';
+ checkoutSubmit.disabled=true;checkoutSubmit.textContent='Hazırlanıyor…';
+ try{
+  const data=Object.fromEntries(new FormData(checkoutForm).entries());
+  data.name=String(data.name||'').trim();data.surname=String(data.surname||'').trim();
+  data.gsmNumber=String(data.gsmNumber||'').trim();data.identityNumber=String(data.identityNumber||'').trim();
+  data.city=String(data.city||'').trim();data.district=String(data.district||'').trim();
+  data.address=String(data.address||'').trim();data.zipCode=String(data.zipCode||'').trim();
+  const token=await user.getIdToken(true);
+  const response=await fetch('https://trend-entegre.onrender.com/api/v1/payments/iyzico/initialize',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({planId:checkoutPlanId,customer:data})});
+  const result=await response.json();
+  if(!response.ok)throw new Error(result.error||'Ödeme başlatılamadı.');
+  checkoutPaymentUrl=result.paymentPageUrl;
+  document.getElementById('checkoutNet').textContent=checkoutMoney(result.totals.net);
+  document.getElementById('checkoutVat').textContent=checkoutMoney(result.totals.vat);
+  document.getElementById('checkoutTotal').textContent=checkoutMoney(result.totals.total);
+  checkoutSummary.classList.add('show');
+  checkoutSubmit.textContent='iyzico ile güvenli ödemeye geç';
+ }catch(error){
+  checkoutError.textContent=error.message||'İşlem tamamlanamadı. Bilgileri kontrol edip tekrar deneyin.';
+  checkoutError.classList.add('show');
+ }finally{checkoutSubmit.disabled=false;}
+});
+window.addEventListener('trend:purchase',event=>{
+ checkoutPlanId=String(event.detail?.planId||'');
+ checkoutPaymentUrl='';
+ checkoutForm.reset();checkoutSummary.classList.remove('show');checkoutError.classList.remove('show');checkoutError.textContent='';
+ checkoutSubmit.disabled=false;checkoutSubmit.textContent='Ödeme tutarını hesapla';
+ const user=auth.currentUser;
+ if(!user||!user.emailVerified){setMode('login');openModal();showMessage('Sipariş için önce giriş yapıp e-posta adresinizi doğrulayın.','error');return;}
+ const parts=(user.displayName||'').trim().split(/\s+/);
+ document.getElementById('billName').value=parts.shift()||'';
+ document.getElementById('billSurname').value=parts.join(' ');
+ checkoutModal.classList.add('open');checkoutModal.setAttribute('aria-hidden','false');
 });
 const paymentResult=new URLSearchParams(window.location.search).get('payment');if(paymentResult){const messages={success:'Ödemeniz doğrulandı. 12 aylık üyeliğiniz etkinleştirildi.',failed:'Ödeme tamamlanmadı.',error:'Ödeme sonucu doğrulanamadı. Destek ekibiyle iletişime geçin.'};alert(messages[paymentResult]||'Ödeme sonucu alındı.');const clean=new URL(window.location.href);clean.searchParams.delete('payment');clean.searchParams.delete('plan');window.history.replaceState({},'',clean.toString());}
