@@ -235,6 +235,7 @@ footer i{color:#ffd36e}
 #checkoutModal label{display:block;font-size:13px;font-weight:700;color:#35415a;margin-bottom:6px}
 #checkoutModal input,#checkoutModal select{width:100%;height:46px;border:1px solid #d6dce8;border-radius:10px;padding:0 12px;font:inherit;color:#18243a;background:#fff;box-sizing:border-box}
 #checkoutModal .checkout-field.full{grid-column:1/-1}
+#checkoutModal .checkout-field small{display:block;margin-top:5px}
 #checkoutModal .checkout-summary{display:none;margin-top:20px;padding:16px;border-radius:13px;background:#f2f6ff;border:1px solid #dce6ff}
 #checkoutModal .checkout-summary.show{display:block}
 #checkoutModal .checkout-summary-row{display:flex;justify-content:space-between;gap:12px;margin:7px 0}
@@ -259,9 +260,9 @@ footer i{color:#ffd36e}
 <div class="checkout-field full"><label for="billCompany">Firma adı (şirket faturası için)</label><input id="billCompany" name="companyName" autocomplete="organization" placeholder="Firma unvanı"></div>
 <div class="checkout-field"><label for="billPhone">Telefon *</label><input id="billPhone" name="gsmNumber" type="tel" autocomplete="tel" placeholder="+905XXXXXXXXX" required></div>
 <div class="checkout-field"><label for="billIdentity">T.C. kimlik / Vergi no *</label><input id="billIdentity" name="identityNumber" inputmode="numeric" minlength="10" maxlength="11" required></div>
-<div class="checkout-field"><label for="billCity">İl *</label><input id="billCity" name="city" autocomplete="address-level1" required></div>
-<div class="checkout-field"><label for="billDistrict">İlçe *</label><input id="billDistrict" name="district" autocomplete="address-level2" required></div>
-<div class="checkout-field full"><label for="billAddress">Açık fatura adresi *</label><input id="billAddress" name="address" autocomplete="street-address" required></div>
+<div class="checkout-field"><label for="billCity">İl *</label><input id="billCity" name="city" list="billCityOptions" autocomplete="address-level1" placeholder="İl yazmaya başlayın" required><datalist id="billCityOptions"></datalist></div>
+<div class="checkout-field"><label for="billDistrict">İlçe *</label><input id="billDistrict" name="district" list="billDistrictOptions" autocomplete="address-level2" placeholder="İlçe yazmaya başlayın" required><datalist id="billDistrictOptions"></datalist></div>
+<div class="checkout-field full"><label for="billAddress">Açık fatura adresi *</label><input id="billAddress" name="address" list="billAddressOptions" autocomplete="street-address" placeholder="Cadde, sokak veya mahalle arayın" required><datalist id="billAddressOptions"></datalist><small class="checkout-note">Adres önerileri OpenStreetMap tabanlı aramadan gelir; öneriyi seçebilir veya adresinizi elle yazabilirsiniz.</small></div>
 <div class="checkout-field"><label for="billZip">Posta kodu *</label><input id="billZip" name="zipCode" autocomplete="postal-code" required></div>
 </div>
 <div class="checkout-error" id="checkoutError" role="alert"></div>
