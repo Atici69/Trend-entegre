@@ -255,7 +255,7 @@ export function registerIyzicoRoutes(app) {
   app.post('/api/v1/payments/iyzico/reconcile-test', async (req, res) => {
     try {
       const authHeader = req.headers.authorization || '';
-      const bearer = authHeader.match(/^Bearer\\s+(.+)$/i)?.[1];
+      const bearer = authHeader.match(/^Bearer\s+(.+)$/i)?.[1];
       const firebase = firebaseServices();
       if (!firebase || !bearer) return res.status(401).json({ error: 'Yönetici oturumu doğrulanamadı.' });
       const decoded = await firebase.auth.verifyIdToken(bearer);
@@ -264,7 +264,7 @@ export function registerIyzicoRoutes(app) {
 
       const paymentId = String(req.body?.paymentId || '').trim();
       const conversationId = String(req.body?.conversationId || '').trim();
-      if (!/^\\d{6,20}$/.test(paymentId) || !conversationId || conversationId.length > 80) {
+      if (!/^\d{6,20}$/.test(paymentId) || !conversationId || conversationId.length > 80) {
         return res.status(400).json({ error: 'Geçerli ödeme ve konuşma numarası gerekli.' });
       }
 
