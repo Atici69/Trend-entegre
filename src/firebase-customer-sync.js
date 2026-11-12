@@ -1,8 +1,7 @@
-import { getApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+import { auth } from "./firebase-auth.js?v=20261112-fix1";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
 const API_BASE_URL = "https://trend-entegre.onrender.com";
-const auth = getAuth(getApp());
 const syncedUsers = new Set();
 
 async function syncCustomer(user) {
