@@ -276,7 +276,7 @@ for (const [resource, config] of Object.entries(resourceConfig)) {
         const userId = customer.user_id || req.params.id;
         const userFields = {};
         for (const field of ['full_name', 'email', 'phone', 'company_name', 'status']) {
-          if (Object.hasOwn(payload, field)) userFields[field] = payload[field];
+          if (Object.hasOwn(customer, field)) userFields[field] = customer[field];
         }
         if (Object.keys(userFields).length) {
           await req.firestore.collection('users').doc(userId).set({
