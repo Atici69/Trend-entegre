@@ -266,6 +266,10 @@ checkoutForm.addEventListener('submit',async event=>{
 });
 window.addEventListener('trend:purchase',async event=>{
  checkoutPlanId=String(event.detail?.planId||'');
+ const isTestProduct=checkoutPlanId.startsWith('test-product-');
+ document.getElementById('checkoutLead').textContent=isTestProduct?'Gerçek karttan tek seferlik test çekimi için fatura bilgilerinizi kontrol edin.':'Yıllık paket satın alımınızı tamamlamak için fatura bilgilerinizi girin. Ödeme kredi kartından tek çekim alınır.';
+ document.getElementById('checkoutNetLabel').textContent=isTestProduct?'Test ürünü bedeli':'Yıllık paket bedeli';
+ document.getElementById('checkoutTermNote').textContent=isTestProduct?'Bu ödeme tek seferliktir; abonelik, paket süresi veya otomatik yenileme başlatmaz.':'12 aylık kullanım hakkı. Otomatik yenileme yapılmaz; sonraki yıl yenileme sizin onayınızla gerçekleştirilir.';
  checkoutPaymentUrl='';
  checkoutForm.reset();checkoutSummary.classList.remove('show');checkoutError.classList.remove('show');checkoutError.textContent='';
  checkoutSubmit.disabled=false;checkoutSubmit.textContent='Ödeme tutarını hesapla';
