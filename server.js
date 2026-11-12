@@ -275,7 +275,9 @@ for (const [resource, config] of Object.entries(resourceConfig)) {
       const updated = await ref.get();
       if (resource === 'customers') {
         const customer = updated.data();
-        const userId = customer.user_id || req.params.id;
+        // Customer documents are keyed by the Firebase Auth UID in this project.
+        // Always sync to that same UID; a stale/mismatched customer.user_id must not redirect the write.
+        const userId = req.params.id;
         const userFields = {};
         for (const field of ['full_name', 'email', 'phone', 'company_name', 'status']) {
           if (Object.hasOwn(customer, field)) userFields[field] = customer[field];
