@@ -12,6 +12,8 @@ const PLANS = {
   'eticaret-baslangic': { name: 'E-Ticaret Başlangıç', annualNet: 1700000 },
   'eticaret-buyume': { name: 'E-Ticaret Büyüme', annualNet: 3500000 },
   'eticaret-profesyonel': { name: 'E-Ticaret Profesyonel', annualNet: 7100000 },
+  'test-product-3-tl': { name: 'Test Ürünü 1', netAmount: 250, vatAmount: 50, grossAmount: 300, testOnly: true },
+  'test-product-5-tl': { name: 'Test Ürünü 2', netAmount: 417, vatAmount: 83, grossAmount: 500, testOnly: true },
 };
 
 const money = (minor) => (minor / 100).toFixed(2);
@@ -79,6 +81,10 @@ export function registerIyzicoRoutes(app) {
     const plan = PLANS[planId];
     if (!client) return res.status(503).json({ error: 'iyzico ödeme ayarları hazır değil.' });
     if (!plan) return res.status(400).json({ error: 'Geçersiz paket seçimi.' });
+    if (plan.testOnly) {
+      const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map((email) => email.trim().toLowerCase()).filter(Boolean);
+      if (!adminEmails.includes(req.user.email.toLowerCase())) return res.status(403).json({ error: 'Test ürünlerini yalnızca yetkili yönetici hesabı satın alabilir.' });
+    }
     if (!process.env.IYZIPAY_CALLBACK_URL?.trim()) return res.status(503).json({ error: 'Ödeme geri dönüş adresi ayarlı değil.' });
 
     const c = req.body?.customer || {};
@@ -89,9 +95,9 @@ export function registerIyzicoRoutes(app) {
     const identity = c.identityNumber.trim();
     if (!/^\d{10,11}$/.test(identity)) return res.status(400).json({ error: 'T.C. kimlik veya vergi numarası 10 ya da 11 rakam olmalıdır.' });
 
-    const net = plan.annualNet;
-    const vat = Math.round(net * 0.20);
-    const gross = net + vat;
+    const net = plan.testOnly ? plan.netAmount : plan.annualNet;
+    const vat = plan.testOnly ? plan.vatAmount : Math.round(net * 0.20);
+    const gross = plan.testOnly ? plan.grossAmount : net + vat;
     const attemptId = randomUUID();
     const buyerName = c.name.trim().slice(0, 50);
     const buyerSurname = c.surname.trim().slice(0, 50);
@@ -127,7 +133,7 @@ export function registerIyzicoRoutes(app) {
       billingAddress: { ...address, district },
       shippingAddress: { ...address, district },
       basketItems: [
-        { id: planId, name: `${plan.name} - 12 Aylık Lisans`, category1: 'Yazılım', category2: 'Yıllık Lisans', itemType: Iyzipay.BASKET_ITEM_TYPE.VIRTUAL, price: money(net) },
+        { id: planId, name: plan.testOnly ? plan.name : `${plan.name} - 12 Aylık Lisans`, category1: 'Yazılım', category2: plan.testOnly ? 'Test Ürünü' : 'Yıllık Lisans', itemType: Iyzipay.BASKET_ITEM_TYPE.VIRTUAL, price: money(net) },
         { id: 'KDV20', name: 'KDV (%20)', category1: 'Vergi', category2: 'KDV', itemType: Iyzipay.BASKET_ITEM_TYPE.VIRTUAL, price: money(vat) },
       ],
     };
@@ -140,7 +146,7 @@ export function registerIyzicoRoutes(app) {
       }
       await req.db.collection('payment_attempts').doc(hash(result.token)).create({
         uid: req.user.uid, email: req.user.email, provider: 'iyzico',
-        plan_id: planId, plan_name: plan.name, net_amount_minor: net,
+        plan_id: planId, plan_name: plan.name, is_test_payment: Boolean(plan.testOnly), net_amount_minor: net,
         vat_amount_minor: vat, gross_amount_minor: gross, amount: gross / 100,
         currency: 'TRY', checkout_token_hash: hash(result.token),
         provider_conversation_id: attemptId, status: 'pending',
@@ -181,6 +187,27 @@ export function registerIyzicoRoutes(app) {
         await attemptRef.set({ status: 'failed', provider_status: String(result.paymentStatus || result.status || 'unconfirmed'), updated_at: FieldValue.serverTimestamp() }, { merge: true });
         const url = returnUrl('failed', attempt.plan_id);
         return url ? res.redirect(303, url) : res.status(200).send('Ödeme tamamlanmadı.');
+      }
+
+      if (attempt.is_test_payment === true) {
+        const paymentRef = firebase.db.collection('payments').doc(String(result.paymentId));
+        const batch = firebase.db.batch();
+        batch.create(paymentRef, {
+          customer_id: attempt.uid, user_id: attempt.uid, provider: 'iyzico',
+          provider_reference: String(result.paymentId), provider_conversation_id: attempt.provider_conversation_id,
+          status: 'paid', plan_id: attempt.plan_id, package_name: attempt.plan_name,
+          payment_type: 'test_product', net_amount: attempt.net_amount_minor / 100,
+          vat_amount: attempt.vat_amount_minor / 100, amount: attempt.gross_amount_minor / 100,
+          currency: 'TRY', created_at: FieldValue.serverTimestamp(),
+        });
+        batch.set(attemptRef, {
+          status: 'paid', provider_payment_id: String(result.paymentId),
+          provider_status: result.paymentStatus, paid_at: FieldValue.serverTimestamp(),
+          updated_at: FieldValue.serverTimestamp(),
+        }, { merge: true });
+        await batch.commit();
+        const url = returnUrl('success', attempt.plan_id);
+        return url ? res.redirect(303, url) : res.status(200).send('Test ürünü ödemesi doğrulandı.');
       }
 
       const now = new Date();
