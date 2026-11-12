@@ -250,4 +250,89 @@ export function registerIyzicoRoutes(app) {
       return url ? res.redirect(303, url) : res.status(502).send('Ödeme doğrulaması tamamlanamadı.');
     }
   });
+
+  // Admin-only recovery for a captured test payment whose browser callback was missed.
+  app.post('/api/v1/payments/iyzico/reconcile-test', async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization || '';
+      const bearer = authHeader.match(/^Bearer\\s+(.+)$/i)?.[1];
+      const firebase = firebaseServices();
+      if (!firebase || !bearer) return res.status(401).json({ error: 'Yönetici oturumu doğrulanamadı.' });
+      const decoded = await firebase.auth.verifyIdToken(bearer);
+      const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map((email) => email.trim().toLowerCase()).filter(Boolean);
+      if (!decoded.email || !adminEmails.includes(decoded.email.toLowerCase())) return res.status(403).json({ error: 'Bu işlem yalnızca yöneticiler içindir.' });
+
+      const paymentId = String(req.body?.paymentId || '').trim();
+      const conversationId = String(req.body?.conversationId || '').trim();
+      if (!/^\\d{6,20}$/.test(paymentId) || !conversationId || conversationId.length > 80) {
+        return res.status(400).json({ error: 'Geçerli ödeme ve konuşma numarası gerekli.' });
+      }
+
+      const matches = await firebase.db.collection('payment_attempts')
+        .where('provider_conversation_id', '==', conversationId).limit(2).get();
+      if (matches.size !== 1) return res.status(404).json({ error: 'Ödeme denemesi bulunamadı veya tekil değil.' });
+      const attemptDoc = matches.docs[0];
+      const attempt = attemptDoc.data();
+      if (attempt.provider !== 'iyzico' || attempt.is_test_payment !== true) {
+        return res.status(403).json({ error: 'Bu kurtarma işlemi yalnızca test ödemeleri içindir.' });
+      }
+      if (attempt.status === 'paid' && attempt.provider_payment_id === paymentId) {
+        return res.json({ ok: true, alreadyProcessed: true, status: 'paid' });
+      }
+
+      const client = iyzicoClient();
+      if (!client) return res.status(503).json({ error: 'iyzico bağlantısı hazır değil.' });
+      const result = await call(client.payment, 'retrieve', {
+        locale: Iyzipay.LOCALE.TR,
+        conversationId: randomUUID(),
+        paymentId,
+        paymentConversationId: conversationId,
+      });
+      const paidMinor = Math.round(Number(result.paidPrice) * 100);
+      const confirmed = result.status === 'success'
+        && result.paymentStatus === 'SUCCESS'
+        && Number(result.fraudStatus) === 1
+        && String(result.paymentId) === paymentId
+        && result.currency === 'TRY'
+        && paidMinor === attempt.gross_amount_minor
+        && result.basketId === conversationId;
+      if (!confirmed) {
+        console.error('iyzico test payment reconciliation mismatch:', {
+          status: result.status, paymentStatus: result.paymentStatus,
+          fraudStatus: result.fraudStatus, paymentId: result.paymentId,
+          currency: result.currency, basketId: result.basketId,
+        });
+        return res.status(409).json({ error: 'iyzico ödeme bilgileri kayıtla eşleşmedi; hiçbir kayıt değiştirilmedi.' });
+      }
+
+      const paymentRef = firebase.db.collection('payments').doc(paymentId);
+      await firebase.db.runTransaction(async (transaction) => {
+        const existingPayment = await transaction.get(paymentRef);
+        if (existingPayment.exists) {
+          const existing = existingPayment.data();
+          if (String(existing.provider_reference) !== paymentId || existing.user_id !== attempt.uid) {
+            throw new Error('Payment ID başka bir kullanıcı kaydıyla eşleşiyor.');
+          }
+        } else {
+          transaction.create(paymentRef, {
+            customer_id: attempt.uid, user_id: attempt.uid, provider: 'iyzico',
+            provider_reference: paymentId, provider_conversation_id: conversationId,
+            status: 'paid', plan_id: attempt.plan_id, package_name: attempt.plan_name,
+            payment_type: 'test_product', net_amount: attempt.net_amount_minor / 100,
+            vat_amount: attempt.vat_amount_minor / 100, amount: attempt.gross_amount_minor / 100,
+            currency: 'TRY', created_at: FieldValue.serverTimestamp(),
+          });
+        }
+        transaction.set(attemptDoc.ref, {
+          status: 'paid', provider_payment_id: paymentId,
+          provider_status: result.paymentStatus, paid_at: FieldValue.serverTimestamp(),
+          updated_at: FieldValue.serverTimestamp(),
+        }, { merge: true });
+      });
+      return res.json({ ok: true, status: 'paid', paymentId, amount: attempt.gross_amount_minor / 100, testPayment: true });
+    } catch (error) {
+      console.error('iyzico test payment reconciliation failed:', error?.message || 'Unknown error');
+      return res.status(500).json({ error: 'Ödeme kurtarma işlemi tamamlanamadı.' });
+    }
+  });
 }
