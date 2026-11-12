@@ -127,6 +127,67 @@ app.post('/api/v1/auth/register', async (req, res) => {
   }
 });
 
+
+// Customer-owned billing profile: each signed-in user can read and update only their own record.
+async function requireCustomer(req, res, next) {
+  try {
+    const token = req.headers.authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
+    const firebase = getFirebaseAdmin();
+    if (!firebase || !token) return res.status(401).json({ error: 'Oturum doğrulanamadı.' });
+    const decoded = await firebase.auth.verifyIdToken(token);
+    if (!decoded.uid || decoded.email_verified !== true) return res.status(403).json({ error: 'E-posta doğrulaması gerekli.' });
+    req.customerUser = { uid: decoded.uid, email: decoded.email || '' };
+    req.customerDb = firebase.db;
+    next();
+  } catch { return res.status(401).json({ error: 'Oturum doğrulanamadı.' }); }
+}
+
+app.get('/api/v1/customer/profile', requireCustomer, async (req, res) => {
+  try {
+    const [userSnap, customerSnap] = await Promise.all([
+      req.customerDb.collection('users').doc(req.customerUser.uid).get(),
+      req.customerDb.collection('customers').doc(req.customerUser.uid).get(),
+    ]);
+    const user = userSnap.exists ? userSnap.data() : {};
+    const customer = customerSnap.exists ? customerSnap.data() : {};
+    const profile = { ...customer, ...user };
+    res.json({ profile: {
+      full_name: profile.full_name || '', phone: profile.phone || '', company_name: profile.company_name || '',
+      company_type: profile.company_type || '', tax_office: profile.tax_office || '', tax_number: profile.tax_number || '',
+      city: profile.city || '', district: profile.district || '', address: profile.address || '', zip_code: profile.zip_code || '',
+      billing_profile_completed: profile.billing_profile_completed === true,
+    } });
+  } catch (error) {
+    console.error('Customer profile read failed:', error?.message || 'Unknown error');
+    res.status(503).json({ error: 'Profil bilgileri şu anda alınamadı.' });
+  }
+});
+
+app.put('/api/v1/customer/profile', requireCustomer, async (req, res) => {
+  const b = req.body || {};
+  const allowed = ['full_name','phone','company_name','company_type','tax_office','tax_number','city','district','address','zip_code'];
+  const profile = Object.fromEntries(allowed.map(key => [key, String(b[key] || '').trim()]));
+  if (profile.full_name.length < 2 || !profile.phone || !profile.company_type || !profile.city || !profile.district || !profile.address || !profile.zip_code || !profile.tax_number) {
+    return res.status(400).json({ error: 'Zorunlu profil alanlarını tamamlayın.' });
+  }
+  if (!['sole_proprietor','limited','joint_stock','other'].includes(profile.company_type)) return res.status(400).json({ error: 'Geçersiz şirket türü.' });
+  const expectedTaxLength = profile.company_type === 'sole_proprietor' ? 11 : 10;
+  if (!(expectedTaxLength === 11 ? /^\d{11}$/.test(profile.tax_number) : /^\d{10}$/.test(profile.tax_number))) return res.status(400).json({ error: profile.company_type === 'sole_proprietor' ? 'Şahıs işletmesi için 11 haneli T.C. kimlik numarası girin.' : 'Şirketler için 10 haneli vergi numarası girin.' });
+  if (profile.company_type !== 'sole_proprietor' && !profile.tax_office) return res.status(400).json({ error: 'Vergi dairesi alanını doldurun.' });
+  const now = new Date().toISOString();
+  const data = { ...profile, email: req.customerUser.email, billing_profile_completed: true, billing_profile_updated_at: now, updated_at: now };
+  try {
+    const batch = req.customerDb.batch();
+    batch.set(req.customerDb.collection('users').doc(req.customerUser.uid), { ...data, uid: req.customerUser.uid }, { merge: true });
+    batch.set(req.customerDb.collection('customers').doc(req.customerUser.uid), { ...data, user_id: req.customerUser.uid, status: 'active' }, { merge: true });
+    await batch.commit();
+    res.json({ ok: true, profile: data });
+  } catch (error) {
+    console.error('Customer profile save failed:', error?.message || 'Unknown error');
+    res.status(503).json({ error: 'Profil kaydedilemedi. Lütfen tekrar deneyin.' });
+  }
+});
+
 app.get('/api/v1/admin/config', (_req, res) => {
   const config = firebasePublicConfig();
   const enabled = Object.values(config).every(Boolean) && Boolean(process.env.ADMIN_EMAILS?.trim()) && Boolean(process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim());
