@@ -51,7 +51,7 @@ jobs:
           export ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/trend-entegre-release.jks"
           python3 - <<'PY'
           from pathlib import Path
-          import os, re
+          import re
           gradle = Path("android/app/build.gradle")
           source = gradle.read_text()
           if "signingConfigs {" in source:
@@ -63,6 +63,8 @@ jobs:
                       storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
                       keyAlias System.getenv("ANDROID_KEY_ALIAS")
                       keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+                      enableV1Signing true
+                      enableV2Signing true
                   }
               }
           """
@@ -82,6 +84,11 @@ jobs:
         run: |
           cd android
           ./gradlew assembleRelease
+      - name: Verify release APK signature
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' && env.ANDROID_KEYSTORE_PASSWORD != '' && env.ANDROID_KEY_ALIAS != '' && env.ANDROID_KEY_PASSWORD != '' }}
+        run: |
+          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          "$BUILD_TOOLS/apksigner" verify --verbose --print-certs android/app/build/outputs/apk/release/app-release.apk
       - name: Upload signed release APK
         if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' && env.ANDROID_KEYSTORE_PASSWORD != '' && env.ANDROID_KEY_ALIAS != '' && env.ANDROID_KEY_PASSWORD != '' }}
         uses: actions/upload-artifact@v4
