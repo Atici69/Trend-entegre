@@ -1,3 +1,5 @@
+import { Browser } from '@capacitor/browser';
+import { Capacitor } from '@capacitor/core';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {
   getAuth, setPersistence, browserLocalPersistence,
@@ -243,7 +245,21 @@ checkoutForm.addEventListener('submit',async event=>{
  event.preventDefault();
  const user=auth.currentUser;
  if(!user||!user.emailVerified){closeCheckout();setMode('login');openModal();showMessage('Siparişi tamamlamak için giriş yapıp e-posta adresinizi doğrulayın.','error');return;}
- if(checkoutPaymentUrl){window.location.assign(checkoutPaymentUrl);return;}
+ if(checkoutPaymentUrl){
+  try{
+   const paymentUrl=new URL(checkoutPaymentUrl);
+   if(paymentUrl.protocol!=='https:')throw new Error('Güvenli olmayan ödeme adresi engellendi.');
+   if(Capacitor.isNativePlatform()){
+    await Browser.open({url:paymentUrl.toString()});
+   }else{
+    window.location.assign(paymentUrl.toString());
+   }
+  }catch(error){
+   checkoutError.textContent=error.message||'iyzico ödeme sayfası açılamadı. Lütfen tekrar deneyin.';
+   checkoutError.classList.add('show');
+  }
+  return;
+ }
  checkoutError.classList.remove('show');checkoutError.textContent='';
  checkoutSubmit.disabled=true;checkoutSubmit.textContent='Hazırlanıyor…';
  try{
