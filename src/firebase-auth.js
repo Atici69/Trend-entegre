@@ -257,7 +257,9 @@ checkoutForm.addEventListener('submit',async event=>{
   try{
    const paymentUrl=new URL(checkoutPaymentUrl);
    if(paymentUrl.protocol!=='https:')throw new Error('Güvenli olmayan ödeme adresi engellendi.');
-   if(Capacitor.isNativePlatform()){
+   const isNativePlatform = window.Capacitor?.isNativePlatform?.() === true;
+   if(isNativePlatform){
+    const { Browser } = await import('@capacitor/browser');
     await Browser.open({url:paymentUrl.toString()});
    }else{
     window.location.assign(paymentUrl.toString());
