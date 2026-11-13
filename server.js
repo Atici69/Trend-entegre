@@ -216,6 +216,131 @@ app.get('/api/v1/admin/session', requireAdmin, (req, res) => {
   res.json({ ok: true, user: req.adminUser });
 });
 
+app.get('/api/v1/admin/ads', requireAdmin, async (req, res) => {
+  try {
+    const snapshot = await req.firestore.collection('ad_campaigns').get();
+    const campaigns = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+      .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+    res.json({ slots: adSlots, campaigns });
+  } catch (error) {
+    console.error('Admin ads list failed:', error?.message || 'Unknown error');
+    res.status(503).json({ error: 'Reklam kayıtları alınamadı.' });
+  }
+});
+function validateAdPayload(body, partial = false) {
+  const allowed = ['slot_id','advertiser_name','advertiser_email','title','description','image_url','target_url','starts_at','ends_at','price','billing_period','status'];
+  const payload = cleanPayload(body, allowed);
+  if (!partial || Object.hasOwn(payload, 'slot_id')) if (!adSlotIds.has(payload.slot_id)) return { error: 'Geçerli bir reklam alanı seçin.' };
+  if (!partial || Object.hasOwn(payload, 'title')) if (!payload.title || String(payload.title).length > 120) return { error: 'Reklam başlığı zorunludur (en fazla 120 karakter).' };
+  if (!partial || Object.hasOwn(payload, 'advertiser_name')) if (!payload.advertiser_name || String(payload.advertiser_name).length > 160) return { error: 'Reklam veren firma / kişi bilgisi zorunludur.' };
+  if (Object.hasOwn(payload, 'advertiser_email') && payload.advertiser_email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(payload.advertiser_email)) return { error: 'Reklam veren e-posta adresini kontrol edin.' };
+  if (Object.hasOwn(payload, 'image_url')) { const url = safeAdUrl(payload.image_url); if (url === null) return { error: 'Görsel adresi http veya https olmalıdır.' }; payload.image_url = url; }
+  if (Object.hasOwn(payload, 'target_url')) { const url = safeAdUrl(payload.target_url); if (url === null) return { error: 'Hedef bağlantı http veya https olmalıdır.' }; payload.target_url = url; }
+  if (!partial || Object.hasOwn(payload, 'starts_at')) if (!payload.starts_at || !Number.isFinite(Date.parse(payload.starts_at))) return { error: 'Başlangıç tarihi geçerli olmalıdır.' };
+  if (!partial || Object.hasOwn(payload, 'ends_at')) if (!payload.ends_at || !Number.isFinite(Date.parse(payload.ends_at))) return { error: 'Bitiş tarihi geçerli olmalıdır.' };
+  if (payload.starts_at && payload.ends_at && Date.parse(payload.ends_at) <= Date.parse(payload.starts_at)) return { error: 'Bitiş tarihi başlangıç tarihinden sonra olmalıdır.' };
+  if (Object.hasOwn(payload, 'price') && (!Number.isFinite(Number(payload.price)) || Number(payload.price) < 0)) return { error: 'Reklam fiyatı sıfır veya daha büyük olmalıdır.' };
+  if (Object.hasOwn(payload, 'billing_period') && !['daily','period'].includes(payload.billing_period)) return { error: 'Geçersiz ücretlendirme dönemi.' };
+  if (Object.hasOwn(payload, 'status') && !['draft','pending','approved','paused','expired'].includes(payload.status)) return { error: 'Geçersiz reklam durumu.' };
+  return { payload };
+}
+app.post('/api/v1/admin/ads', requireAdmin, async (req, res) => {
+  const checked = validateAdPayload(req.body || {});
+  if (checked.error) return res.status(400).json({ error: checked.error });
+  try {
+    const now = new Date().toISOString();
+    const payload = { ...checked.payload, status: checked.payload.status || 'draft', impressions: 0, clicks: 0, created_at: now, updated_at: now, created_by: req.adminUser.email };
+    const ref = await req.firestore.collection('ad_campaigns').add(payload);
+    await audit(req, 'create', 'ad_campaigns', ref.id, { slot_id: payload.slot_id });
+    res.status(201).json({ item: { id: ref.id, ...payload } });
+  } catch (error) {
+    console.error('Admin ad create failed:', error?.message || 'Unknown error');
+    res.status(503).json({ error: 'Reklam kaydı oluşturulamadı.' });
+  }
+});
+app.patch('/api/v1/admin/ads/:id', requireAdmin, async (req, res) => {
+  const checked = validateAdPayload(req.body || {}, true);
+  if (checked.error) return res.status(400).json({ error: checked.error });
+  if (!Object.keys(checked.payload).length) return res.status(400).json({ error: 'Güncellenecek alan bulunamadı.' });
+  try {
+    const ref = req.firestore.collection('ad_campaigns').doc(req.params.id);
+    const current = await ref.get();
+    if (!current.exists) return res.status(404).json({ error: 'Reklam bulunamadı.' });
+    const patch = { ...checked.payload, updated_at: new Date().toISOString() };
+    await ref.update(patch);
+    await audit(req, 'update', 'ad_campaigns', req.params.id, { fields: Object.keys(patch) });
+    const updated = await ref.get();
+    res.json({ item: { id: updated.id, ...updated.data() } });
+  } catch (error) {
+    console.error('Admin ad update failed:', error?.message || 'Unknown error');
+    res.status(503).json({ error: 'Reklam güncellenemedi.' });
+  }
+});
+
+
+const adSlots = [
+  { id: 'home_top', name: 'Ana sayfa üst banner', page: 'Ana sayfa', position: 'Üst bölüm' },
+  { id: 'home_slider', name: 'Ana sayfa slider', page: 'Ana sayfa', position: 'Slider' },
+  { id: 'home_bottom', name: 'Ana sayfa alt banner', page: 'Ana sayfa', position: 'Alt bölüm' },
+  { id: 'between_packages', name: 'Paketler arası reklam', page: 'Paketler', position: 'Paket kartları arası' },
+  { id: 'product_category', name: 'Ürün / kategori sponsorluğu', page: 'Ürün ve kategori', position: 'Kategori üstü' },
+  { id: 'buybox_promo', name: 'BuyBox tanıtım alanı', page: 'BuyBox', position: 'BuyBox bölümü' },
+  { id: 'customer_dashboard', name: 'Müşteri paneli', page: 'Müşteri paneli', position: 'Panel içi' },
+  { id: 'dealer_dashboard', name: 'Bayi paneli', page: 'Bayi paneli', position: 'Panel içi' },
+  { id: 'guide_content', name: 'Rehber / içerik sayfaları', page: 'Rehber ve yardım', position: 'İçerik arası' },
+  { id: 'help_content', name: 'Yardım sayfaları', page: 'Yardım merkezi', position: 'İçerik altı' },
+  { id: 'package_selection', name: 'Paket seçim sayfası', page: 'Paket seçimi', position: 'Paketlerden önce' },
+  { id: 'xml_content', name: 'XML ürün merkezi', page: 'XML merkezi', position: 'İçerik alanı' },
+];
+const adSlotIds = new Set(adSlots.map((slot) => slot.id));
+function safeAdUrl(value, required = false) {
+  const raw = String(value || '').trim();
+  if (!raw && !required) return '';
+  try {
+    const url = new URL(raw);
+    return ['https:', 'http:'].includes(url.protocol) ? url.toString() : null;
+  } catch { return null; }
+}
+function publicAdCampaign(doc) {
+  const data = doc.data();
+  const now = Date.now();
+  const start = Date.parse(data.starts_at || '');
+  const end = Date.parse(data.ends_at || '');
+  if (data.status !== 'approved' || !Number.isFinite(start) || !Number.isFinite(end) || start > now || end < now) return null;
+  return {
+    id: doc.id, slot_id: data.slot_id, title: data.title || '', description: data.description || '',
+    image_url: data.image_url || '', target_url: data.target_url || '', advertiser_name: data.advertiser_name || '',
+  };
+}
+app.get('/api/v1/ads/:slot', async (req, res) => {
+  const slot = String(req.params.slot || '');
+  if (!adSlotIds.has(slot)) return res.status(404).json({ error: 'Reklam alanı bulunamadı.' });
+  try {
+    const snapshot = await getFirestore().collection('ad_campaigns').where('slot_id', '==', slot).where('status', '==', 'approved').limit(30).get();
+    const campaigns = snapshot.docs.map(publicAdCampaign).filter(Boolean);
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json({ campaigns });
+  } catch (error) {
+    console.error('Public ad read failed:', error?.message || 'Unknown error');
+    res.status(503).json({ campaigns: [] });
+  }
+});
+app.post('/api/v1/ads/:id/:event', async (req, res) => {
+  const { id, event } = req.params;
+  if (!/^[A-Za-z0-9_-]{1,100}$/.test(id) || !['impression', 'click'].includes(event)) return res.status(400).json({ error: 'Geçersiz reklam ölçümü.' });
+  try {
+    const ref = getFirestore().collection('ad_campaigns').doc(id);
+    const snap = await ref.get();
+    if (!snap.exists || snap.data().status !== 'approved') return res.status(404).json({ error: 'Reklam bulunamadı.' });
+    await ref.update({ [event === 'click' ? 'clicks' : 'impressions']: FieldValue.increment(1), updated_at: new Date().toISOString() });
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Ad metric update failed:', error?.message || 'Unknown error');
+    res.status(503).json({ error: 'Reklam ölçümü kaydedilemedi.' });
+  }
+});
+
+
 const resourceConfig = {
   customers: {
     search: ['full_name','company_name','email','phone'],
