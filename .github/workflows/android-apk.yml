@@ -8,6 +8,11 @@ on:
 jobs:
   android:
     runs-on: ubuntu-latest
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,9 +35,58 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
-      - uses: actions/upload-artifact@v4
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
         with:
           name: trend-entegre-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Configure Android release signing
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' && env.ANDROID_KEYSTORE_PASSWORD != '' && env.ANDROID_KEY_ALIAS != '' && env.ANDROID_KEY_PASSWORD != '' }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/trend-entegre-release.jks"
+          chmod 600 "$RUNNER_TEMP/trend-entegre-release.jks"
+          export ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/trend-entegre-release.jks"
+          python3 - <<'PY'
+          from pathlib import Path
+          import os, re
+          gradle = Path("android/app/build.gradle")
+          source = gradle.read_text()
+          if "signingConfigs {" in source:
+              raise SystemExit("Signing configuration already exists; refusing to overwrite it.")
+          signing = """
+              signingConfigs {
+                  release {
+                      storeFile file(System.getenv("ANDROID_KEYSTORE_PATH"))
+                      storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                      keyAlias System.getenv("ANDROID_KEY_ALIAS")
+                      keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+                  }
+              }
+          """
+          if "    buildTypes {" not in source:
+              raise SystemExit("Could not locate Android buildTypes block.")
+          source = source.replace("    buildTypes {", signing + "\n    buildTypes {", 1)
+          pattern = r"(    buildTypes\s*\{\s*release\s*\{)"
+          source, count = re.subn(pattern, r"\1\n            signingConfig signingConfigs.release", source, count=1)
+          if count != 1:
+              raise SystemExit("Could not locate release build type.")
+          gradle.write_text(source)
+          PY
+      - name: Build signed release APK
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' && env.ANDROID_KEYSTORE_PASSWORD != '' && env.ANDROID_KEY_ALIAS != '' && env.ANDROID_KEY_PASSWORD != '' }}
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/trend-entegre-release.jks
+        run: |
+          cd android
+          ./gradlew assembleRelease
+      - name: Upload signed release APK
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' && env.ANDROID_KEYSTORE_PASSWORD != '' && env.ANDROID_KEY_ALIAS != '' && env.ANDROID_KEY_PASSWORD != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: trend-entegre-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 30
