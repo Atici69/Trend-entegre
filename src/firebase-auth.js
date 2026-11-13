@@ -32,6 +32,8 @@ const submitButton = $("authSubmitBtn");
 const message = $("authMessage");
 let mode = "login";
 
+const loginRequestedFromNavigation = new URLSearchParams(window.location.search).get('giris') === '1';
+
 const persistenceReady = setPersistence(auth, browserLocalPersistence).catch((error) => {
   console.error('Firebase oturum kalıcılığı ayarlanamadı:', error);
   throw error;
@@ -71,6 +73,14 @@ function closeModal() {
   modal.classList.remove("open");
   modal.setAttribute("aria-hidden", "true");
   clearMessage();
+}
+
+if (loginRequestedFromNavigation) {
+  setMode("login");
+  openModal();
+  const cleanUrl = new URL(window.location.href);
+  cleanUrl.searchParams.delete("giris");
+  window.history.replaceState({}, "", cleanUrl.toString());
 }
 
 $("authOpenBtn").addEventListener("click", () => {
