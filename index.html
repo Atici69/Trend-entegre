@@ -344,7 +344,7 @@ footer{background:linear-gradient(120deg,#101832,#1c2853)}
 #checkoutModal .checkout-panel,#profileModal .checkout-panel{width:min(720px,100%);max-height:calc(100vh - 44px);overflow:auto;background:#fff;color:#172033;border-radius:20px;padding:28px;box-shadow:0 24px 80px #0005;position:relative}
 #checkoutModal h2,#profileModal h2{font-size:25px;margin:0 40px 8px 0;color:#15213b}
 #checkoutModal .checkout-lead,#profileModal .checkout-lead{color:#65718a;margin:0 0 22px;line-height:1.5}
-#checkoutModal .checkout-close{position:absolute;right:18px;top:15px;border:0;background:#eef1f7;border-radius:50%;width:38px;height:38px;font-size:24px;cursor:pointer}
+#checkoutModal .checkout-close,#profileModal .checkout-close{position:absolute;right:18px;top:15px;border:0;background:#eef1f7;border-radius:50%;width:44px;height:44px;font-size:24px;cursor:pointer}
 #checkoutModal .checkout-grid,#profileModal .checkout-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 #checkoutModal label,#profileModal label{display:block;font-size:13px;font-weight:700;color:#35415a;margin-bottom:6px}
 #checkoutModal input,#checkoutModal select,#profileModal input,#profileModal select{width:100%;height:46px;border:1px solid #d6dce8;border-radius:10px;padding:0 12px;font:inherit;color:#18243a;background:#fff;box-sizing:border-box}
@@ -390,7 +390,8 @@ footer{background:linear-gradient(120deg,#101832,#1c2853)}
 <p class="checkout-note">Bilgileriniz sipariş ve fatura işlemleri için kullanılır. Kart bilgileriniz Trend-Entegre tarafından alınmaz; güvenli ödeme iyzico sayfasında tamamlanır.</p>
 </form></section></div>
 <div id="profileModal" class="checkout-modal" aria-hidden="true"><section class="checkout-panel" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
-<h2 id="profileTitle">Firma ve fatura profilinizi tamamlayın</h2><p class="checkout-lead">Bu bilgileri bir kez kaydedin. Sonraki siparişlerinizde yeniden doldurmanız gerekmez.</p>
+<button type="button" class="checkout-close" id="profileClose" aria-label="Hesap penceresini kapat">×</button>
+<h2 id="profileTitle">Hesabım ve fatura bilgilerim</h2><p class="checkout-lead">Giriş yaptığınız hesap: <strong id="profileAccountEmail"></strong>. Firma ve fatura bilgilerinizi buradan güncelleyebilirsiniz.</p>
 <form id="profileForm"><div class="checkout-grid">
 <div class="checkout-field"><label for="profileFullName">Ad soyad *</label><input id="profileFullName" name="full_name" required></div>
 <div class="checkout-field"><label for="profilePhone">Telefon *</label><input id="profilePhone" name="phone" type="tel" required></div>
