@@ -504,6 +504,39 @@ footer i{color:#ff9a61}
 }
 </style>
 
+<style id="real-home-slider-refresh">
+.hero-slider{background:#f6f8fc!important;color:#15213f!important;padding:76px 0 66px!important;position:relative;overflow:hidden}
+.hero-slider:before{content:"";position:absolute;width:620px;height:620px;border-radius:50%;right:-210px;top:-330px;background:radial-gradient(circle,#e8edfb 0%,#f6f8fc 70%);pointer-events:none}
+.hero-layout{position:relative;z-index:1;display:grid;grid-template-columns:1.05fr .95fr;gap:54px;align-items:center}
+.hero-copy{min-width:0}.hero-slides{position:relative;min-height:330px}
+.hero-slide{display:none;animation:heroIn .35s ease}.hero-slide.is-active{display:block}
+.hero-slide .tag{display:inline-flex;background:#fff0e7;border:1px solid #f8d5c0;color:#b9541c;padding:8px 12px}
+.hero-slide h1{color:#101b3f;font-size:clamp(42px,5vw,62px);line-height:1.06;letter-spacing:-2.3px;margin:24px 0 18px;max-width:680px}
+.hero-slide h1 em{color:#ef762e}.hero-slide p{color:#5c6881;font-size:17px;line-height:1.8;max-width:590px}
+.hero-slide .actions{margin-top:28px}.hero-slide .actions .btn{background:#f4772b;color:#fff;border:0}.hero-slide .actions .light{background:#fff;color:#24365f;border:1px solid #dce2ee;box-shadow:none}
+.hero-slider-controls{display:flex;align-items:center;gap:13px;margin-top:18px}
+.hero-arrow{width:35px;height:35px;border:1px solid #dce2ee;background:#fff;border-radius:50%;font-size:22px;color:#1b2b51;cursor:pointer}
+.hero-dots{display:flex;gap:7px}.hero-dots button{width:8px;height:8px;padding:0;border:0;border-radius:99px;background:#c8cfdd;cursor:pointer}.hero-dots button.is-active{width:25px;background:#f4772b}
+.hero-slide-count{font-size:11px;color:#7a8499;margin-left:4px}.hero-slide-count b{color:#15213f}
+.hero-slider .hero-partner-link{color:#67738a;margin-top:17px}.hero-slider .hero-partner-link strong{color:#e96d27}
+.hero-visual{background:#fff;border:1px solid #e3e8f1;border-radius:26px;padding:28px;box-shadow:0 22px 65px rgba(23,38,75,.10);position:relative}
+.visual-topline{font-size:11px;font-weight:900;letter-spacing:1.1px;color:#53617c;display:flex;align-items:center;gap:8px}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#12a79d;box-shadow:0 0 0 4px #12a79d18}
+.visual-flow{display:grid;grid-template-columns:1fr 34px 1fr;gap:8px;align-items:center;margin:26px 0 22px}
+.visual-node{background:#f4f6fb;border:1px solid #e5e9f1;border-radius:16px;padding:20px 12px;text-align:center}
+.visual-node>span{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:13px;background:#fff0e7;color:#c65c20;font-size:13px;font-weight:950;margin-bottom:10px}
+.visual-node.central{background:#eff3ff;border-color:#dce4fa}.visual-node.central>span{background:#243f82;color:#fff}
+.visual-node b,.visual-node small{display:block}.visual-node b{font-size:14px;color:#172344}.visual-node small{font-size:11px;color:#7a8499;margin-top:4px}
+.visual-connector{font-size:25px;color:#f4772b;text-align:center}
+.visual-caption{font-size:10px;letter-spacing:1.1px;font-weight:900;color:#8a94a8;margin-bottom:10px}
+.hero-visual .channels{grid-template-columns:repeat(3,1fr);gap:9px;margin:0}
+.hero-visual .market-logo{min-height:58px;background:#fff;border-color:#e7eaf1}
+.visual-footer{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:18px;padding-top:16px;border-top:1px solid #edf0f5;font-size:11px;color:#69758c}
+.visual-footer strong{color:#f4772b}
+@keyframes heroIn{from{opacity:.25;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:850px){.hero-layout{grid-template-columns:1fr;gap:34px}.hero-slides{min-height:310px}.hero-slider{padding:58px 0 52px!important}.hero-visual{max-width:620px}}
+@media(max-width:560px){.hero-slide h1{font-size:clamp(36px,9vw,46px);letter-spacing:-1.5px}.hero-slide p{font-size:15px}.hero-slides{min-height:360px}.hero-visual{padding:18px;border-radius:20px}.visual-node{padding:15px 7px}.hero-visual .channels{gap:6px}.hero-visual .market-logo{min-height:49px}.visual-footer{gap:7px;font-size:10px}}
+</style>
 </head><body>
 <header><div class="w nav"><a href="#" aria-label="Trend-Entegre ana sayfa"><img class="brand-logo" src="assets/trend-entegre-logo.svg" alt="Trend-Entegre — Tek XML, tüm pazaryerleri"></a><nav class="premium-nav"><a href="#cozum">Çözümler</a><a href="#nasil">Nasıl çalışır?</a><a href="#paketler">Paketler</a><a href="#iletisim">Bayilik</a></nav><div class="auth-actions"><span class="auth-user" id="authUserLabel"></span><button class="btn" id="authOpenBtn" type="button">Giriş / Kayıt</button></div></div></header>
 
@@ -514,14 +547,53 @@ footer i{color:#ff9a61}
   <a href="#entegrasyon-paketleri" aria-label="Paketler"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg><span>Paketler</span></a>
   <button type="button" aria-label="Hesabım, giriş veya kayıt" onclick="document.getElementById('authOpenBtn').click()"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Hesabım</span></button>
 </nav><div class="trend-ad-slot" data-ad-slot="home_top" aria-label="Sponsorlu reklam alanı"></div>
-<main><section class="hero"><div class="w hg"><div><span class="tag">E-TİCARET OPERASYONUNUZ İÇİN TEK MERKEZ</span><h1>Tüm pazaryerleriniz, <em>tek merkezden.</em></h1><p>Ürünlerinizi pazaryerlerine hazırlayın, XML verilerinizi düzenleyin ve satış operasyonunuzu daha kontrollü yönetin. Trend Entegre ile işinizi büyütmeye odaklanın.</p><div class="actions"><button class="btn" type="button" onclick="document.getElementById('authOpenBtn').click()">Ücretsiz üye ol</button><a class="btn light" href="#cozum">Çözümleri keşfet</a></div><a class="hero-partner-link" href="#iletisim">Bayi olmak mı istiyorsunuz? <strong>Bilgi alın →</strong></a></div><div class="mock"><h3>XML → Pazaryeri Dönüşümü</h3><div class="flow"><div class="tile"><span>📦</span><b>Tedarikçi XML</b><small>Ürün · Stok · Fiyat</small></div><div class="arr">➜</div><div class="tile"><span>⚙️</span><b>Trend-Entegre</b><small>Düzenle · Dönüştür</small></div></div><div class="channels" aria-label="Desteklenen pazaryerleri">
-<div class="market-logo trendyol" aria-label="Trendyol"><svg viewBox="0 0 150 34" role="img" aria-label="Trendyol"><text x="75" y="25" text-anchor="middle" fill="currentColor" font-size="25">Trendyol</text></svg></div>
-<div class="market-logo hepsi" aria-label="Hepsiburada"><svg viewBox="0 0 160 34" role="img" aria-label="Hepsiburada"><text x="80" y="23" text-anchor="middle" fill="currentColor" font-size="20">hepsiburada</text></svg></div>
-<div class="market-logo n11" aria-label="n11"><svg viewBox="0 0 100 34" role="img" aria-label="n11"><text x="50" y="26" text-anchor="middle" fill="currentColor" font-size="29">n11</text></svg></div>
-<div class="market-logo amazon" aria-label="Amazon"><svg viewBox="0 0 120 34" role="img" aria-label="Amazon"><text x="60" y="22" text-anchor="middle" fill="currentColor" font-size="25">amazon</text><path d="M30 27 Q60 36 91 27" fill="none" stroke="#ff9900" stroke-width="2.4" stroke-linecap="round"/></svg></div>
-<div class="market-logo pazarama" aria-label="Pazarama"><svg viewBox="0 0 150 34" role="img" aria-label="Pazarama"><text x="75" y="23" text-anchor="middle" fill="currentColor" font-size="23">pazarama</text></svg></div>
-<div class="market-logo ozon" aria-label="Ozon"><svg viewBox="0 0 100 34" role="img" aria-label="Ozon"><text x="50" y="25" text-anchor="middle" fill="currentColor" font-size="29">Ozon</text></svg></div>
-</div></div></div></section>
+<main><section class="hero hero-slider" aria-label="Trend-Entegre çözümleri">
+  <div class="w hero-layout">
+    <div class="hero-copy">
+      <div class="hero-slides">
+        <article class="hero-slide is-active" data-slide="0">
+          <span class="tag">XML'DEN PAZARYERİNE · TEK MERKEZ</span>
+          <h1>Tek XML kaynağı, <em>çoklu pazaryeri.</em></h1>
+          <p>Tedarikçi ürün verinizi Trendyol, Hepsiburada, N11, Amazon ve diğer satış kanallarına göre hazırlayın. Ürün verilerinizi tek merkezden yönetin.</p>
+          <div class="actions"><button class="btn" type="button" onclick="document.getElementById('authOpenBtn').click()">Hemen başlayın</button><a class="btn light" href="#nasil">Nasıl çalışır?</a></div>
+        </article>
+        <article class="hero-slide" data-slide="1">
+          <span class="tag">REKABETİ TAKİP EDİN</span>
+          <h1>Buybox takibiyle <em>rekabeti kaçırmayın.</em></h1>
+          <p>Buybox çözümlerini ayrı bir hizmet olarak inceleyin; fiyat rekabetinizi ve pazaryeri performansınızı daha yakından takip etmeye hazırlanın.</p>
+          <div class="actions"><a class="btn" href="#buybox-paketleri">Buybox paketlerini incele</a><a class="btn light" href="#cozum">Tüm çözümler</a></div>
+        </article>
+        <article class="hero-slide" data-slide="2">
+          <span class="tag">ÜRÜN VERİSİ · STOK · FİYAT</span>
+          <h1>Dağınık ürün dosyaları yerine <em>tek çalışma alanı.</em></h1>
+          <p>XML ve Excel ürün verilerinizi düzenleyin, hedef pazaryerine göre hazırlayın ve operasyonunuzu daha kontrollü yürütün.</p>
+          <div class="actions"><a class="btn" href="#cozum">Çözümleri keşfet</a><a class="btn light" href="#paketler">Paketleri karşılaştır</a></div>
+        </article>
+      </div>
+      <div class="hero-slider-controls" aria-label="Ana sayfa slayt kontrolleri">
+        <button type="button" class="hero-arrow" aria-label="Önceki slayt" data-prev>‹</button>
+        <div class="hero-dots"><button type="button" aria-label="1. slayt" class="is-active" data-go="0"></button><button type="button" aria-label="2. slayt" data-go="1"></button><button type="button" aria-label="3. slayt" data-go="2"></button></div>
+        <button type="button" class="hero-arrow" aria-label="Sonraki slayt" data-next>›</button>
+        <span class="hero-slide-count"><b data-current>01</b> / 03</span>
+      </div>
+      <a class="hero-partner-link" href="#iletisim">Bayi olmak mı istiyorsunuz? <strong>Bilgi alın →</strong></a>
+    </div>
+    <div class="hero-visual">
+      <div class="visual-topline"><span class="live-dot"></span> TEK MERKEZDEN YÖNETİM</div>
+      <div class="visual-flow"><div class="visual-node"><span>XML</span><b>Tedarikçi</b><small>Ürün · Stok · Fiyat</small></div><div class="visual-connector">→</div><div class="visual-node central"><span>TE</span><b>Trend-Entegre</b><small>Dönüştür · Düzenle</small></div></div>
+      <div class="visual-caption">PAZARYERİ KANALLARI</div>
+      <div class="channels" aria-label="Pazaryeri kanalları">
+        <div class="market-logo trendyol"><svg viewBox="0 0 150 34" role="img" aria-label="Trendyol"><text x="75" y="25" text-anchor="middle" fill="currentColor" font-size="25">Trendyol</text></svg></div>
+        <div class="market-logo hepsi"><svg viewBox="0 0 160 34" role="img" aria-label="Hepsiburada"><text x="80" y="23" text-anchor="middle" fill="currentColor" font-size="20">hepsiburada</text></svg></div>
+        <div class="market-logo n11"><svg viewBox="0 0 100 34" role="img" aria-label="n11"><text x="50" y="26" text-anchor="middle" fill="currentColor" font-size="29">n11</text></svg></div>
+        <div class="market-logo amazon"><svg viewBox="0 0 120 34" role="img" aria-label="Amazon"><text x="60" y="22" text-anchor="middle" fill="currentColor" font-size="25">amazon</text><path d="M30 27 Q60 36 91 27" fill="none" stroke="#ff9900" stroke-width="2.4" stroke-linecap="round"/></svg></div>
+        <div class="market-logo pazarama"><svg viewBox="0 0 150 34" role="img" aria-label="Pazarama"><text x="75" y="23" text-anchor="middle" fill="currentColor" font-size="23">pazarama</text></svg></div>
+        <div class="market-logo ozon"><svg viewBox="0 0 100 34" role="img" aria-label="Ozon"><text x="50" y="25" text-anchor="middle" fill="currentColor" font-size="29">Ozon</text></svg></div>
+      </div>
+      <div class="visual-footer"><span>XML kaynağı</span><strong>→</strong><span>Çoklu kanal</span><strong>→</strong><span>Tek panel</span></div>
+    </div>
+  </div>
+</section>
 <section id="cozum"><div class="w"><div class="head"><span class="k">Tek kaynaktan çoklu pazaryeri</span><h2>XML dosyanız, pazaryerlerinize hazır hale gelsin.</h2><p>Her pazaryerinin ürün alanları ve veri ihtiyaçları farklı olabilir. Trend-Entegre, ürün verilerinizi pazaryeri bazında düzenlemeyi ve yönetmeyi kolaylaştırmak için tasarlanıyor.</p></div><div class="grid3"><article class="card"><span class="ico">↔</span><h3>Pazaryeri bazlı XML dönüşümü</h3><p>Tedarikçi XML verinizi hedef pazaryerinin ürün yapısına göre hazırlamaya yönelik dönüşüm akışı.</p></article><article class="card"><span class="ico">▦</span><h3>Excel içe / dışa aktarma</h3><p>XML ürün listenizi içe alın, Excel'e aktararak düzenleyin ve dosyanızı dışa çıkarın.</p></article><article class="card"><span class="ico">◉</span><h3>Merkezi ürün kontrolü</h3><p>Ürün, fiyat, stok ve varyant verilerinizi tek çalışma alanında takip etmeye yönelik yapı.</p></article></div></div></section><div class="trend-ad-slot" data-ad-slot="home_slider" aria-label="Sponsorlu reklam alanı"></div>
 <section class="soft" id="nasil"><div class="w"><div class="head"><span class="k">Basit iş akışı</span><h2>Üç adımda pazaryerlerine hazırlanın.</h2><p>Dağınık ürün dosyaları yerine anlaşılır ve tekrarlanabilir bir süreç.</p></div><div class="grid3 steps"><article class="card"><div class="num">01</div><h3>XML kaynağınızı ekleyin</h3><p>Tedarikçinizin XML bağlantısını tanımlayın veya ürün dosyanızı içe aktarın.</p></article><article class="card"><div class="num">02</div><h3>Hedef pazaryerini seçin</h3><p>Ürünlerinizi göndermek istediğiniz pazaryerine göre verileri düzenleyin.</p></article><article class="card"><div class="num">03</div><h3>Kontrol edin ve dışa aktarın</h3><p>Ürün listenizi gözden geçirin ve uygun çıktı biçimiyle sonraki adıma geçin.</p></article></div></div></section><div class="trend-ad-slot" data-ad-slot="guide_content" aria-label="Sponsorlu reklam alanı"></div>
 <section id="paketler" class="soft"><div class="w"><div class="head"><span class="k">Üç ayrı hizmet kategorisi</span><h2>İhtiyacınıza uygun çözümü seçin.</h2><p>Entegrasyon, Buybox ve XML veri aktarımı. İhtiyacınız olan hizmeti ayrı ayrı seçebilir, çözümlerinizi zamanla genişletebilirsiniz.</p></div><div class="grid3 category-jumps"><a class="card" href="#entegrasyon-paketleri"><span class="ico">🔗</span><h3>01 · Entegrasyon Paketleri</h3><p>Pazaryerlerinizi tek merkezden yönetin.</p><strong>Fiyatları incele →</strong></a><a class="card" href="#buybox-paketleri"><span class="ico">📊</span><h3>02 · Buybox Paketleri</h3><p>Rakip fiyatlarını ve Buybox durumunu takip edin.</p><strong>Buybox çözümlerini incele →</strong></a><a class="card" href="#xml-paketleri"><span class="ico">⇄</span><h3>03 · XML ile Veri Aktarımı</h3><p>Tedarikçi XML verinizi dönüştürün ve dışa aktarın.</p><strong>XML çözümlerini incele →</strong></a></div></div></section><div class="trend-ad-slot" data-ad-slot="product_category" aria-label="Sponsorlu reklam alanı"></div><div class="trend-ad-slot" data-ad-slot="package_selection" aria-label="Sponsorlu reklam alanı"></div>
@@ -686,6 +758,20 @@ footer i{color:#ff9a61}
   }catch(error){console.warn("Reklam alanı yüklenemedi:",slot);}
  }
  document.querySelectorAll(".trend-ad-slot[data-ad-slot]").forEach(renderSlot);
+})();
+</script>
+<script id="real-home-slider-script">
+(function(){
+ const root=document.querySelector('.hero-slider');if(!root)return;
+ const slides=[...root.querySelectorAll('.hero-slide')],dots=[...root.querySelectorAll('[data-go]')],count=root.querySelector('[data-current]');
+ let active=0,timer;
+ function show(n){active=(n+slides.length)%slides.length;slides.forEach((s,i)=>s.classList.toggle('is-active',i===active));dots.forEach((d,i)=>d.classList.toggle('is-active',i===active));if(count)count.textContent=String(active+1).padStart(2,'0');}
+ function restart(){clearInterval(timer);timer=setInterval(()=>show(active+1),6500);}
+ root.querySelector('[data-prev]').addEventListener('click',()=>{show(active-1);restart()});
+ root.querySelector('[data-next]').addEventListener('click',()=>{show(active+1);restart()});
+ dots.forEach(d=>d.addEventListener('click',()=>{show(Number(d.dataset.go));restart()}));
+ root.addEventListener('mouseenter',()=>clearInterval(timer));root.addEventListener('mouseleave',restart);
+ show(0);restart();
 })();
 </script>
 </body></html>
