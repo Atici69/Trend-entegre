@@ -1,4 +1,4 @@
-import { auth } from "./firebase-auth.js?v=20261112-testproducts";
+import { auth } from "./firebase-auth.js?v=20261113-mobile-nav1";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
 const API_BASE_URL = "https://trend-entegre.onrender.com";
