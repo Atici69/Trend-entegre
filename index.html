@@ -593,6 +593,62 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
 }
 </style>
 
+
+<style id="trend-package-contrast-final-fix">
+/* Paket kartlarında her yüzey için açık ve koyu metin kontrastını ayrı yönet */
+#eticaret-paketleri .commerce-card:not(.featured){
+ background:#fff!important;color:#18233e!important;
+}
+#eticaret-paketleri .commerce-card:not(.featured) *,
+#eticaret-paketleri .commerce-card:not(.featured) h3,
+#eticaret-paketleri .commerce-card:not(.featured) p,
+#eticaret-paketleri .commerce-card:not(.featured) li,
+#eticaret-paketleri .commerce-card:not(.featured) .price,
+#eticaret-paketleri .commerce-card:not(.featured) .price small{
+ color:#26334d!important;opacity:1!important;
+}
+#eticaret-paketleri .commerce-card:not(.featured) .popular{color:#a94716!important}
+#eticaret-paketleri .commerce-card.featured{
+ background:linear-gradient(150deg,#101b3f 0%,#243f82 100%)!important;
+ color:#fff!important;border:1px solid #40588f!important;
+}
+#eticaret-paketleri .commerce-card.featured h3,
+#eticaret-paketleri .commerce-card.featured p,
+#eticaret-paketleri .commerce-card.featured li,
+#eticaret-paketleri .commerce-card.featured .price,
+#eticaret-paketleri .commerce-card.featured .price small{
+ color:#fff!important;opacity:1!important;
+}
+#eticaret-paketleri .commerce-card.featured .popular{
+ background:#fff0e7!important;color:#9d4318!important;
+}
+#eticaret-paketleri .commerce-card.featured li{color:#f1f4fb!important}
+#eticaret-paketleri .commerce-card .btn{color:#fff!important}
+/* Buybox kartı açık zeminde; tüm metinler koyu olmalı */
+#buybox-paketleri .pricecard.featured{
+ background:#fff!important;color:#18233e!important;
+ border:2px solid #ff9a61!important;
+}
+#buybox-paketleri .pricecard.featured h3,
+#buybox-paketleri .pricecard.featured p,
+#buybox-paketleri .pricecard.featured .muted,
+#buybox-paketleri .pricecard.featured .plan-fit,
+#buybox-paketleri .pricecard.featured .price,
+#buybox-paketleri .pricecard.featured .price small,
+#buybox-paketleri .pricecard.featured ul,
+#buybox-paketleri .pricecard.featured li{
+ color:#26334d!important;opacity:1!important;
+}
+#buybox-paketleri .pricecard.featured .popular{
+ background:#fff0e7!important;color:#a94716!important;
+}
+#buybox-paketleri .pricecard.featured .buybox-benefits div{
+ background:#f1f4fa!important;border:1px solid #e0e6f0!important;color:#35425d!important;
+}
+#buybox-paketleri .pricecard.featured .buybox-benefits b{color:#101b3f!important}
+#buybox-paketleri .pricecard.featured .btn{color:#fff!important}
+</style>
+
 </head><body>
 <header><div class="w nav"><a href="#" aria-label="Trend-Entegre ana sayfa"><img class="brand-logo" src="assets/trend-entegre-logo.svg" alt="Trend-Entegre — Tek XML, tüm pazaryerleri"></a><nav class="premium-nav"><a href="#cozum">Çözümler</a><a href="#nasil">Nasıl çalışır?</a><a href="#paketler">Paketler</a><a href="#iletisim">Bayilik</a></nav><div class="auth-actions"><span class="auth-user" id="authUserLabel"></span><button class="btn" id="authOpenBtn" type="button">Giriş / Kayıt</button></div></div></header>
 
