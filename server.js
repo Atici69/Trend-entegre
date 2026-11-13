@@ -316,7 +316,7 @@ app.get('/api/v1/ads/:slot', async (req, res) => {
   const slot = String(req.params.slot || '');
   if (!adSlotIds.has(slot)) return res.status(404).json({ error: 'Reklam alanı bulunamadı.' });
   try {
-    const snapshot = await getFirestore().collection('ad_campaigns').where('slot_id', '==', slot).where('status', '==', 'approved').limit(30).get();
+    const snapshot = await getFirestore().collection('ad_campaigns').where('slot_id', '==', slot).limit(30).get();
     const campaigns = snapshot.docs.map(publicAdCampaign).filter(Boolean);
     res.set('Cache-Control', 'public, max-age=60');
     res.json({ campaigns });
