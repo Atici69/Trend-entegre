@@ -81,8 +81,22 @@ if (loginRequestedFromNavigation) {
   window.history.replaceState({}, "", cleanUrl.toString());
 }
 
-$("authOpenBtn").addEventListener("click", () => {
-  setMode(auth.currentUser ? "login" : "login");
+$("authOpenBtn").addEventListener("click", async () => {
+  const user = auth.currentUser;
+  if (user && user.emailVerified) {
+    try {
+      const result = await profileRequest();
+      savedBillingProfile = result.profile || {};
+      document.getElementById("profileAccountEmail").textContent = user.email || "";
+      openProfile(savedBillingProfile);
+    } catch (error) {
+      setMode("login");
+      openModal();
+      showMessage("Hesap bilgileri alınamadı: " + error.message, "error");
+    }
+    return;
+  }
+  setMode("login");
   openModal();
 });
 $("authCloseBtn").addEventListener("click", closeModal);
@@ -321,6 +335,12 @@ window.addEventListener('trend:purchase',async event=>{
  checkoutModal.classList.add('open');checkoutModal.setAttribute('aria-hidden','false');
 });
 const profileModal=document.getElementById('profileModal');
+document.getElementById('profileClose').addEventListener('click',()=>{
+ profileModal.classList.remove('open');profileModal.setAttribute('aria-hidden','true');
+});
+profileModal.addEventListener('click',event=>{
+ if(event.target===profileModal){profileModal.classList.remove('open');profileModal.setAttribute('aria-hidden','true');}
+});
 const profileForm=document.getElementById('profileForm');
 const profileSave=document.getElementById('profileSave');
 const profileError=document.getElementById('profileError');
