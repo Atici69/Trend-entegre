@@ -253,7 +253,9 @@ footer{background:linear-gradient(120deg,#101832,#1c2853)}
 <style id="trend-mobile-navigation">
 @media(max-width:800px){
   #authModal{padding:10px;overflow-y:auto;align-items:flex-start}
-  #authModal .auth-panel{max-height:calc(100vh - 20px);overflow-y:auto;padding:22px 17px;margin:auto}
+  #authModal .auth-panel{max-height:calc(100vh - 20px);max-height:calc(100dvh - 20px);overflow-y:auto;padding:22px 17px;margin:auto}
+  .btn,#checkoutModal .checkout-close{min-height:44px}
+  #authModal .auth-close{min-width:44px;min-height:44px}
   html{scroll-padding-top:78px}
   body{padding-bottom:98px}
   section[id]{scroll-margin-top:84px}
