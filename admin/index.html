@@ -68,7 +68,25 @@ th{background:#f5f7fc}
  .auth-card{border-radius:20px}
 }
 
-</style></head>
+</style>
+<style id="trend-admin-tablet-navigation">
+@media (min-width:561px) and (max-width:900px){
+  .shell{display:block;min-height:100vh}
+  .sidebar{position:sticky;top:70px;z-index:20;width:100%;padding:8px 14px;display:block}
+  .sidebar .logo,.sidebar .group,.sidebar .side-note{display:none}
+  .sidebar .nav{display:flex;gap:7px;overflow-x:auto;scrollbar-width:thin;padding:2px 0 5px}
+  .sidebar .nav button{flex:0 0 auto;white-space:nowrap;font-size:12px;text-align:left;padding:11px 13px;min-height:44px}
+  .sidebar .nav .ico{font-size:15px;width:21px}
+  .wrap{padding:22px}
+  .tablebox{max-width:calc(100vw - 44px)}
+}
+@media(max-width:560px){
+  .sidebar .nav button{min-height:44px}
+  .toolbar button,.quick button,.btn,.logout-btn{min-height:42px}
+  input,select,textarea{font-size:16px}
+}
+</style>
+</head>
 <body>
 <section class="auth-screen" id="authScreen">
   <form class="auth-card" id="adminLoginForm">
