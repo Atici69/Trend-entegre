@@ -112,7 +112,41 @@ main{min-width:0}.topbar{height:70px;background:#fff;border-bottom:1px solid var
 <section class="page" id="buybox"><div class="head"><div><h1>BuyBox Yönetimi</h1><p>Rakip fiyat izleme ve BuyBox hizmetlerinin operasyon alanı.</p></div></div><div class="empty-state"><b>BuyBox servisi henüz bağlı değil.</b><br>Ürün eşleştirme, fiyat izleme sıklığı, bildirim ve raporlama modülleri servis altyapısıyla birlikte geliştirilecek.</div></section>
 <section class="page" id="payments"><div class="head"><div><h1>Ödeme Yönetimi</h1><p>Abonelik tahsilat kayıtları ve ödeme bildirimleri.</p></div><button class="btn light" onclick="loadResource('payments')">Yenile</button></div><div class="notice">Ödeme kayıtları burada salt okunur gösterilir. Gerçek tahsilat veya iade işlemi ödeme kuruluşunun doğrulanmış API/webhook akışı kurulmadan yapılamaz.</div><div class="toolbar"><input id="paymentsSearch" placeholder="Sağlayıcı, referans veya durum ara" oninput="queueResourceSearch('payments')"></div><div id="paymentsMessage" class="section-note"></div><div class="tablebox"><table><thead><tr><th>Sağlayıcı / Referans</th><th>Müşteri ID</th><th>Tutar</th><th>Durum</th><th>Ödeme tarihi</th></tr></thead><tbody id="paymentsRows"><tr><td colspan="5">Kayıtlar yükleniyor…</td></tr></tbody></table></div><p class="section-note" id="paymentsPager"></p></section>
 <section class="page" id="accounting"><div class="head"><div><h1>Muhasebe</h1><p>Gelir-gider, bayi komisyonları, tahsilat ve finansal kayıtlar.</p></div><span class="tag gray">MODÜL PASİF</span></div><div class="notice"><b>Muhasebe modülü henüz aktif edilmemiştir.</b> Bu bölüm yönetim panelinde hazır tutulmaktadır. Aktifleştirme yapılana kadar kayıt oluşturma, düzenleme, silme ve finansal hesaplama işlemleri kapalıdır.</div><div class="grid"><div class="metric"><label>Muhasebe Genel Bakış</label><strong>—</strong><small class="state">Pasif</small></div><div class="metric"><label>Gelir – Gider Takibi</label><strong>—</strong><small class="state">Pasif</small></div><div class="metric"><label>Bayi Komisyonları</label><strong>—</strong><small class="state">Pasif</small></div><div class="metric"><label>Tahsilat Raporları</label><strong>—</strong><small class="state">Pasif</small></div></div><div class="card" style="margin-top:15px"><h2>Finansal kayıt alanları</h2><div class="tablebox"><table><thead><tr><th>Alt bölüm</th><th>Durum</th><th>Açıklama</th></tr></thead><tbody><tr><td>Gelir – Gider Takibi</td><td><span class="tag gray">Pasif</span></td><td>Gelir ve gider kayıtları</td></tr><tr><td>Bayi Komisyonları</td><td><span class="tag gray">Pasif</span></td><td>Bayi / alt bayi hakedişleri</td></tr><tr><td>Tahsilat Raporları</td><td><span class="tag gray">Pasif</span></td><td>Ödeme ve tahsilat dökümleri</td></tr><tr><td>Fatura ve Ödeme Kayıtları</td><td><span class="tag gray">Pasif</span></td><td>Fatura ve ödeme geçmişi</td></tr></tbody></table></div><p class="section-note">Modül, ileride güvenli veritabanı ve muhasebe iş kuralları bağlandığında yönetici tarafından etkinleştirilebilir.</p></div></section>
-<section class="page" id="ads"><div class="head"><div><h1>Reklam Alanları</h1><p>Ana sayfa slider, banner ve tanıtım alanlarının taslak yönetimi.</p></div></div><div class="two"><div class="card"><h2>Ana sayfa slider</h2><div class="field"><label>Başlık</label><input value="Pazaryerlerinde büyümeye hazır mısınız?" disabled></div><div class="field"><label>Açıklama</label><textarea disabled>Tek XML kaynağından farklı pazaryerlerine uygun ürün verisi hazırlayın.</textarea></div><button class="btn" disabled>Taslağı kaydet</button></div><div class="card"><h2>Reklam yerleşimleri</h2><p class="section-note">Üst banner, paketler arası tanıtım, BuyBox tanıtım alanı ve alt sayfa reklamları.</p><span class="tag">Yayın bağlantısı kurulmadı</span></div></div></section>
+<section class="page" id="ads">
+<div class="head"><div><h1>Reklam Yönetimi</h1><p>Tüm reklam alanlarını, reklam verenleri, kampanyaları ve performansı tek yerden yönetin.</p></div><button class="btn light" type="button" onclick="loadAdManager()">Yenile</button></div>
+<div class="notice"><b>Yayın kuralı:</b> Reklamlar yönetici onayı ve yayın tarihleri uygun olduğunda gösterilir. Ödeme bilgisi girilen hassas ödeme ekranlarında reklam gösterilmez. Her reklam açıkça “Sponsorlu” olarak işaretlenir.</div>
+<div class="grid" style="margin-bottom:15px">
+<div class="metric"><label>Toplam kampanya</label><strong id="adMetricTotal">—</strong><small>Kayıtlı reklam</small></div>
+<div class="metric"><label>Yayındaki kampanya</label><strong id="adMetricLive">—</strong><small>Onaylı ve tarih aralığında</small></div>
+<div class="metric"><label>Toplam gösterim</label><strong id="adMetricImpressions">—</strong><small>Reklam gösterimleri</small></div>
+<div class="metric"><label>Toplam tıklama</label><strong id="adMetricClicks">—</strong><small>Reklam bağlantıları</small></div>
+</div>
+<div class="card" style="margin-bottom:15px">
+<h2 id="adFormTitle">Yeni reklam kampanyası</h2>
+<form id="adCampaignForm">
+<div class="two">
+<div class="field"><label for="adSlot">Reklam alanı</label><select id="adSlot" required><option value="">Alanlar yükleniyor…</option></select></div>
+<div class="field"><label for="adAdvertiser">Reklam veren firma / kişi</label><input id="adAdvertiser" maxlength="160" required placeholder="Firma veya kişi adı"></div>
+<div class="field"><label for="adEmail">Reklam veren e-posta</label><input id="adEmail" type="email" placeholder="reklamveren@firma.com"></div>
+<div class="field"><label for="adTitle">Reklam başlığı</label><input id="adTitle" maxlength="120" required placeholder="Kampanya başlığı"></div>
+</div>
+<div class="field"><label for="adDescription">Açıklama</label><textarea id="adDescription" maxlength="500" placeholder="Kısa reklam açıklaması"></textarea></div>
+<div class="two">
+<div class="field"><label for="adImage">Görsel bağlantısı (https://)</label><input id="adImage" type="url" placeholder="https://..."></div>
+<div class="field"><label for="adTarget">Tıklanınca açılacak bağlantı</label><input id="adTarget" type="url" placeholder="https://..."></div>
+<div class="field"><label for="adStart">Yayın başlangıcı</label><input id="adStart" type="datetime-local" required></div>
+<div class="field"><label for="adEnd">Yayın bitişi</label><input id="adEnd" type="datetime-local" required></div>
+<div class="field"><label for="adPrice">Reklam bedeli (TL)</label><input id="adPrice" type="number" min="0" step="0.01" value="0" required></div>
+<div class="field"><label for="adBilling">Ücretlendirme</label><select id="adBilling"><option value="daily">Günlük</option><option value="period">Belirlenen yayın dönemi</option></select></div>
+<div class="field"><label for="adStatus">Kampanya durumu</label><select id="adStatus"><option value="draft">Taslak</option><option value="pending">Onay bekliyor</option><option value="approved">Onayla ve yayınla</option><option value="paused">Duraklatıldı</option></select></div>
+</div>
+<div class="toolbar"><button class="btn" id="adSaveButton" type="submit">Kampanyayı kaydet</button><button class="btn light" type="button" onclick="resetAdForm()">Temizle</button></div>
+<p class="section-note" id="adFormMessage" role="status"></p>
+</form></div>
+<div class="card" style="margin-bottom:15px"><h2>Reklam alanları ve yerleşim kataloğu</h2><div class="tablebox"><table><thead><tr><th>Sayfa</th><th>Reklam alanı</th><th>Yerleşim kodu</th></tr></thead><tbody id="adSlotsRows"><tr><td colspan="3">Yükleniyor…</td></tr></tbody></table></div></div>
+<div class="head"><div><h2 style="margin:0;color:var(--navy)">Kampanyalar</h2><p>Onay, yayın takvimi ve performans takibi.</p></div></div>
+<div class="tablebox"><table><thead><tr><th>Reklam / Veren</th><th>Yerleşim</th><th>Yayın dönemi</th><th>Bedel</th><th>Gösterim</th><th>Tıklama</th><th>Durum</th><th>İşlem</th></tr></thead><tbody id="adCampaignRows"><tr><td colspan="8">Kampanyalar yükleniyor…</td></tr></tbody></table></div>
+</section>
 <section class="page" id="settings">
 <div class="head"><div><h1>Sistem Ayarları</h1><p>Trend-Entegre platformunun genel yapılandırması ve güvenlik politikaları.</p></div><span class="tag">YAPILANDIRMA TASLAĞI</span></div>
 <div class="notice"><b>Önemli:</b> Bu bölüm şu anda arayüz taslağıdır. Kaydetme, gerçek kullanıcı/şirket verilerini değiştirmez. Canlı ayarlar için güvenli sunucu API'si ve yönetici yetkilendirmesi bağlanmalıdır. API anahtarlarını bu sayfaya veya GitHub deposuna yazmayın.</div>
@@ -181,6 +215,7 @@ function go(id){
   document.getElementById("pageTitle").textContent=titles[id]||"Yönetim Merkezi";
   window.scrollTo({top:0,behavior:"smooth"});
   if(id==="marketplaces") loadMarketplaceStatus();
+  if(id==="ads") loadAdManager();
   if(["customers","subscriptions","dealers","payments"].includes(id)) loadResource(id);
 }
 document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.page)));
@@ -412,4 +447,81 @@ async function deactivateRecord(resource,id){
  if(!confirm('Bu kaydı silmeden pasife almak istiyor musunuz?'))return;
  try{await adminApi('/api/v1/admin/'+resource+'/'+id,{method:'DELETE'});await loadResource(resource);loadAdminOverview();}catch(error){alert(error.message);}
 }
+
+let adCampaignsCache=[];
+let adSlotsCache=[];
+let editingAdId=null;
+function localDateInput(date){const d=new Date(date.getTime()-date.getTimezoneOffset()*60000);return d.toISOString().slice(0,16);}
+function resetAdForm(){
+ editingAdId=null;
+ document.getElementById('adCampaignForm').reset();
+ document.getElementById('adStart').value=localDateInput(new Date());
+ document.getElementById('adEnd').value=localDateInput(new Date(Date.now()+30*86400000));
+ document.getElementById('adPrice').value='0';
+ document.getElementById('adFormTitle').textContent='Yeni reklam kampanyası';
+ document.getElementById('adSaveButton').textContent='Kampanyayı kaydet';
+ document.getElementById('adFormMessage').textContent='';
+}
+function adStatusLabel(status){return ({draft:'Taslak',pending:'Onay bekliyor',approved:'Onaylı',paused:'Duraklatıldı',expired:'Süresi doldu'})[status]||status||'—';}
+function adStatusClass(status){return status==='approved'?'green':status==='pending'?'':'gray';}
+async function loadAdManager(){
+ const rows=document.getElementById('adCampaignRows');if(!rows)return;
+ rows.innerHTML='<tr><td colspan="8">Reklamlar yükleniyor…</td></tr>';
+ try{
+  const data=await adminApi('/api/v1/admin/ads');
+  adSlotsCache=data.slots||[];adCampaignsCache=data.campaigns||[];
+  const slotSelect=document.getElementById('adSlot'),selected=slotSelect.value;
+  slotSelect.innerHTML='<option value="">Reklam alanı seçin</option>'+adSlotsCache.map(x=>'<option value="'+escapeHtml(x.id)+'">'+escapeHtml(x.name)+' · '+escapeHtml(x.page)+'</option>').join('');
+  if(selected)slotSelect.value=selected;
+  document.getElementById('adSlotsRows').innerHTML=adSlotsCache.map(x=>'<tr><td>'+escapeHtml(x.page)+'</td><td><strong>'+escapeHtml(x.name)+'</strong></td><td><code>'+escapeHtml(x.id)+'</code></td></tr>').join('');
+  const total=adCampaignsCache.length,live=adCampaignsCache.filter(x=>x.status==='approved'&&Date.parse(x.starts_at)<=Date.now()&&Date.parse(x.ends_at)>=Date.now()).length;
+  document.getElementById('adMetricTotal').textContent=total;
+  document.getElementById('adMetricLive').textContent=live;
+  document.getElementById('adMetricImpressions').textContent=adCampaignsCache.reduce((n,x)=>n+Number(x.impressions||0),0).toLocaleString('tr-TR');
+  document.getElementById('adMetricClicks').textContent=adCampaignsCache.reduce((n,x)=>n+Number(x.clicks||0),0).toLocaleString('tr-TR');
+  rows.innerHTML=total?adCampaignsCache.map(x=>{
+   const slot=adSlotsCache.find(s=>s.id===x.slot_id);
+   return '<tr><td><strong>'+escapeHtml(x.title)+'</strong><br>'+escapeHtml(x.advertiser_name||'')+'</td><td>'+escapeHtml(slot?.name||x.slot_id)+'</td><td>'+formatDate(x.starts_at)+'<br>'+formatDate(x.ends_at)+'</td><td>'+Number(x.price||0).toLocaleString('tr-TR')+' TL / '+(x.billing_period==='daily'?'gün':'dönem')+'</td><td>'+Number(x.impressions||0).toLocaleString('tr-TR')+'</td><td>'+Number(x.clicks||0).toLocaleString('tr-TR')+'</td><td><span class="tag '+adStatusClass(x.status)+'">'+adStatusLabel(x.status)+'</span></td><td><button class="logout-btn" onclick="editAdCampaign(\''+x.id+'\')">Düzenle</button></td></tr>';
+  }).join(''):'<tr><td colspan="8">Henüz reklam kampanyası yok.</td></tr>';
+ }catch(error){rows.innerHTML='<tr><td colspan="8">Reklamlar yüklenemedi.</td></tr>';document.getElementById('adFormMessage').textContent=error.message;}
+}
+function editAdCampaign(id){
+ const x=adCampaignsCache.find(item=>item.id===id);if(!x)return;
+ editingAdId=id;
+ document.getElementById('adSlot').value=x.slot_id||'';
+ document.getElementById('adAdvertiser').value=x.advertiser_name||'';
+ document.getElementById('adEmail').value=x.advertiser_email||'';
+ document.getElementById('adTitle').value=x.title||'';
+ document.getElementById('adDescription').value=x.description||'';
+ document.getElementById('adImage').value=x.image_url||'';
+ document.getElementById('adTarget').value=x.target_url||'';
+ document.getElementById('adStart').value=localDateInput(new Date(x.starts_at));
+ document.getElementById('adEnd').value=localDateInput(new Date(x.ends_at));
+ document.getElementById('adPrice').value=x.price??0;
+ document.getElementById('adBilling').value=x.billing_period||'daily';
+ document.getElementById('adStatus').value=x.status||'draft';
+ document.getElementById('adFormTitle').textContent='Reklam kampanyasını düzenle';
+ document.getElementById('adSaveButton').textContent='Değişiklikleri kaydet';
+ document.getElementById('adFormMessage').textContent='Kampanya düzenleme modunda.';
+ document.getElementById('adFormTitle').scrollIntoView({behavior:'smooth',block:'center'});
+}
+document.getElementById('adCampaignForm').addEventListener('submit',async event=>{
+ event.preventDefault();
+ const message=document.getElementById('adFormMessage'),button=document.getElementById('adSaveButton');
+ const value=id=>document.getElementById(id).value.trim();
+ const payload={
+  slot_id:value('adSlot'),advertiser_name:value('adAdvertiser'),advertiser_email:value('adEmail'),
+  title:value('adTitle'),description:value('adDescription'),image_url:value('adImage'),target_url:value('adTarget'),
+  starts_at:new Date(value('adStart')).toISOString(),ends_at:new Date(value('adEnd')).toISOString(),
+  price:Number(value('adPrice')),billing_period:value('adBilling'),status:value('adStatus')
+ };
+ button.disabled=true;message.textContent='Kaydediliyor…';
+ try{
+  await adminApi('/api/v1/admin/ads'+(editingAdId?'/'+encodeURIComponent(editingAdId):''),{
+   method:editingAdId?'PATCH':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)
+  });
+  message.textContent='Kampanya kaydedildi.';resetAdForm();await loadAdManager();
+ }catch(error){message.textContent=error.message;}
+ finally{button.disabled=false;}
+});
 </script></body></html>
