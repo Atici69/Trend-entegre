@@ -3,7 +3,7 @@ name: Android APK build
 on:
   workflow_dispatch:
   push:
-    branches: [feature/admin-secure-dashboard]
+    branches: [main]
 
 jobs:
   android:
