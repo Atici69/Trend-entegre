@@ -18,8 +18,47 @@ input,select,textarea{border:1px solid #dce3ef;border-radius:11px}
 @media(max-width:600px){.nav{height:62px}.hero{padding:38px 0}.w{width:calc(100% - 26px)}}
 </style>
 
+
+<style id="trend-mobile-navigation">
+@media(max-width:800px){
+  html{scroll-padding-top:70px}
+  body{padding-bottom:96px}
+  section[id]{scroll-margin-top:84px}
+  .mobile-dock{
+    position:fixed;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;
+    left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));z-index:1000;
+    padding:7px 6px calc(7px + env(safe-area-inset-bottom));
+    border:1px solid #dce4f1;background:rgba(255,255,255,.96);
+    -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+    border-radius:17px;box-shadow:0 10px 34px #111b3b24
+  }
+  .mobile-dock a,.mobile-dock button{
+    min-width:0;min-height:48px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:3px;border:0;
+    background:transparent;color:#596783;font:750 10px/1.15 Inter,system-ui,sans-serif;
+    text-decoration:none;padding:4px 1px;border-radius:11px;white-space:nowrap
+  }
+  .mobile-dock svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .mobile-dock a[aria-current="page"],.mobile-dock a:hover,.mobile-dock button:hover{color:#087f89;background:#e9f8f6}
+  .mobile-dock a:focus-visible,.mobile-dock button:focus-visible{outline:3px solid #5146b8;outline-offset:1px}
+  .wa-launch{bottom:112px}
+}
+@media(max-width:380px){
+  .mobile-dock a,.mobile-dock button{font-size:9px}
+  .mobile-dock svg{width:18px;height:18px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
 </head><body>
 <header><div class="w nav"><a class="brand" href="index.html">TREND<span>•</span>ENTEGRE</a><a class="back" href="index.html">← Ana sayfa</a></div></header>
+
+<nav class="mobile-dock" aria-label="Mobil ana gezinme">
+  <a href="index.html" aria-label="Ana sayfa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><span>Ana Sayfa</span></a>
+  <a href="index.html#eticaret-paketleri" aria-label="Hizmet kategorileri"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg><span>Kategoriler</span></a>
+  <a href="xml-merkezi.html" aria-label="XML Ürün Merkezi" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10"/><circle cx="18" cy="19" r="2"/></svg><span>XML Merkezi</span></a>
+  <a href="index.html#entegrasyon-paketleri" aria-label="Paketler"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg><span>Paketler</span></a>
+  <a href="index.html?giris=1" aria-label="Hesabım, giriş veya kayıt"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Hesabım</span></a>
+</nav>
 <section class="hero"><div class="w"><h1>XML Ürün Merkezi</h1><p>XML dosyanızı yükleyin, ürün fiyatlarına yüzde artış uygulayın ve seçtiğiniz ürünleri Excel uyumlu dosya olarak dışa aktarın.</p></div></section>
 <main class="w main">
 <section class="panel"><h2>1. XML kaynağını seçin</h2>
