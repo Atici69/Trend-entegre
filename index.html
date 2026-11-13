@@ -249,8 +249,47 @@ footer{background:linear-gradient(120deg,#101832,#1c2853)}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
 </style>
+
+<style id="trend-mobile-navigation">
+@media(max-width:800px){
+  html{scroll-padding-top:78px}
+  body{padding-bottom:98px}
+  section[id]{scroll-margin-top:84px}
+  .mobile-dock{
+    position:fixed;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;
+    left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));z-index:1000;
+    padding:7px 6px calc(7px + env(safe-area-inset-bottom));
+    border:1px solid #dce4f1;background:rgba(255,255,255,.96);
+    -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+    border-radius:17px;box-shadow:0 10px 34px #111b3b24
+  }
+  .mobile-dock a,.mobile-dock button{
+    min-width:0;min-height:48px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:3px;border:0;
+    background:transparent;color:#596783;font:750 10px/1.15 Inter,system-ui,sans-serif;
+    text-decoration:none;padding:4px 1px;border-radius:11px;white-space:nowrap
+  }
+  .mobile-dock svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .mobile-dock a[aria-current="page"],.mobile-dock a:hover,.mobile-dock button:hover{color:#087f89;background:#e9f8f6}
+  .mobile-dock a:focus-visible,.mobile-dock button:focus-visible{outline:3px solid #5146b8;outline-offset:1px}
+  .wa-launch{bottom:112px}
+}
+@media(max-width:380px){
+  .mobile-dock a,.mobile-dock button{font-size:9px}
+  .mobile-dock svg{width:18px;height:18px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
 </head><body>
-<header><div class="w nav"><a href="#" aria-label="Trend-Entegre ana sayfa"><img class="brand-logo" src="assets/trend-entegre-logo.svg" alt="Trend-Entegre — Tek XML, tüm pazaryerleri"></a><nav><a href="#cozum">Çözümümüz</a><a href="#nasil">Nasıl çalışır?</a><a href="#eticaret-paketleri">E-Ticaret Mağazası</a><a href="#entegrasyon-paketleri">Entegrasyon</a><a href="#buybox-paketleri">Buybox</a><a href="#xml-paketleri">XML Aktarımı</a><a href="xml-merkezi.html">XML Ürün Merkezi</a></nav><div class="auth-actions"><span class="auth-user" id="authUserLabel"></span><button class="btn" id="authOpenBtn" type="button">Giriş / Kayıt</button></div></div></header><div class="trend-ad-slot" data-ad-slot="home_top" aria-label="Sponsorlu reklam alanı"></div>
+<header><div class="w nav"><a href="#" aria-label="Trend-Entegre ana sayfa"><img class="brand-logo" src="assets/trend-entegre-logo.svg" alt="Trend-Entegre — Tek XML, tüm pazaryerleri"></a><nav><a href="#cozum">Çözümümüz</a><a href="#nasil">Nasıl çalışır?</a><a href="#eticaret-paketleri">E-Ticaret Mağazası</a><a href="#entegrasyon-paketleri">Entegrasyon</a><a href="#buybox-paketleri">Buybox</a><a href="#xml-paketleri">XML Aktarımı</a><a href="xml-merkezi.html">XML Ürün Merkezi</a></nav><div class="auth-actions"><span class="auth-user" id="authUserLabel"></span><button class="btn" id="authOpenBtn" type="button">Giriş / Kayıt</button></div></div></header>
+
+<nav class="mobile-dock" aria-label="Mobil ana gezinme">
+  <a href="#" aria-label="Ana sayfa" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><span>Ana Sayfa</span></a>
+  <a href="#eticaret-paketleri" aria-label="Hizmet kategorileri"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg><span>Kategoriler</span></a>
+  <a href="xml-merkezi.html" aria-label="XML Ürün Merkezi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10"/><circle cx="18" cy="19" r="2"/></svg><span>XML Merkezi</span></a>
+  <a href="#entegrasyon-paketleri" aria-label="Paketler"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg><span>Paketler</span></a>
+  <button type="button" aria-label="Hesabım, giriş veya kayıt" onclick="document.getElementById('authOpenBtn').click()"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Hesabım</span></button>
+</nav><div class="trend-ad-slot" data-ad-slot="home_top" aria-label="Sponsorlu reklam alanı"></div>
 <main><section class="hero"><div class="w hg"><div><span class="tag">XML'DEN PAZARYERLERİNE TEK MERKEZ</span><h1>Ürünlerinizi <em>pazaryerlerinde</em> büyütün.</h1><p>Tedarikçinizin XML ürün kaynağını alın; ürün verilerinizi farklı pazaryerlerinin ihtiyaçlarına göre düzenleyip satış yapacağınız pazaryerlerine hazırlayın. Daha az operasyon, daha kontrollü ürün yönetimi.</p><div class="actions"><a class="btn" href="#entegrasyon-paketleri">Paketleri keşfet →</a><a class="btn light" href="#nasil">Nasıl çalışır?</a></div></div><div class="mock"><h3>XML → Pazaryeri Dönüşümü</h3><div class="flow"><div class="tile"><span>📦</span><b>Tedarikçi XML</b><small>Ürün · Stok · Fiyat</small></div><div class="arr">➜</div><div class="tile"><span>⚙️</span><b>Trend-Entegre</b><small>Düzenle · Dönüştür</small></div></div><div class="channels" aria-label="Desteklenen pazaryerleri">
 <div class="market-logo trendyol" aria-label="Trendyol"><svg viewBox="0 0 150 34" role="img" aria-label="Trendyol"><text x="75" y="25" text-anchor="middle" fill="currentColor" font-size="25">Trendyol</text></svg></div>
 <div class="market-logo hepsi" aria-label="Hepsiburada"><svg viewBox="0 0 160 34" role="img" aria-label="Hepsiburada"><text x="80" y="23" text-anchor="middle" fill="currentColor" font-size="20">hepsiburada</text></svg></div>
