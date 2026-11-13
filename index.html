@@ -74,6 +74,60 @@
   .hero p{font-size:16px}
 }
 
+
+/* PREMIUM HOME REFRESH — restrained layout, clear conversion path */
+:root{--n:#101b3f;--o:#f4772b;--t:#18233e;--m:#66718b;--bg:#f6f7fb;--l:#e5e9f1}
+html{scroll-behavior:smooth}
+header{background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border-bottom:1px solid #e9edf4;box-shadow:0 5px 24px #101b3f08}
+header .nav{min-height:78px}
+.premium-nav{gap:clamp(12px,2vw,25px);align-items:center}
+.premium-nav a{font-size:13px;color:#47536e;transition:color .18s ease}
+.premium-nav a:hover{color:var(--o)}
+.auth-actions .btn{border-radius:11px;padding:12px 18px;box-shadow:0 7px 18px #f4772b2a}
+.hero{position:relative;overflow:hidden;padding:clamp(68px,8vw,104px) 0;background:radial-gradient(ellipse at 82% 18%,#344f9b 0%,transparent 36%),linear-gradient(118deg,#0c1738 0%,#172b60 58%,#243f86 100%)}
+.hero:after{content:"";position:absolute;width:440px;height:440px;border:1px solid #ffffff12;border-radius:50%;right:-190px;bottom:-300px;pointer-events:none}
+.hero .w{position:relative;z-index:1}
+.hero .tag{display:inline-flex;border-color:#ffffff35;background:#ffffff0d;color:#ffbd91;letter-spacing:1.35px}
+.hero h1{max-width:690px;font-size:clamp(42px,5.4vw,66px);line-height:1.04;letter-spacing:-2.5px;margin:25px 0 20px}
+.hero h1 em{color:#ff9a61}
+.hero p{max-width:570px;font-size:17px;line-height:1.8;color:#dce4f7}
+.hero .actions{gap:13px;margin-top:30px}
+.hero .actions .btn{padding:15px 23px;border-radius:12px;font-size:14px}
+.hero .actions .btn:first-child{box-shadow:0 10px 26px #f4772b35}
+.hero .actions .light{background:#ffffff12;color:#fff;border:1px solid #ffffff45}
+.hero-partner-link{display:inline-block;margin-top:22px;color:#dce4f7;font-size:13px;text-decoration:none}
+.hero-partner-link strong{color:#ffad7b;margin-left:4px}
+.mock{padding:25px;border:1px solid #ffffff35;border-radius:24px;box-shadow:0 28px 80px #050c2580}
+.mock h3{font-size:18px;letter-spacing:-.3px}
+.tile{padding:20px 10px}
+.channels{margin-top:18px}
+.market-logo{min-height:58px;border-radius:12px}
+section{padding:clamp(62px,7vw,88px) 0}
+.head{margin-bottom:34px}
+.head h2{letter-spacing:-1.35px}
+.card,.pricecard{box-shadow:0 8px 28px #101b3f08}
+#cozum .card{transition:transform .2s ease,box-shadow .2s ease}
+#cozum .card:hover{transform:translateY(-3px);box-shadow:0 16px 34px #101b3f12}
+#paketler{scroll-margin-top:90px}
+.contact{background:linear-gradient(120deg,#f5f7fc,#fff8f2)}
+footer{padding:34px 0}
+@media(max-width:800px){
+ header .nav{min-height:68px}
+ .premium-nav{display:none}
+ .hero{padding:66px 0 58px}
+ .hg{gap:32px}
+ .hero h1{font-size:clamp(39px,8vw,54px)}
+ .hero p{font-size:15px;line-height:1.7}
+}
+@media(max-width:560px){
+ .hero .actions{display:grid;grid-template-columns:1fr}
+ .hero .actions .btn{text-align:center;width:100%}
+ .hero-partner-link{margin-top:18px}
+ .mock{padding:17px;border-radius:18px}
+ .channels{gap:7px}
+ .market-logo{min-height:52px;padding:7px 5px}
+}
+
 </style>
 <style id="trend-entegre-color-refresh">
 :root{--n:#172044;--b:#5146b8;--o:#0ea5a4;--t:#202945;--m:#68738d;--bg:#f2f5fb;--l:#dfe5f0}
@@ -379,7 +433,7 @@ footer{padding:38px 0 22px}
 </style>
 
 </head><body>
-<header><div class="w nav"><a href="#" aria-label="Trend-Entegre ana sayfa"><img class="brand-logo" src="assets/trend-entegre-logo.svg" alt="Trend-Entegre — Tek XML, tüm pazaryerleri"></a><nav><a href="#cozum">Çözümümüz</a><a href="#nasil">Nasıl çalışır?</a><a href="#eticaret-paketleri">E-Ticaret Mağazası</a><a href="#entegrasyon-paketleri">Entegrasyon</a><a href="#buybox-paketleri">Buybox</a><a href="#xml-paketleri">XML Aktarımı</a><a href="xml-merkezi.html">XML Ürün Merkezi</a></nav><div class="auth-actions"><span class="auth-user" id="authUserLabel"></span><button class="btn" id="authOpenBtn" type="button">Giriş / Kayıt</button></div></div></header>
+<header><div class="w nav"><a href="#" aria-label="Trend-Entegre ana sayfa"><img class="brand-logo" src="assets/trend-entegre-logo.svg" alt="Trend-Entegre — Tek XML, tüm pazaryerleri"></a><nav class="premium-nav"><a href="#cozum">Çözümler</a><a href="#nasil">Nasıl çalışır?</a><a href="#paketler">Paketler</a><a href="#iletisim">Bayilik</a></nav><div class="auth-actions"><span class="auth-user" id="authUserLabel"></span><button class="btn" id="authOpenBtn" type="button">Giriş / Kayıt</button></div></div></header>
 
 <nav class="mobile-dock" aria-label="Mobil ana gezinme">
   <a href="#" aria-label="Ana sayfa" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><span>Ana Sayfa</span></a>
@@ -388,7 +442,7 @@ footer{padding:38px 0 22px}
   <a href="#entegrasyon-paketleri" aria-label="Paketler"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg><span>Paketler</span></a>
   <button type="button" aria-label="Hesabım, giriş veya kayıt" onclick="document.getElementById('authOpenBtn').click()"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Hesabım</span></button>
 </nav><div class="trend-ad-slot" data-ad-slot="home_top" aria-label="Sponsorlu reklam alanı"></div>
-<main><section class="hero"><div class="w hg"><div><span class="tag">XML'DEN PAZARYERLERİNE TEK MERKEZ</span><h1>Ürünlerinizi <em>pazaryerlerinde</em> büyütün.</h1><p>Tedarikçinizin XML ürün kaynağını alın; ürün verilerinizi farklı pazaryerlerinin ihtiyaçlarına göre düzenleyip satış yapacağınız pazaryerlerine hazırlayın. Daha az operasyon, daha kontrollü ürün yönetimi.</p><div class="actions"><a class="btn" href="#entegrasyon-paketleri">Paketleri keşfet →</a><a class="btn light" href="#nasil">Nasıl çalışır?</a></div></div><div class="mock"><h3>XML → Pazaryeri Dönüşümü</h3><div class="flow"><div class="tile"><span>📦</span><b>Tedarikçi XML</b><small>Ürün · Stok · Fiyat</small></div><div class="arr">➜</div><div class="tile"><span>⚙️</span><b>Trend-Entegre</b><small>Düzenle · Dönüştür</small></div></div><div class="channels" aria-label="Desteklenen pazaryerleri">
+<main><section class="hero"><div class="w hg"><div><span class="tag">E-TİCARET OPERASYONUNUZ İÇİN TEK MERKEZ</span><h1>Tüm pazaryerleriniz, <em>tek merkezden.</em></h1><p>Ürünlerinizi pazaryerlerine hazırlayın, XML verilerinizi düzenleyin ve satış operasyonunuzu daha kontrollü yönetin. Trend Entegre ile işinizi büyütmeye odaklanın.</p><div class="actions"><button class="btn" type="button" onclick="document.getElementById('authOpenBtn').click()">Ücretsiz üye ol</button><a class="btn light" href="#cozum">Çözümleri keşfet</a></div><a class="hero-partner-link" href="#iletisim">Bayi olmak mı istiyorsunuz? <strong>Bilgi alın →</strong></a></div><div class="mock"><h3>XML → Pazaryeri Dönüşümü</h3><div class="flow"><div class="tile"><span>📦</span><b>Tedarikçi XML</b><small>Ürün · Stok · Fiyat</small></div><div class="arr">➜</div><div class="tile"><span>⚙️</span><b>Trend-Entegre</b><small>Düzenle · Dönüştür</small></div></div><div class="channels" aria-label="Desteklenen pazaryerleri">
 <div class="market-logo trendyol" aria-label="Trendyol"><svg viewBox="0 0 150 34" role="img" aria-label="Trendyol"><text x="75" y="25" text-anchor="middle" fill="currentColor" font-size="25">Trendyol</text></svg></div>
 <div class="market-logo hepsi" aria-label="Hepsiburada"><svg viewBox="0 0 160 34" role="img" aria-label="Hepsiburada"><text x="80" y="23" text-anchor="middle" fill="currentColor" font-size="20">hepsiburada</text></svg></div>
 <div class="market-logo n11" aria-label="n11"><svg viewBox="0 0 100 34" role="img" aria-label="n11"><text x="50" y="26" text-anchor="middle" fill="currentColor" font-size="29">n11</text></svg></div>
