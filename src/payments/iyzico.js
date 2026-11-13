@@ -9,9 +9,9 @@ const PLANS = {
   'coklu-pazaryeri': { name: 'Çoklu Pazaryeri', annualNet: 5998800 },
   'full-paket': { name: 'Full Paket', annualNet: 11998800 },
   'buybox-pro': { name: 'Buybox Pro', annualNet: 2878800 },
-  'eticaret-baslangic': { name: 'E-Ticaret Başlangıç', annualNet: 149000 },
-  'eticaret-buyume': { name: 'E-Ticaret Büyüme', annualNet: 299000 },
-  'eticaret-profesyonel': { name: 'E-Ticaret Profesyonel', annualNet: 599000 },
+  'eticaret-baslangic': { name: 'E-Ticaret Başlangıç', annualNet: 1788000 },
+  'eticaret-buyume': { name: 'E-Ticaret Büyüme', annualNet: 3588000 },
+  'eticaret-profesyonel': { name: 'E-Ticaret Profesyonel', annualNet: 7188000 },
   'test-product-3-tl': { name: 'Test Ürünü 1', netAmount: 250, vatAmount: 50, grossAmount: 300, testOnly: true },
   'test-product-5-tl': { name: 'Test Ürünü 2', netAmount: 417, vatAmount: 83, grossAmount: 500, testOnly: true },
 };
