@@ -233,7 +233,7 @@ function validateAdPayload(body, partial = false) {
   if (!partial || Object.hasOwn(payload, 'slot_id')) if (!adSlotIds.has(payload.slot_id)) return { error: 'Geçerli bir reklam alanı seçin.' };
   if (!partial || Object.hasOwn(payload, 'title')) if (!payload.title || String(payload.title).length > 120) return { error: 'Reklam başlığı zorunludur (en fazla 120 karakter).' };
   if (!partial || Object.hasOwn(payload, 'advertiser_name')) if (!payload.advertiser_name || String(payload.advertiser_name).length > 160) return { error: 'Reklam veren firma / kişi bilgisi zorunludur.' };
-  if (Object.hasOwn(payload, 'advertiser_email') && payload.advertiser_email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(payload.advertiser_email)) return { error: 'Reklam veren e-posta adresini kontrol edin.' };
+  if (Object.hasOwn(payload, 'advertiser_email') && payload.advertiser_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.advertiser_email)) return { error: 'Reklam veren e-posta adresini kontrol edin.' };
   if (Object.hasOwn(payload, 'image_url')) { const url = safeAdUrl(payload.image_url); if (url === null) return { error: 'Görsel adresi http veya https olmalıdır.' }; payload.image_url = url; }
   if (Object.hasOwn(payload, 'target_url')) { const url = safeAdUrl(payload.target_url); if (url === null) return { error: 'Hedef bağlantı http veya https olmalıdır.' }; payload.target_url = url; }
   if (!partial || Object.hasOwn(payload, 'starts_at')) if (!payload.starts_at || !Number.isFinite(Date.parse(payload.starts_at))) return { error: 'Başlangıç tarihi geçerli olmalıdır.' };
