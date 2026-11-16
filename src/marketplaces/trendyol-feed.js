@@ -11,7 +11,6 @@ export function validateTrendyolProduct(source, mapping = {}) {
   const title = String(source['Ürün Adı'] || '').trim();
   const barcode = String(source['Barkod'] || '').trim().replace(/\\s+/g, '');
   const sku = String(source.SKU || '').trim();
-  const brand = String(source['Marka'] || '').trim();
   const category = String(mapping.categoryId || '').trim();
   const brandId = String(mapping.brandId || '').trim();
   const salePrice = numeric(source['Satış Fiyatı'] ?? source['Fiyat']);
@@ -55,7 +54,7 @@ export function validateTrendyolProduct(source, mapping = {}) {
     errors,
     warnings,
     normalized: {
-      barcode, title, productMainId: sku, stockCode: sku, brand,
+      barcode, title, productMainId: sku, stockCode: sku,
       brandId: brandId ? Number(brandId) : null, categoryId: category ? Number(category) : null,
       quantity: stock, dimensionalWeight, vatRate, ...(origin && /^[A-Z]{2}$/.test(origin) ? { origin } : {}), listPrice: salePrice, salePrice,
       description, images: image ? [{ url: image }] : [],
