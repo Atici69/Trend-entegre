@@ -114,6 +114,8 @@ function sourceValue(product, attributeName) {
   if (/marka|brand/.test(name)) return text(product['Marka']);
   if (/materyal|malzeme|material/.test(name)) return text(product['Materyal']);
   if (/cinsiyet|gender/.test(name)) return text(product['Cinsiyet']);
+  if (/menşei|mensei|origin|country of origin|uretim yeri/.test(name)) return text(product['Menşei']);
+  if (/kutu durumu|package condition|box condition/.test(name)) return text(product['Kutu Durumu']);
   return '';
 }
 function parseAttributeValues(data) {
@@ -144,6 +146,7 @@ async function makeAttributes(product, categoryId, mapping, cache) {
     if (!attributeId) continue;
     const saved = configured.find(item => String(item.attributeId) === attributeId);
     let raw = saved?.customAttributeValue || saved?.attributeValue || '';
+    if (!raw && saved?.sourceField) raw = text(product[saved.sourceField]);
     if (!raw) raw = sourceValue(product, attribute.name || '');
     if (!raw) {
       if (definition.required) errors.push('Zorunlu özellik eksik: ' + (attribute.name || attributeId));
@@ -278,6 +281,14 @@ export function registerTrendyolRoutes(app, requireAdmin) {
       res.json(data);
     } catch (error) { res.status(502).json({ error: error.message }); }
   });
+  app.get('/api/v1/marketplaces/trendyol/categories/:categoryId/attributes/:attributeId/values', requireAdmin, async (req, res) => {
+    try {
+      const data = await trendyolRequest('/integration/product/categories/' +
+        encodeURIComponent(req.params.categoryId) + '/attributes/' +
+        encodeURIComponent(req.params.attributeId) + '/values?size=1000&page=0');
+      res.json({ values: parseAttributeValues(data) });
+    } catch (error) { res.status(502).json({ error: error.message }); }
+  });
   app.get('/api/v1/marketplaces/trendyol/feed-mappings', requireAdmin, async (req, res) => {
     try {
       const { id, products } = await getFeed(req.firestore, req.query.feed_id);
@@ -299,7 +310,13 @@ export function registerTrendyolRoutes(app, requireAdmin) {
         categoryId: text(item.categoryId),
         brandId: text(item.brandId),
         brandName: text(item.brandName).slice(0, 120),
-        attributes: asArray(item.attributes).slice(0, 100),
+        attributes: asArray(item.attributes).slice(0, 100).map(attribute => ({
+          attributeId: text(attribute.attributeId),
+          sourceField: text(attribute.sourceField),
+          attributeValueId: text(attribute.attributeValueId),
+          attributeValue: text(attribute.attributeValue).slice(0, 100),
+          customAttributeValue: text(attribute.customAttributeValue).slice(0, 100),
+        })),
       }));
       if (!mappings.length || mappings.some(item => !item.sourceCategory || !/^\d+$/.test(item.categoryId) || !/^\d+$/.test(item.brandId))) {
         return res.status(400).json({ error: 'Her kaynak kategori için geçerli Trendyol kategori ve marka seçin.' });
