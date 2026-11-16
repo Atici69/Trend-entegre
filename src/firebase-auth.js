@@ -378,6 +378,29 @@ function openProfile(profile){
  fillProfileForm(profile||{});
  profileError.classList.remove('show');profileError.textContent='';
  profileModal.classList.add('open');profileModal.setAttribute('aria-hidden','false');
+ loadCustomerOrders();
+}
+async function loadCustomerOrders(){
+ const list=document.getElementById('customerOrdersList');
+ if(!list)return;
+ list.textContent='Siparişler yükleniyor…';
+ try{
+  const user=auth.currentUser;if(!user)throw new Error('Oturum bulunamadı.');
+  const token=await user.getIdToken();
+  const response=await fetch('https://trend-entegre.onrender.com/api/v1/customer/orders',{headers:{Authorization:'Bearer '+token}});
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(result.error||'Siparişler alınamadı.');
+  const orders=Array.isArray(result.orders)?result.orders:[];
+  if(!orders.length){list.textContent='Henüz siparişiniz bulunmuyor.';return;}
+  const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const money=value=>(Number(value||0)/100).toLocaleString('tr-TR',{style:'currency',currency:'TRY'});
+  const statuses={new:'Alındı',confirmed:'Onaylandı',cancelled:'İptal edildi',fulfilled:'Tamamlandı'};
+  list.innerHTML=orders.map(order=>{
+   const date=order.created_at?new Date(order.created_at).toLocaleString('tr-TR'):'Tarih bilgisi yok';
+   const lines=(order.items||[]).map(item=>esc(item.name)+' × '+Number(item.quantity||0)).join(', ');
+   return '<article style="border:1px solid #e5e9f1;border-radius:10px;padding:12px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><strong>Sipariş #'+esc(order.order_number)+'</strong><strong>'+money(order.total_minor)+'</strong></div><p style="margin:6px 0;color:#64708a;font-size:12px">'+esc(date)+' · '+esc(statuses[order.status]||'İşlemde')+'</p><p style="margin:0;font-size:13px">'+lines+'</p></article>';
+  }).join('');
+ }catch(error){list.textContent=error.message||'Siparişler yüklenemedi.';}
 }
 async function ensureBillingProfile(user){
  if(!user||!user.emailVerified||profileCheckUid===user.uid)return;
