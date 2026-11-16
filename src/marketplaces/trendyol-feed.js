@@ -37,7 +37,7 @@ export function validateTrendyolProduct(source, mapping = {}) {
     catch { errors.push('Ürün görsel adresi geçersiz.'); }
   }
   if (!description) warnings.push('Ürün açıklaması boş.');
-  if (barcode && !/^\d{8,14}$/.test(barcode)) warnings.push('Barkod 8-14 haneli sayısal GTIN formatında görünmüyor; Trendyol kontrolü gerekebilir.');
+  if (barcode.length > 40) errors.push('Barkod 40 karakterden uzun olamaz.');
   if (category && !mapping.attributes?.length) errors.push('Seçilen Trendyol kategorisinin zorunlu ürün özellikleri eşleştirilmemiş.');
   return {
     ready: errors.length === 0,
