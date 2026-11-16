@@ -5,7 +5,7 @@ import { XMLParser, XMLValidator } from 'fast-xml-parser';
 
 const MAX_XML_BYTES = 25 * 1024 * 1024;
 const MAX_PRODUCTS = 5000;
-const PRODUCT_TAGS = new Set(['product', 'item', 'urun', 'ürün', 'entry', 'offer', 'productitem']);
+const PRODUCT_TAGS = new Set(['product', 'item', 'urun', 'entry', 'offer', 'productitem']);
 const parser = new XMLParser({
   ignoreAttributes: true,
   processEntities: false,
