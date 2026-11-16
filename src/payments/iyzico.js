@@ -121,15 +121,16 @@ export function registerIyzicoRoutes(app) {
       if (totalMinor < 1 || totalMinor > 500000000) return res.status(400).json({ error: 'Sipariş toplamı geçersiz.' });
       const now = new Date().toISOString();
       const orderRef = db.collection('orders').doc();
+      const orderNumber = 'TE-' + Date.now().toString(36).toUpperCase();
       const email = String(buyer.email || req.user.email).trim().slice(0, 160);
       await orderRef.create({
-        order_number: 'TE-' + Date.now().toString(36).toUpperCase(),
+        order_number: orderNumber,
         user_id: req.user.uid, email, provider: 'iyzico', status: 'pending_payment',
         payment_status: 'pending', currency: 'TRY', total_minor: totalMinor, total: totalMinor / 100,
         buyer: { name, phone: iyziPhone, email, address, city, district, identity_number: identityNumber, zip_code: zipCode },
         items: orderItems, created_at: now, updated_at: now,
       });
-      res.status(201).json({ order: { id: orderRef.id, order_number: 'TE-' + Date.now().toString(36).toUpperCase(), total: totalMinor / 100, currency: 'TRY' } });
+      res.status(201).json({ order: { id: orderRef.id, order_number: orderNumber, total: totalMinor / 100, currency: 'TRY' } });
     } catch (error) {
       console.error('Store order creation failed:', error?.message || 'Unknown error');
       res.status(500).json({ error: 'Sipariş oluşturulamadı. Lütfen tekrar deneyin.' });
@@ -164,7 +165,7 @@ export function registerIyzicoRoutes(app) {
       const request = {
         locale: Iyzipay.LOCALE.TR, conversationId: attemptId,
         price: money(totalMinor), paidPrice: money(totalMinor),
-        currency: Iyzipay.CURRENCY.TRY, basketId: orderRef.id,
+        currency: Iyzipay.CURRENCY.TRY, basketId: attemptId,
         paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT,
         callbackUrl: process.env.IYZIPAY_CALLBACK_URL.trim(), enabledInstallments: [1],
         buyer: {
