@@ -179,13 +179,14 @@ async function makeAttributes(product, categoryId, mapping, cache) {
   }
   return { result, errors, definitions };
 }
-function productBaseErrors(product, mapping, marginPercent = 0) {
+function productBaseErrors(product, mapping, marginPercent = 0, discountPercent = 0) {
   const errors = [];
   const barcode = text(product['Barkod']);
   const title = text(product['Ürün Adı']);
   const stock = numeric(product['Stok']);
   const basePrice = numeric(product['Satış Fiyatı'] || product['Fiyat']);
-  const price = basePrice === null ? null : Math.round((basePrice * (1 + marginPercent / 100) + Number.EPSILON) * 100) / 100;
+  const discountedPrice = basePrice === null ? null : basePrice * (1 + marginPercent / 100) * (1 - discountPercent / 100);
+  const price = discountedPrice === null ? null : Math.round((discountedPrice + Number.EPSILON) * 100) / 100;
   const image = text(product['Görsel URL']);
   const vat = numeric(product['KDV'] || process.env.TRENDYOL_DEFAULT_VAT_RATE);
   if (!barcode) errors.push('Barkod eksik.');
@@ -219,7 +220,8 @@ async function buildValidation(db, feedId) {
     const sourceCategory = text(product['Kategori']);
     const mapping = byCategory.get(normalize(sourceCategory));
     const marginPercent = Number(feed.margin_percent || 0);
-    const errors = productBaseErrors(product, mapping, marginPercent);
+    const discountPercent = Number(feed.discount_percent || 0);
+    const errors = productBaseErrors(product, mapping, marginPercent, discountPercent);
     const barcode = text(product['Barkod']).trim();
     if (barcode && (barcodeCounts.get(barcode) || 0) > 1) {
       errors.push('Aynı barkod XML içinde birden fazla üründe kullanılmış: ' + barcode + '. Bu barkodlu kayıtların tamamı gönderimden çıkarılmalıdır.');
@@ -239,7 +241,8 @@ async function buildValidation(db, feedId) {
     });
     if (ready) {
       const basePrice = numeric(product['Satış Fiyatı'] || product['Fiyat']);
-      const price = Math.round((basePrice * (1 + Number(feed.margin_percent || 0) / 100) + Number.EPSILON) * 100) / 100;
+      const priceBeforeDiscount = basePrice * (1 + Number(feed.margin_percent || 0) / 100);
+      const price = Math.round((priceBeforeDiscount * (1 - Number(feed.discount_percent || 0) / 100) + Number.EPSILON) * 100) / 100;
       const stock = numeric(product['Stok']);
       const vatRate = numeric(product['KDV'] || process.env.TRENDYOL_DEFAULT_VAT_RATE);
       const image = text(product['Görsel URL']);
