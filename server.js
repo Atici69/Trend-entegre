@@ -9,7 +9,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { marketplaceStatus } from './src/marketplaces/index.js';
 import { testHepsiburadaConnection } from './src/marketplaces/hepsiburada.js';
-import { testTrendyolConnection, getTrendyolProducts, getTrendyolOrders, searchTrendyolBrands, searchTrendyolCategories, getTrendyolCategoryAttributes } from './src/marketplaces/trendyol.js';
+import { testTrendyolConnection, getTrendyolProducts, getTrendyolOrders, searchTrendyolBrands, searchTrendyolCategories, getTrendyolCategoryAttributes, createTrendyolProducts, getTrendyolBatchRequestResult } from './src/marketplaces/trendyol.js';
 import { validateTrendyolFeed } from './src/marketplaces/trendyol-feed.js';
 import { registerIyzicoRoutes } from './src/payments/iyzico.js';
 import * as XLSX from 'xlsx';
@@ -687,6 +687,66 @@ app.post('/api/v1/marketplaces/trendyol/validate-feed', requireAdmin, async (req
 });
 
 
+
+app.post('/api/v1/marketplaces/trendyol/publish-feed', requireAdmin, async (req, res) => {
+  try {
+    if (req.body?.confirm_publish !== true) return res.status(400).json({ error: 'Ürün gönderimi için açık onay gerekli.' });
+    const feedId = String(req.body?.feed_id || '').trim();
+    if (!feedId) return res.status(400).json({ error: 'Önce kayıtlı bir XML kaynağı seçin.' });
+    const feedRef = req.firestore.collection('xml_feeds').doc(feedId);
+    const feedSnap = await feedRef.get();
+    if (!feedSnap.exists) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
+    const feed = feedSnap.data();
+    const productSnap = await feedRef.collection('products').orderBy('index').get();
+    const sourceProducts = productSnap.docs.map(doc => doc.data().product).filter(Boolean);
+    if (!sourceProducts.length) return res.status(422).json({ error: 'XML kaynağında gönderilecek ürün bulunamadı.' });
+    const margin = normalizeProfitMargin(feed.margin_percent ?? 0);
+    const pricedProducts = sourceProducts.map(product => {
+      const cost = priceNumber(product['Fiyat']);
+      return { ...product, 'Desi': product['Desi'] || product.dimensionalWeight || '1', 'Satış Fiyatı': cost === null ? '' : (Math.round((cost * (1 + margin / 100) + Number.EPSILON) * 100) / 100).toFixed(2) };
+    });
+    const mappingsSnap = await req.firestore.collection('marketplace_category_mappings').where('marketplace', '==', 'trendyol').get();
+    const mappings = {};
+    mappingsSnap.docs.forEach(doc => {
+      const data = doc.data();
+      if (data.source_category) mappings[String(data.source_category)] = {
+        categoryId: data.category_id, brandId: data.brand_id, attributes: data.attributes || [], requiredAttributes: data.required_attributes || null,
+      };
+    });
+    const report = validateTrendyolFeed(pricedProducts, mappings);
+    if (report.total === 0 || report.blocked > 0) {
+      return res.status(422).json({ error: 'Eksik veya eşleştirilmemiş ürünler var. Hiçbir ürün Trendyol’a gönderilmedi.', validation: report });
+    }
+    const items = report.rows.map(row => row.normalized);
+    const result = await createTrendyolProducts(items);
+    if (!result.ok) return res.status(result.status === 'not_configured' ? 424 : 502).json({ error: result.message, status: result.status });
+    const batchRequestId = String(result.data?.batchRequestId || '');
+    const batchDocId = batchRequestId || randomUUID();
+    await req.firestore.collection('marketplace_batch_requests').doc('trendyol_' + batchDocId).set({
+      marketplace: 'trendyol', feed_id: feedId, batch_request_id: batchRequestId || null,
+      item_count: items.length, status: 'submitted', response: result.data || {},
+      created_at: new Date().toISOString(),
+    }, { merge: true });
+    await audit(req, 'publish_feed', 'xml_feed', feedId, { marketplace: 'trendyol', item_count: items.length, batch_request_id: batchRequestId });
+    res.json({ ok: true, batchRequestId, itemCount: items.length, response: result.data, note: 'Ürünler Trendyol kuyruğuna iletildi. Onay süreci ve batch sonucu ayrıca kontrol edilmelidir.' });
+  } catch (error) {
+    console.error('Trendyol feed publish failed:', error?.message || 'Unknown error');
+    res.status(400).json({ error: error.message || 'Trendyol ürün aktarımı başlatılamadı.' });
+  }
+});
+
+app.get('/api/v1/marketplaces/trendyol/batches/:batchRequestId', requireAdmin, async (req, res) => {
+  const result = await getTrendyolBatchRequestResult(req.params.batchRequestId);
+  if (!result.ok) return res.status(result.status === 'not_configured' ? 424 : 502).json({ error: result.message, status: result.status });
+  try {
+    await req.firestore.collection('marketplace_batch_requests').doc('trendyol_' + req.params.batchRequestId).set({
+      status: result.data?.status || 'unknown', result: result.data || {}, checked_at: new Date().toISOString(),
+    }, { merge: true });
+  } catch (error) {
+    console.error('Could not save Trendyol batch result:', error?.message || 'Unknown error');
+  }
+  res.json({ ok: true, ...result.data });
+});
 
 // XML supplier feeds and internal catalog (kept separate from billing/customer APIs).
 function normalizeProfitMargin(value) {
