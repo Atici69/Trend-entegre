@@ -574,6 +574,7 @@ app.patch('/api/v1/admin/catalog/orders/:id', requireAdmin, async (req, res) => 
       const snapshot = await transaction.get(ref);
       if (!snapshot.exists) throw new Error('Sipariş bulunamadı.');
       const order = snapshot.data();
+      if (status === 'cancelled' && order.payment_status === 'pending') throw new Error('Ödeme işlemi devam eden sipariş iptal edilemez. Önce ödeme sonucunu bekleyin.');
       if (order.status === 'fulfilled' && status !== 'fulfilled') throw new Error('Tamamlanan siparişin durumu değiştirilemez.');
       if (order.status === 'cancelled' && status !== 'cancelled') throw new Error('İptal edilen sipariş yeniden açılamaz.');
       if (status === 'fulfilled' && order.status !== 'confirmed') throw new Error('Önce siparişi onaylamalısınız.');
