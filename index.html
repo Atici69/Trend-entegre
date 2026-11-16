@@ -662,10 +662,11 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
 #eticaret-paketleri .commerce-card .btn{color:#fff!important}
 </style>
 </head><body>
-<header><div class="w nav"><a href="#" aria-label="Trend-Entegre ana sayfa"><img class="brand-logo" src="assets/trend-entegre-logo.svg" alt="Trend-Entegre — Tek XML, tüm pazaryerleri"></a><nav class="premium-nav"><a href="#cozum">Çözümler</a><a href="#nasil">Nasıl çalışır?</a><a href="#paketler">Paketler</a><a href="#iletisim">Bayilik</a></nav><div class="auth-actions"><span class="auth-user" id="authUserLabel"></span><button class="btn" id="authOpenBtn" type="button">Giriş / Kayıt</button></div></div></header>
+<header><div class="w nav"><a href="#" aria-label="Trend-Entegre ana sayfa"><img class="brand-logo" src="assets/trend-entegre-logo.svg" alt="Trend-Entegre — Tek XML, tüm pazaryerleri"></a><nav class="premium-nav"><a href="#katalog">Katalog</a><a href="#cozum">Çözümler</a><a href="#nasil">Nasıl çalışır?</a><a href="#paketler">Paketler</a><a href="#iletisim">Bayilik</a></nav><div class="auth-actions"><span class="auth-user" id="authUserLabel"></span><button class="btn" id="authOpenBtn" type="button">Giriş / Kayıt</button></div></div></header>
 
 <nav class="mobile-dock" aria-label="Mobil ana gezinme">
   <a href="#" aria-label="Ana sayfa" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><span>Ana Sayfa</span></a>
+  <a href="#katalog" aria-label="Ürün Kataloğu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16l-1.5 15h-13z"/><path d="M9 9a3 3 0 0 0 6 0"/></svg><span>Katalog</span></a>
   <a href="#eticaret-paketleri" aria-label="Hizmet kategorileri"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg><span>Kategoriler</span></a>
   <a href="xml-merkezi.html" aria-label="XML Ürün Merkezi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10"/><circle cx="18" cy="19" r="2"/></svg><span>XML Merkezi</span></a>
   <a href="#entegrasyon-paketleri" aria-label="Paketler"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg><span>Paketler</span></a>
@@ -718,6 +719,29 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
     </div>
   </div>
 </section>
+<section id="katalog" class="soft">
+<div class="w">
+<div class="head"><span class="k">Trend-Entegre mağaza</span><h2>Ürün Kataloğu</h2><p>Mağazamızda satışa açılan ürünleri burada inceleyebilirsiniz.</p></div>
+<div id="publicCatalogMessage" class="muted" style="text-align:center;margin-bottom:18px">Ürünler yükleniyor…</div>
+<div class="store-cart" id="storeCart">
+ <div class="store-cart-head"><div><h3>Alışveriş sepetim</h3><p>Ürünleri sepete ekleyin, sipariş talebinizi gönderin.</p></div><strong id="storeCartTotal">0,00 TL</strong></div>
+ <div id="storeCartItems" class="store-cart-items">Sepetiniz henüz boş.</div>
+ <form id="storeOrderForm" class="store-order-form">
+  <h4>Sipariş ve teslimat bilgileri</h4>
+  <div class="store-order-fields">
+   <label>Ad soyad<input name="name" required maxlength="120" autocomplete="name" placeholder="Adınız soyadınız"></label>
+   <label>Telefon<input name="phone" required maxlength="30" autocomplete="tel" placeholder="05XX XXX XX XX"></label>
+   <label>E-posta (isteğe bağlı)<input name="email" type="email" maxlength="160" autocomplete="email" placeholder="ornek@eposta.com"></label>
+   <label class="store-address">Teslimat adresi<textarea name="address" required minlength="8" maxlength="600" autocomplete="street-address" placeholder="Mahalle, cadde, sokak, bina ve daire bilgisi"></textarea></label>
+  </div>
+  <p class="store-payment-note">Siparişinizi oluşturduktan sonra iyzico güvenli ödeme sayfasına yönlendirilirsiniz. Kart bilgileriniz Trend-Entegre tarafından saklanmaz.</p>
+  <button class="btn" id="storeOrderButton" type="submit">Siparişi oluştur ve ödemeye geç</button>
+  <p id="storeOrderMessage" role="status" aria-live="polite"></p>
+ </form>
+</div>
+<div id="publicCatalogGrid" class="commerce-grid" aria-live="polite"></div>
+</div>
+</section>
 <section id="cozum"><div class="w"><div class="head"><span class="k">Tek kaynaktan çoklu pazaryeri</span><h2>XML dosyanız, pazaryerlerinize hazır hale gelsin.</h2><p>Her pazaryerinin ürün alanları ve veri ihtiyaçları farklı olabilir. Trend-Entegre, ürün verilerinizi pazaryeri bazında düzenlemeyi ve yönetmeyi kolaylaştırmak için tasarlanıyor.</p></div><div class="grid3"><article class="card"><span class="ico">↔</span><h3>Pazaryeri bazlı XML dönüşümü</h3><p>Tedarikçi XML verinizi hedef pazaryerinin ürün yapısına göre hazırlamaya yönelik dönüşüm akışı.</p></article><article class="card"><span class="ico">▦</span><h3>Excel içe / dışa aktarma</h3><p>XML ürün listenizi içe alın, Excel'e aktararak düzenleyin ve dosyanızı dışa çıkarın.</p></article><article class="card"><span class="ico">◉</span><h3>Merkezi ürün kontrolü</h3><p>Ürün, fiyat, stok ve varyant verilerinizi tek çalışma alanında takip etmeye yönelik yapı.</p></article></div></div></section><div class="trend-ad-slot" data-ad-slot="home_slider" aria-label="Sponsorlu reklam alanı"></div>
 <section class="soft" id="nasil"><div class="w"><div class="head"><span class="k">Basit iş akışı</span><h2>Üç adımda pazaryerlerine hazırlanın.</h2><p>Dağınık ürün dosyaları yerine anlaşılır ve tekrarlanabilir bir süreç.</p></div><div class="grid3 steps"><article class="card"><div class="num">01</div><h3>XML kaynağınızı ekleyin</h3><p>Tedarikçinizin XML bağlantısını tanımlayın veya ürün dosyanızı içe aktarın.</p></article><article class="card"><div class="num">02</div><h3>Hedef pazaryerini seçin</h3><p>Ürünlerinizi göndermek istediğiniz pazaryerine göre verileri düzenleyin.</p></article><article class="card"><div class="num">03</div><h3>Kontrol edin ve dışa aktarın</h3><p>Ürün listenizi gözden geçirin ve uygun çıktı biçimiyle sonraki adıma geçin.</p></article></div></div></section><div class="trend-ad-slot" data-ad-slot="guide_content" aria-label="Sponsorlu reklam alanı"></div>
 <section id="paketler" class="soft"><div class="w"><div class="head"><span class="k">Üç ayrı hizmet kategorisi</span><h2>İhtiyacınıza uygun çözümü seçin.</h2><p>Entegrasyon, Buybox ve XML veri aktarımı. İhtiyacınız olan hizmeti ayrı ayrı seçebilir, çözümlerinizi zamanla genişletebilirsiniz.</p></div><div class="grid3 category-jumps"><a class="card" href="#entegrasyon-paketleri"><span class="ico">🔗</span><h3>01 · Entegrasyon Paketleri</h3><p>Pazaryerlerinizi tek merkezden yönetin.</p><strong>Fiyatları incele →</strong></a><a class="card" href="#buybox-paketleri"><span class="ico">📊</span><h3>02 · Buybox Paketleri</h3><p>Rakip fiyatlarını ve Buybox durumunu takip edin.</p><strong>Buybox çözümlerini incele →</strong></a><a class="card" href="#xml-paketleri"><span class="ico">⇄</span><h3>03 · XML ile Veri Aktarımı</h3><p>Tedarikçi XML verinizi dönüştürün ve dışa aktarın.</p><strong>XML çözümlerini incele →</strong></a></div></div></section><div class="trend-ad-slot" data-ad-slot="product_category" aria-label="Sponsorlu reklam alanı"></div><div class="trend-ad-slot" data-ad-slot="package_selection" aria-label="Sponsorlu reklam alanı"></div>
@@ -730,7 +754,7 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
 <section id="entegrasyon-paketleri"><div class="w"><div class="head"><span class="k">Kategori 01</span><h2>Entegrasyon Paketleri</h2><p>Tek pazaryerinden tüm pazaryerlerine uzanan ürün yönetimi çözümleri.</p><p class="note" style="font-size:14px;font-weight:800;color:#b84c19;margin-top:12px">Belirtilen tüm fiyatlara KDV dahil değildir. KDV ayrıca eklenir.</p></div><div class="pricegrid"><article class="pricecard"><span class="popular">İLK ADIM</span><h3>Tek Pazaryeri</h3><p class="muted">Tek bir pazaryerinde satışa hazırlanmak isteyenler için.</p><div class="price">9.588 TL <small>/ yıl + KDV</small></div><p class="plan-fit">Tek pazaryerinde ürün yönetimine başlamak için.</p><ul><li>1 pazaryeri seçimi</li><li>XML ürün içe aktarma</li><li>Excel içe / dışa aktarma</li><li>Temel ürün yönetimi</li></ul><button class="btn" type="button" onclick="pay(&quot;tek-pazaryeri&quot;)">Satın al</button></article><article class="pricecard"><span class="popular">ÇOKLU SATIŞ YAPANLAR</span><h3>Çoklu Pazaryeri</h3><p class="muted">Birden fazla pazaryerinde ürünlerini yönetmek isteyenler için.</p><div class="price">59.988 TL <small>/ yıl + KDV</small></div><p class="plan-fit">Farklı pazaryerleri için tek ürün çalışma alanı.</p><div class="market-chips"><span>Trendyol</span><span>Hepsiburada</span><span>n11</span><span>Amazon</span><span>Pazarama</span><span>Ozon</span></div><ul><li>Tüm desteklenen pazaryerleri</li><li>Pazaryeri bazlı XML dönüşümü</li><li>XML ve Excel içe / dışa aktarma</li><li>Merkezi ürün çalışma alanı</li></ul><button class="btn" type="button" onclick="pay(&quot;coklu-pazaryeri&quot;)">Satın al</button></article><article class="pricecard featured"><span class="popular">★ EN KAPSAMLI ÇÖZÜM</span><h3>Full Paket</h3><p class="muted">Entegrasyon, XML ve Buybox tek pakette.</p><div class="price">119.988 TL <small>/ yıl + KDV</small></div><p class="plan-fit">Tüm hizmetleri tek abonelikte toplamak isteyen işletmeler için.</p><div class="market-chips"><span>Trendyol</span><span>Hepsiburada</span><span>n11</span><span>Amazon</span><span>Pazarama</span><span>Ozon</span></div><div class="plan-promise"><b>Tek paket, üç hizmet:</b> Pazaryeri entegrasyonu + XML dönüşümü + Buybox Pro.</div><ul><li>Tüm desteklenen pazaryerleri</li><li>Pazaryeri bazlı XML dönüşümü</li><li>XML ve Excel içe / dışa aktarma</li><li>Buybox Pro modülü dahil</li><li>Merkezi ürün, fiyat ve stok çalışma alanı</li></ul><button class="btn" type="button" onclick="pay(&quot;full-paket&quot;)">Satın al</button></article></div></div></section>
 <section class="soft" id="buybox-paketleri"><div class="w"><div class="head"><span class="k">Kategori 02</span><h2>Buybox Paketleri</h2><p>Rakip fiyatlarını ve Buybox durumunu takip etmeye yönelik bağımsız çözüm.</p></div><div class="pricegrid" style="grid-template-columns:minmax(0,560px);justify-content:center"><article class="pricecard featured"><span class="popular">BAĞIMSIZ BUYBOX ÇÖZÜMÜ</span><h3>Buybox Pro</h3><p class="muted">Entegrasyon paketi almadan Buybox hizmetini ayrıca tercih edin.</p><div class="price">28.788 TL <small>/ yıl + KDV</small></div><p class="plan-fit">Rekabetçi fiyatları ve Buybox performansını takip etmek isteyen satıcılar için.</p><div class="buybox-benefits"><div><b>Rakip fiyatları</b>Ürün bazlı fiyat karşılaştırma</div><div><b>Buybox durumu</b>Rekabet konumunu izleme</div><div><b>Tek merkez</b>Takip ve analiz alanı</div></div><ul><li>Bağımsız Buybox Pro aboneliği</li><li>Rakip fiyat analizi çözümü</li><li>Entegrasyon paketlerinden bağımsız satın alma seçeneği</li><li>Full Paket aboneliğine dahil</li></ul><button class="btn" type="button" onclick="pay(&quot;buybox-pro&quot;)">Satın al</button></article></div><p class="note">Buybox özelliklerinin kullanımı, ilgili pazaryeri erişimleri ve teknik bağlantılar tamamlandıkça etkinleştirilecektir.</p></div></section><div class="trend-ad-slot" data-ad-slot="buybox_promo" aria-label="Sponsorlu reklam alanı"></div>
 <section class="soft" id="test-odeme-urunleri"><div class="w"><div class="head"><span class="k">Yönetici ödeme testi</span><h2>Gerçek kart çekimi için test ürünleri</h2><p>Bu iki ürün yalnızca yetkili yönetici hesabından satın alınabilir. Tutarlar KDV dahil, tek seferliktir; abonelik veya paket süresi başlatmaz.</p></div><div class="pricegrid" style="grid-template-columns:repeat(2,minmax(0,1fr));max-width:760px;margin:0 auto"><article class="pricecard"><span class="popular">TEK SEFERLİK TEST</span><h3>Test Ürünü 1</h3><p class="muted">Gerçek karttan 3,00 TL deneme çekimi.</p><div class="price">3,00 TL <small>KDV dahil</small></div><button class="btn" type="button" onclick="pay(&quot;test-product-3-tl&quot;)">3 TL test ödemesi</button></article><article class="pricecard"><span class="popular">TEK SEFERLİK TEST</span><h3>Test Ürünü 2</h3><p class="muted">Gerçek karttan 5,00 TL deneme çekimi.</p><div class="price">5,00 TL <small>KDV dahil</small></div><button class="btn" type="button" onclick="pay(&quot;test-product-5-tl&quot;)">5 TL test ödemesi</button></article></div><p class="note">Test ödemeleri yıllık abonelik oluşturmaz ve otomatik yenilenmez. Gerçek karttan çekim, ödeme sağlayıcısının canlı ortamı etkinse yapılır.</p></div></section>
-<section id="xml-paketleri"><div class="w"><div class="head"><span class="k">Kategori 03</span><h2>XML ile Veri Aktarımı</h2><p>Tedarikçi XML bağlantınızı alın; ürün verilerinizi düzenleyin, dönüştürün ve ihtiyacınız olan dosya biçiminde dışa aktarın.</p></div><div class="grid3"><article class="card"><span class="ico">▦</span><h3>XML Bağlantısı → Excel <span class="popular">ÜCRETLİ EK HİZMET</span></h3><p>XML adresinizi girin; büyük ürün beslemelerini sunucu üzerinden alın, ürünleri inceleyin ve Excel dosyası olarak dışa aktarın. Gelişmiş URL aktarımı ayrıca ücretlendirilir.</p><a class="btn" style="margin-top:18px;text-align:center" href="https://wa.me/905458959469?text=Merhaba%2C%20XML%20%E2%86%92%20Excel%20hizmeti%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum." target="_blank" rel="noopener noreferrer">Fiyat ve bilgi al</a></article><article class="card"><span class="ico">⇄</span><h3>XML → Tek Pazaryeri</h3><p>Tedarikçi XML verinizi seçtiğiniz pazaryerinin ürün alanlarına göre hazırlayın.</p><a class="btn" style="margin-top:18px;text-align:center" href="https://wa.me/905458959469?text=Merhaba%2C%20tek%20pazaryeri%20XML%20d%C3%B6n%C3%BC%C5%9F%C3%BCm%C3%BC%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum." target="_blank" rel="noopener noreferrer">Fiyat ve bilgi al</a></article><article class="card"><span class="ico">🌐</span><h3>XML → Çoklu Pazaryeri</h3><p>Tek tedarikçi XML kaynağından birden fazla pazaryeri için ayrı ürün çıktıları hazırlayın.</p><a class="btn" style="margin-top:18px;text-align:center" href="https://wa.me/905458959469?text=Merhaba%2C%20%C3%A7oklu%20pazaryeri%20XML%20d%C3%B6n%C3%BC%C5%9F%C3%BCm%C3%BC%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum." target="_blank" rel="noopener noreferrer">Fiyat ve bilgi al</a></article></div><p class="note">XML veri aktarımı hizmetlerinin fiyatı; ürün sayısı, varyant yapısı ve hedef pazaryerlerine göre tekliflendirilir.</p></div></section><div class="trend-ad-slot" data-ad-slot="xml_content" aria-label="Sponsorlu reklam alanı"></div><section class="soft" id="sss"><div class="w"><div class="head"><span class="k">Merak edilenler</span><h2>Sık sorulan sorular</h2></div><div class="faq"><article><h3>E-ticaret mağazası paketi ile pazaryeri entegrasyonu aynı şey mi?</h3><p>Hayır. E-ticaret mağazası kendi internet sitenizi yönetir. Pazaryeri entegrasyonları, mağazanızı Trendyol, Hepsiburada ve diğer kanallarla bağlayan ayrı hizmetlerdir. İhtiyacınıza göre birlikte kullanılabilir.</p></article><article><h3>Mağaza paketlerinde ödeme ve kargo ücretleri dahil mi?</h3><p>Ödeme kuruluşu komisyonları, kargo gönderi bedelleri, alan adı ve üçüncü taraf servis ücretleri paket aboneliğine dahil değildir; sağlayıcı tarifesine göre ayrıca hesaplanır.</p></article><article><h3>Hangi pazaryerleri hedefleniyor?</h3><p>Trendyol, Hepsiburada, N11, Amazon, Pazarama ve OZON öncelikli pazaryeri seçenekleridir.</p></article><article><h3>Her pazaryeri için ayrı ücret mi var?</h3><p>Tek Pazaryeri 799 TL/ay, Çoklu Pazaryeri 4.999 TL/ay’dir. Hepsi Bir Arada Full Paket 9.999 TL/ay’dir ve Buybox Pro dahildir.</p></article><article><h3>XML dosyamı Excel'e çevirebilir miyim?</h3><p>Standart paketlerde mevcut dosya tabanlı Excel işlemleri sunulur. XML bağlantısından sunucu üzerinden büyük XML alma ve Excel'e aktarma ise ayrıca ücretlendirilen ek hizmettir.</p></article><article><h3>XML bağlantısıyla büyük ürün listesi aktarabilir miyim?</h3><p>Evet. Ücretli XML URL → Excel ek hizmetiyle tedarikçi bağlantısı sunucuda işlenir. Dosya boyutu ve ürün kotası seçilen hizmet limitlerine tabidir.</p></article><article><h3>Buybox takibi pakete dahil mi?</h3><p>Buybox Pro, Hepsi Bir Arada Full Paket’e dahildir. Diğer paketlerden bağımsız olarak yıllık 28.788 TL + KDV bedelle satın alınabilir.</p></article><article><h3>Hemen ödeme aktif mi?</h3><p>Ödeme sağlayıcısı bağlantısı henüz etkinleştirilmedi. iyzico entegrasyonu tamamlandığında güvenli ödeme açılacaktır.</p></article><article><h3>Ürünler doğrudan pazaryerine gönderiliyor mu?</h3><p>Doğrudan aktarım, ilgili pazaryerinin API erişimi ve mağaza yetkilendirmesi tamamlandığında açılacaktır.</p></article></div></div></section><div class="trend-ad-slot" data-ad-slot="help_content" aria-label="Sponsorlu reklam alanı"></div>
+<section id="xml-paketleri"><div class="w"><div class="head"><span class="k">Kategori 03</span><h2>XML ile Veri Aktarımı</h2><p>Tedarikçi XML bağlantınızı alın; ürün verilerinizi düzenleyin, dönüştürün ve ihtiyacınız olan dosya biçiminde dışa aktarın.</p></div><div class="grid3"><article class="card"><span class="ico">▦</span><h3>XML Bağlantısı → Excel <span class="popular">ŞİMDİLİK ÜCRETSİZ</span></h3><p>XML adresinizi girin; ürünleri sunucu üzerinden alın, inceleyin ve Excel dosyası olarak dışa aktarın. Büyük XML URL aktarımı şu anda ücretsizdir; mevcut dosya ve ürün limitleri geçerlidir.</p><a class="btn" style="margin-top:18px;text-align:center" href="https://wa.me/905458959469?text=Merhaba%2C%20XML%20%E2%86%92%20Excel%20hizmeti%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum." target="_blank" rel="noopener noreferrer">Fiyat ve bilgi al</a></article><article class="card"><span class="ico">⇄</span><h3>XML → Tek Pazaryeri</h3><p>Tedarikçi XML verinizi seçtiğiniz pazaryerinin ürün alanlarına göre hazırlayın.</p><a class="btn" style="margin-top:18px;text-align:center" href="https://wa.me/905458959469?text=Merhaba%2C%20tek%20pazaryeri%20XML%20d%C3%B6n%C3%BC%C5%9F%C3%BCm%C3%BC%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum." target="_blank" rel="noopener noreferrer">Fiyat ve bilgi al</a></article><article class="card"><span class="ico">🌐</span><h3>XML → Çoklu Pazaryeri</h3><p>Tek tedarikçi XML kaynağından birden fazla pazaryeri için ayrı ürün çıktıları hazırlayın.</p><a class="btn" style="margin-top:18px;text-align:center" href="https://wa.me/905458959469?text=Merhaba%2C%20%C3%A7oklu%20pazaryeri%20XML%20d%C3%B6n%C3%BC%C5%9F%C3%BCm%C3%BC%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum." target="_blank" rel="noopener noreferrer">Fiyat ve bilgi al</a></article></div><p class="note">XML veri aktarımı hizmetlerinin fiyatı; ürün sayısı, varyant yapısı ve hedef pazaryerlerine göre tekliflendirilir.</p></div></section><div class="trend-ad-slot" data-ad-slot="xml_content" aria-label="Sponsorlu reklam alanı"></div><section class="soft" id="sss"><div class="w"><div class="head"><span class="k">Merak edilenler</span><h2>Sık sorulan sorular</h2></div><div class="faq"><article><h3>E-ticaret mağazası paketi ile pazaryeri entegrasyonu aynı şey mi?</h3><p>Hayır. E-ticaret mağazası kendi internet sitenizi yönetir. Pazaryeri entegrasyonları, mağazanızı Trendyol, Hepsiburada ve diğer kanallarla bağlayan ayrı hizmetlerdir. İhtiyacınıza göre birlikte kullanılabilir.</p></article><article><h3>Mağaza paketlerinde ödeme ve kargo ücretleri dahil mi?</h3><p>Ödeme kuruluşu komisyonları, kargo gönderi bedelleri, alan adı ve üçüncü taraf servis ücretleri paket aboneliğine dahil değildir; sağlayıcı tarifesine göre ayrıca hesaplanır.</p></article><article><h3>Hangi pazaryerleri hedefleniyor?</h3><p>Trendyol, Hepsiburada, N11, Amazon, Pazarama ve OZON öncelikli pazaryeri seçenekleridir.</p></article><article><h3>Her pazaryeri için ayrı ücret mi var?</h3><p>Tek Pazaryeri 799 TL/ay, Çoklu Pazaryeri 4.999 TL/ay’dir. Hepsi Bir Arada Full Paket 9.999 TL/ay’dir ve Buybox Pro dahildir.</p></article><article><h3>XML dosyamı Excel'e çevirebilir miyim?</h3><p>Evet. Kayıtlı XML kaynağınızı Excel, CSV veya standart ürün XML biçiminde dışa aktarabilirsiniz. Büyük XML URL aktarımı şimdilik ücretsiz sunulmaktadır.</p></article><article><h3>XML bağlantısıyla büyük ürün listesi aktarabilir miyim?</h3><p>Evet. Büyük XML URL aktarımı şimdilik ücretsizdir. Güvenlik için mevcut sınır 25 MB ve en fazla 5.000 üründür.</p></article><article><h3>Buybox takibi pakete dahil mi?</h3><p>Buybox Pro, Hepsi Bir Arada Full Paket’e dahildir. Diğer paketlerden bağımsız olarak yıllık 28.788 TL + KDV bedelle satın alınabilir.</p></article><article><h3>Hemen ödeme aktif mi?</h3><p>Ödeme sağlayıcısı bağlantısı henüz etkinleştirilmedi. iyzico entegrasyonu tamamlandığında güvenli ödeme açılacaktır.</p></article><article><h3>Ürünler doğrudan pazaryerine gönderiliyor mu?</h3><p>Doğrudan aktarım, ilgili pazaryerinin API erişimi ve mağaza yetkilendirmesi tamamlandığında açılacaktır.</p></article></div></div></section><div class="trend-ad-slot" data-ad-slot="help_content" aria-label="Sponsorlu reklam alanı"></div>
 <section class="contact" id="iletisim"><div class="w"><span class="k">Satış ekibiyle görüşün</span><h2>Pazaryerlerinde yerinizi alın.</h2><p>İhtiyacınız olan pazaryerlerini ve ürün yönetimi akışını birlikte netleştirelim.</p><a class="btn" href="mailto:info@trend-entegre.com?subject=Trend-Entegre%20Bilgi%20Talebi">Bilgi talep et →</a><p class="note">İletişim adresi yayına almadan önce doğrulanmalıdır.</p></div></section><div class="trend-ad-slot" data-ad-slot="home_bottom" aria-label="Sponsorlu reklam alanı"></div></main>
 <footer>
 <div class="w foot">
@@ -820,6 +844,10 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
 <div class="checkout-field full"><label for="profileAddress">Açık adres *</label><input id="profileAddress" name="address" required></div>
 <div class="checkout-field"><label for="profileZip">Posta kodu *</label><input id="profileZip" name="zip_code" required></div>
 </div><div id="profileError" class="checkout-error" role="alert"></div><div class="checkout-actions"><button type="submit" id="profileSave">Profili kaydet</button></div></form>
+<section id="customerOrdersPanel" aria-labelledby="customerOrdersTitle" style="margin-top:24px;padding-top:18px;border-top:1px solid #e5e9f1">
+<h3 id="customerOrdersTitle" style="margin:0 0 10px">Siparişlerim</h3>
+<div id="customerOrdersList" aria-live="polite" style="display:grid;gap:10px"><p class="checkout-note">Siparişler yükleniyor…</p></div>
+</section>
 <p class="checkout-note">Vergi/T.C. kimlik bilgileriniz yalnızca fatura ve ödeme işlemleri için saklanır.</p>
 </section></div>
 <div class="auth-modal" id="authModal" aria-hidden="true">
@@ -857,6 +885,42 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
 .trend-ad-card a{color:inherit;text-decoration:none}
 .trend-ad-card a:hover h3{text-decoration:underline}
 @media(max-width:600px){.trend-ad-slot{width:calc(100% - 26px)}.trend-ad-card{grid-template-columns:1fr;gap:10px}.trend-ad-card img{max-height:170px}}
+
+#katalog .commerce-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+#katalog .catalog-product{display:flex;flex-direction:column;min-width:0;background:#fff;border:1px solid var(--l);border-radius:16px;overflow:hidden}
+#katalog .catalog-product img{width:100%;height:190px;object-fit:contain;background:#fff;padding:12px}
+#katalog .catalog-product .catalog-no-image{height:190px;display:grid;place-items:center;background:#eef1f7;color:#66718b;font-size:13px}
+#katalog .catalog-product .catalog-info{padding:15px;display:flex;flex-direction:column;flex:1}
+#katalog .catalog-product .catalog-category{font-size:11px;color:var(--m);font-weight:800}
+#katalog .catalog-product h3{font-size:15px;line-height:1.4;color:var(--n);margin:7px 0}
+#katalog .catalog-product p{font-size:12px;color:var(--m);line-height:1.5;flex:1;margin:0 0 12px}
+#katalog .catalog-product .catalog-price{font-size:22px;font-weight:900;color:var(--n)}
+#katalog .catalog-product .catalog-stock{font-size:11px;color:#13845c;margin-top:5px}
+#katalog .catalog-product .catalog-order{display:block;text-align:center;margin-top:12px;padding:10px 12px;border-radius:10px;background:#f4772b;color:#fff;font-size:12px;font-weight:850}
+#katalog .store-cart{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;margin:0 0 24px;box-shadow:0 10px 30px #1720440a}
+#katalog .store-cart-head{display:flex;align-items:center;justify-content:space-between;gap:14px}
+#katalog .store-cart-head h3{margin:0;color:var(--n);font-size:19px}
+#katalog .store-cart-head p{margin:5px 0 0;color:var(--m);font-size:12px}
+#katalog .store-cart-head>strong{font-size:22px;color:var(--n)}
+#katalog .store-cart-items{margin:15px 0;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);color:var(--m);font-size:13px}
+#katalog .store-cart-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;color:var(--ink)}
+#katalog .store-cart-row button{border:1px solid var(--line);background:#fff;border-radius:7px;padding:5px 9px}
+#katalog .store-cart-row input{width:58px;padding:6px;border:1px solid var(--line);border-radius:7px}
+#katalog .store-order-form h4{margin:12px 0;color:var(--n)}
+#katalog .store-order-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#katalog .store-order-fields label{display:grid;gap:6px;font-size:11px;font-weight:800;color:var(--m)}
+#katalog .store-order-fields input,#katalog .store-order-fields textarea{width:100%;min-width:0;border:1px solid var(--line);border-radius:9px;padding:11px;font:inherit}
+#katalog .store-order-fields textarea{min-height:76px;resize:vertical}
+#katalog .store-order-fields .store-address{grid-column:1/-1}
+#katalog .store-payment-note{font-size:12px;line-height:1.6;color:var(--m)}
+#katalog #storeOrderMessage{font-size:13px;font-weight:750}
+#katalog .catalog-add{display:block;width:100%;border:0;border-radius:10px;margin-top:12px;padding:10px;background:var(--n);color:#fff;font-size:12px;font-weight:850;cursor:pointer}
+#katalog .catalog-add:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:560px){#katalog .store-cart{padding:14px}#katalog .store-order-fields{grid-template-columns:1fr}#katalog .store-order-fields .store-address{grid-column:auto}#katalog .store-cart-head>strong{font-size:18px}}
+
+@media(max-width:800px){#katalog .commerce-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){#katalog .commerce-grid{grid-template-columns:1fr 1fr}#katalog .catalog-product img,#katalog .catalog-product .catalog-no-image{height:140px}#katalog .catalog-product .catalog-info{padding:11px}#katalog .catalog-product h3{font-size:13px}#katalog .catalog-product .catalog-price{font-size:18px}}
+
 </style><script>
 (function(){
  const API="https://trend-entegre.onrender.com/api/v1/ads/";
@@ -898,4 +962,93 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
  show(0);restart();
 })();
 </script>
+
+<script id="public-catalog-script">
+(function(){
+ const api="https://trend-entegre.onrender.com/api/v1";
+ const esc=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+ const money=value=>Number(value||0).toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2})+" TL";
+ const cart=new Map();
+ let products=[];
+ const byId=id=>document.getElementById(id);
+ function renderCart(){
+  const box=byId("storeCartItems"),total=byId("storeCartTotal");
+  if(!box||!total)return;
+  if(!cart.size){box.textContent="Sepetiniz henüz boş.";total.textContent=money(0);return;}
+  let sum=0;
+  box.innerHTML=[...cart.entries()].map(([id,item])=>{
+   const line=Number(item.product.sale_price||0)*item.quantity;sum+=line;
+   return '<div class="store-cart-row"><div><strong>'+esc(item.product.name)+'</strong><br><small>'+money(item.product.sale_price)+' / adet</small></div><div><input aria-label="'+esc(item.product.name)+' adet" type="number" min="1" max="10" value="'+item.quantity+'" data-cart-quantity="'+esc(id)+'"> <button type="button" data-cart-remove="'+esc(id)+'">Kaldır</button></div><strong>'+money(line)+'</strong></div>';
+  }).join("");
+  total.textContent=money(sum);
+ }
+ function addToCart(id){
+  const product=products.find(item=>item.id===id);
+  if(!product)return;
+  const current=cart.get(id)?.quantity||0;
+  if(current>=10){byId("storeOrderMessage").textContent="Bir üründen en fazla 10 adet ekleyebilirsiniz.";return;}
+  if(Number(product.stock)>0&&current>=Number(product.stock)){byId("storeOrderMessage").textContent="Mevcut stok adedine ulaştınız.";return;}
+  cart.set(id,{product,quantity:current+1});renderCart();
+  byId("storeOrderMessage").textContent=product.name+" sepete eklendi.";
+ }
+ async function loadCatalog(){
+  const grid=byId("publicCatalogGrid"),message=byId("publicCatalogMessage");
+  if(!grid||!message)return;
+  try{
+   const response=await fetch(api+"/catalog/products");
+   if(!response.ok)throw new Error("Ürünler şu anda alınamıyor.");
+   const data=await response.json();products=Array.isArray(data.products)?data.products:[];
+   if(!products.length){message.textContent="Katalogda henüz satışa açık ürün bulunmuyor.";return;}
+   message.textContent=products.length+" ürün listeleniyor.";
+   grid.innerHTML=products.map(p=>{
+    const image=p.image_url?'<img src="'+esc(p.image_url)+'" alt="'+esc(p.name)+'" loading="lazy">':'<div class="catalog-no-image">Görsel eklenmemiş</div>';
+    const inStock=Number(p.stock)>0;
+    return '<article class="catalog-product">'+image+'<div class="catalog-info"><span class="catalog-category">'+esc(p.category||"Ürün")+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(p.description||"")+'</p><strong class="catalog-price">'+money(p.sale_price)+'</strong><span class="catalog-stock">'+(inStock?"Stokta · "+Number(p.stock)+" adet":"Stokta yok")+'</span><button class="catalog-add" type="button" data-add-to-cart="'+esc(p.id)+'" '+(!inStock?'disabled':'')+'>Sepete ekle</button></div></article>';
+   }).join("");
+  }catch(error){message.textContent=error.message||"Katalog yüklenemedi.";}
+ }
+ document.addEventListener("click",event=>{
+  const add=event.target.closest("[data-add-to-cart]");
+  if(add){addToCart(add.dataset.addToCart);return;}
+  const remove=event.target.closest("[data-cart-remove]");
+  if(remove){cart.delete(remove.dataset.cartRemove);renderCart();}
+ });
+ document.addEventListener("change",event=>{
+  const input=event.target.closest("[data-cart-quantity]");
+  if(!input)return;
+  const item=cart.get(input.dataset.cartQuantity);if(!item)return;
+  const quantity=Math.max(1,Math.min(10,Number.parseInt(input.value,10)||1));
+  item.quantity=Number(item.product.stock)>0?Math.min(quantity,Number(item.product.stock)):quantity;
+  cart.set(input.dataset.cartQuantity,item);renderCart();
+ });
+ const form=byId("storeOrderForm");
+ if(form)form.addEventListener("submit",async event=>{
+  event.preventDefault();
+  const message=byId("storeOrderMessage"),button=byId("storeOrderButton");
+  const user=window.trendAuth?.currentUser;
+  if(!user||!user.emailVerified){message.textContent="Sipariş verebilmek için hesap oluşturun veya giriş yapıp e-posta adresinizi doğrulayın.";byId("authOpenBtn")?.click();return;}
+  if(!cart.size){message.textContent="Önce sepetinize ürün ekleyin.";return;}
+  const formData=new FormData(form);
+  const buyer={name:formData.get("name"),phone:formData.get("phone"),email:formData.get("email"),address:formData.get("address")};
+  button.disabled=true;button.textContent="Sipariş gönderiliyor…";message.textContent="";
+  try{
+   const idToken=await user.getIdToken();
+   const response=await fetch(api+"/orders",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+idToken},body:JSON.stringify({buyer,items:[...cart.entries()].map(([product_id,item])=>({product_id,quantity:item.quantity}))})});
+   const data=await response.json().catch(()=>({}));
+   if(!response.ok)throw new Error(data.error||"Sipariş oluşturulamadı.");
+   cart.clear();renderCart();form.reset();
+   message.textContent="Sipariş #"+data.order.order_number+" oluşturuldu. Güvenli ödeme sayfası hazırlanıyor…";
+   const paymentResponse=await fetch(api+"/payments/iyzico/orders/"+encodeURIComponent(data.order.id)+"/initialize",{method:"POST",headers:{Authorization:"Bearer "+idToken}});
+   const payment=await paymentResponse.json().catch(()=>({}));
+   if(!paymentResponse.ok)throw new Error("Siparişiniz kaydedildi ancak ödeme başlatılamadı: "+(payment.error||"Lütfen Hesabım > Siparişlerim bölümünden tekrar deneyin."));
+   const paymentUrl=new URL(payment.paymentPageUrl);
+   if(paymentUrl.protocol!=="https:")throw new Error("Siparişiniz kaydedildi ancak güvenli ödeme adresi doğrulanamadı. Hesabım > Siparişlerim bölümünden tekrar deneyin.");
+   window.location.assign(paymentUrl.toString());
+  }catch(error){message.textContent=error.message||"Sipariş gönderilemedi.";}
+  finally{button.disabled=false;button.textContent="Siparişi oluştur ve ödemeye geç";}
+ });
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{renderCart();loadCatalog();});else{renderCart();loadCatalog();}
+})();
+</script>
+
 </body></html>
