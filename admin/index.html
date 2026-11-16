@@ -215,7 +215,7 @@ th{background:#f5f7fc}
 <div class="field"><label for="catalogCategory">Kategori</label><input id="catalogCategory" maxlength="100" placeholder="Örn. Elektronik"></div>
 <div class="field"><label for="catalogImage">Görsel URL</label><input id="catalogImage" type="url" maxlength="2048" placeholder="https://..."></div>
 <div class="field"><label for="catalogCost">Alış fiyatı (TL)</label><input id="catalogCost" type="number" min="0" step="0.01" value="0"></div>
-<div class="field"><label for="catalogMargin">Kâr oranı (%)</label><input id="catalogMargin" type="number" min="0" max="1000" step="0.01" value="0"></div>
+<div class="field"><label for="catalogMargin">Kâr oranı (%)</label><input id="catalogMargin" type="number" min="0" max="1000" step="0.01" value="0" oninput="document.getElementById(&quot;catalogSale&quot;).value=&quot;&quot;"></div>
 <div class="field"><label for="catalogSale">Satış fiyatı (TL) - elle değiştirebilirsiniz</label><input id="catalogSale" type="number" min="0" step="0.01" placeholder="Boş bırakılırsa otomatik hesaplanır"></div>
 <div class="field"><label for="catalogStock">Stok</label><input id="catalogStock" type="number" min="0" step="1" value="0"></div>
 <div class="field"><label for="catalogStatus">Yayın durumu</label><select id="catalogStatus"><option value="draft">Taslak</option><option value="active">Satışta</option><option value="archived">Arşiv</option></select></div>
