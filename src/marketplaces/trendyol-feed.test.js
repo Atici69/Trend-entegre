@@ -32,7 +32,9 @@ test('Trendyol validation accepts a product with explicit marketplace mappings',
   });
   assert.equal(result.ready, true);
   assert.equal(result.normalized.salePrice, 1250);
-  assert.equal(result.normalized.currencyType, 'TRY');
+  assert.deepEqual(result.normalized.images, [{ url: 'https://example.com/product.webp' }]);
+  assert.equal(result.normalized.brandId, 456);
+  assert.equal(result.normalized.categoryId, 123);
 });
 
 test('Trendyol feed validation flags duplicate barcodes', () => {
