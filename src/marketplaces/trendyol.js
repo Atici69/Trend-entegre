@@ -155,12 +155,13 @@ async function makeAttributes(product, categoryId, mapping, cache) {
   }
   return { result, errors, definitions };
 }
-function productBaseErrors(product, mapping) {
+function productBaseErrors(product, mapping, marginPercent = 0) {
   const errors = [];
   const barcode = text(product['Barkod']);
   const title = text(product['Ürün Adı']);
   const stock = numeric(product['Stok']);
-  const price = numeric(product['Satış Fiyatı'] || product['Fiyat']);
+  const basePrice = numeric(product['Satış Fiyatı'] || product['Fiyat']);
+  const price = basePrice === null ? null : Math.round((basePrice * (1 + marginPercent / 100) + Number.EPSILON) * 100) / 100;
   const image = text(product['Görsel URL']);
   const vat = numeric(product['KDV'] || process.env.TRENDYOL_DEFAULT_VAT_RATE);
   if (!barcode) errors.push('Barkod eksik.');
@@ -187,7 +188,8 @@ async function buildValidation(db, feedId) {
   for (const product of products) {
     const sourceCategory = text(product['Kategori']);
     const mapping = byCategory.get(normalize(sourceCategory));
-    const errors = productBaseErrors(product, mapping);
+    const marginPercent = Number(feed.margin_percent || 0);
+    const errors = productBaseErrors(product, mapping, marginPercent);
     let attributes = [];
     if (mapping?.categoryId) {
       try {
@@ -202,7 +204,8 @@ async function buildValidation(db, feedId) {
       ready, errors, warnings: [],
     });
     if (ready) {
-      const price = numeric(product['Satış Fiyatı'] || product['Fiyat']);
+      const basePrice = numeric(product['Satış Fiyatı'] || product['Fiyat']);
+      const price = Math.round((basePrice * (1 + Number(feed.margin_percent || 0) / 100) + Number.EPSILON) * 100) / 100;
       const stock = numeric(product['Stok']);
       const vatRate = numeric(product['KDV'] || process.env.TRENDYOL_DEFAULT_VAT_RATE);
       const image = text(product['Görsel URL']);
