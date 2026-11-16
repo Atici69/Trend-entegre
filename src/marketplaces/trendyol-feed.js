@@ -22,6 +22,7 @@ export function validateTrendyolProduct(source, mapping = {}) {
   const vatRate = numeric(source['KDV Oranı'] ?? source.vatRate);
 
   if (!title) errors.push('Ürün adı eksik.');
+  if (title.length > 100) errors.push('Ürün adı Trendyol için 100 karakteri aşamaz.');
   if (!barcode) errors.push('Barkod eksik.');
   if (!sku) errors.push('Stok kodu (SKU) eksik.');
   if (!brand) errors.push('Marka eksik.');
@@ -36,19 +37,26 @@ export function validateTrendyolProduct(source, mapping = {}) {
     try { if (new URL(image).protocol !== 'https:') errors.push('Ürün görseli HTTPS olmalıdır.'); }
     catch { errors.push('Ürün görsel adresi geçersiz.'); }
   }
-  if (!description) warnings.push('Ürün açıklaması boş.');
+  if (!description) errors.push('Ürün açıklaması eksik.');
   if (barcode.length > 40) errors.push('Barkod 40 karakterden uzun olamaz.');
-  if (category && !mapping.attributes?.length) errors.push('Seçilen Trendyol kategorisinin zorunlu ürün özellikleri eşleştirilmemiş.');
+  if (barcode && !/^[\\p{L}\\p{N}._-]+$/u.test(barcode.replace(/\\s+/g, ''))) errors.push('Barkod yalnızca harf, rakam, nokta, tire ve alt çizgi içerebilir.');
+  const requiredAttributes = Array.isArray(mapping.requiredAttributes) ? mapping.requiredAttributes : null;
+  if (category && requiredAttributes === null) errors.push('Seçilen Trendyol kategorisinin zorunlu özellikleri henüz kontrol edilmemiş.');
+  else if (category && requiredAttributes.length && !mapping.attributes?.length) errors.push('Seçilen Trendyol kategorisinin zorunlu ürün özellikleri eşleştirilmemiş.');
   return {
     ready: errors.length === 0,
     errors,
     warnings,
     normalized: {
       barcode, title, productMainId: sku, stockCode: sku, brand,
-      brandId: brandId || null, categoryId: category || null,
+      brandId: brandId ? Number(brandId) : null, categoryId: category ? Number(category) : null,
       quantity: stock, dimensionalWeight, vatRate, listPrice: salePrice, salePrice,
-      currencyType: 'TRY', description, images: image ? [image] : [],
-      attributes: Array.isArray(mapping.attributes) ? mapping.attributes : [],
+      description, images: image ? [{ url: image }] : [],
+      attributes: Array.isArray(mapping.attributes) ? mapping.attributes.map(attribute => ({
+        attributeId: Number(attribute.attributeId),
+        ...(attribute.attributeValueId ? { attributeValueId: Number(attribute.attributeValueId) } : {}),
+        ...(attribute.customValue ? { customAttributeValue: attribute.customValue } : {}),
+      })) : [],
     },
   };
 }
