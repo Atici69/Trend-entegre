@@ -618,13 +618,42 @@ app.post('/api/v1/admin/xml/export', requireAdmin, async (req, res) => {
     const pricedProducts = applyProfitMargin(products, savedMarginForExport);
     const count = clampProductLimit(req.body?.limit ?? 'all', pricedProducts.length);
     const selected = pricedProducts.slice(0, count);
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.json_to_sheet(selected);
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Ürünler');
-    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-    await audit(req, 'export', 'xml_feed', req.body?.feed_id || null, { exported_products: selected.length });
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename="' + fileName + '.xlsx"; filename*=UTF-8\'\'' + encodeURIComponent(fileName + '.xlsx'));
+    const format = String(req.body?.format || 'xlsx').toLowerCase();
+    if (!['xlsx', 'csv', 'xml'].includes(format)) return res.status(400).json({ error: 'Çıktı biçimi XLSX, CSV veya XML olmalıdır.' });
+    let buffer, contentType, extension;
+    if (format === 'xlsx') {
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(selected);
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Ürünler');
+      buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      extension = 'xlsx';
+    } else if (format === 'csv') {
+      const safeRows = selected.map(row => Object.fromEntries(Object.entries(row).map(([key, value]) => {
+        const text = String(value ?? '');
+        return [key, /^[=+@\\-\\t\\r]/.test(text) ? "'" + text : text];
+      })));
+      const worksheet = XLSX.utils.json_to_sheet(safeRows);
+      buffer = Buffer.from(XLSX.utils.sheet_to_csv(worksheet, { FS: ';' }), 'utf8');
+      contentType = 'text/csv; charset=utf-8';
+      extension = 'csv';
+    } else {
+      const escapeXml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[char]));
+      const records = selected.map((row, index) => '<product><id>' + escapeXml(row['Ürün ID'] || index + 1) +
+        '</id><name>' + escapeXml(row['Ürün Adı']) + '</name><sku>' + escapeXml(row.SKU) +
+        '</sku><barcode>' + escapeXml(row.Barkod) + '</barcode><brand>' + escapeXml(row.Marka) +
+        '</brand><category>' + escapeXml(row.Kategori) + '</category><price>' + escapeXml(row['Satış Fiyatı']) +
+        '</price><cost_price>' + escapeXml(row['Alış Fiyatı']) + '</cost_price><stock>' + escapeXml(row.Stok) +
+        '</stock><image>' + escapeXml(row['Görsel URL']) + '</image><description>' + escapeXml(row.Açıklama) +
+        '</description></product>').join('');
+      buffer = Buffer.from('<?xml version="1.0" encoding="UTF-8"?><products>' + records + '</products>', 'utf8');
+      contentType = 'application/xml; charset=utf-8';
+      extension = 'xml';
+    }
+    await audit(req, 'export', 'xml_feed', req.body?.feed_id || null, { exported_products: selected.length, format });
+    const downloadName = fileName + '.' + extension;
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', 'attachment; filename="' + extension + '"; filename*=UTF-8\'\'' + encodeURIComponent(downloadName));
     res.setHeader('Content-Length', buffer.length);
     res.send(buffer);
   } catch (error) {
