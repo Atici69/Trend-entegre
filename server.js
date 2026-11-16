@@ -9,6 +9,8 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { marketplaceStatus } from './src/marketplaces/index.js';
 import { testHepsiburadaConnection } from './src/marketplaces/hepsiburada.js';
 import { registerIyzicoRoutes } from './src/payments/iyzico.js';
+import * as XLSX from 'xlsx';
+import { downloadXml, parseProducts, clampProductLimit } from './src/xml/feed-service.js';
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -354,6 +356,96 @@ app.get('/api/v1/marketplaces/status', requireAdmin, (_req, res) => {
 app.post('/api/v1/marketplaces/hepsiburada/test', requireAdmin, async (_req, res) => {
   const result = await testHepsiburadaConnection();
   res.status(result.ok ? 200 : result.status === 'not_configured' ? 424 : 502).json(result);
+});
+
+
+const xmlFeeds = () => req.firestore.collection('xml_feeds');
+
+app.get('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
+  try {
+    const snapshot = await req.firestore.collection('xml_feeds').get();
+    const feeds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+    res.json({ feeds });
+  } catch (error) {
+    res.status(503).json({ error: 'XML kaynakları alınamadı.' });
+  }
+});
+
+app.post('/api/v1/admin/xml/preview', requireAdmin, async (req, res) => {
+  try {
+    let url = String(req.body?.url || '').trim();
+    if (req.body?.feed_id) {
+      const saved = await req.firestore.collection('xml_feeds').doc(String(req.body.feed_id)).get();
+      if (!saved.exists) return res.status(404).json({ error: 'Kayıtlı XML kaynağı bulunamadı.' });
+      url = saved.data().url;
+    }
+    const xml = await downloadXml(url);
+    const products = parseProducts(xml);
+    res.json({ totalProducts: products.length, preview: products.slice(0, 10) });
+  } catch (error) {
+    res.status(400).json({ error: error.message || 'XML kaynağı okunamadı.' });
+  }
+});
+
+app.post('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
+  const name = String(req.body?.name || '').trim().slice(0, 100);
+  const url = String(req.body?.url || '').trim().slice(0, 2048);
+  if (name.length < 2 || !url) return res.status(400).json({ error: 'Kaynak adı ve XML adresi gereklidir.' });
+  try {
+    const xml = await downloadXml(url);
+    const products = parseProducts(xml);
+    const now = new Date().toISOString();
+    const ref = await req.firestore.collection('xml_feeds').add({
+      name, url, products_count: products.length, last_tested_at: now,
+      created_at: now, updated_at: now, created_by: req.adminUser.id,
+    });
+    await audit(req, 'create', 'xml_feed', ref.id, { name, products_count: products.length });
+    res.status(201).json({ feed: { id: ref.id, name, url, products_count: products.length, last_tested_at: now } });
+  } catch (error) {
+    res.status(400).json({ error: error.message || 'XML kaynağı kaydedilemedi.' });
+  }
+});
+
+app.delete('/api/v1/admin/xml/feeds/:id', requireAdmin, async (req, res) => {
+  try {
+    const ref = req.firestore.collection('xml_feeds').doc(req.params.id);
+    const existing = await ref.get();
+    if (!existing.exists) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
+    await ref.delete();
+    await audit(req, 'delete', 'xml_feed', req.params.id);
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(400).json({ error: 'XML kaynağı silinemedi.' });
+  }
+});
+
+app.post('/api/v1/admin/xml/export', requireAdmin, async (req, res) => {
+  try {
+    let url = String(req.body?.url || '').trim();
+    let fileName = 'urunler';
+    if (req.body?.feed_id) {
+      const saved = await req.firestore.collection('xml_feeds').doc(String(req.body.feed_id)).get();
+      if (!saved.exists) return res.status(404).json({ error: 'Kayıtlı XML kaynağı bulunamadı.' });
+      url = saved.data().url;
+      fileName = String(saved.data().name || fileName).replace(/[^a-z0-9-_]+/gi, '-').slice(0, 50) || fileName;
+    }
+    const xml = await downloadXml(url);
+    const products = parseProducts(xml);
+    const count = clampProductLimit(req.body?.limit ?? 'all', products.length);
+    const selected = products.slice(0, count);
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(selected);
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Ürünler');
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    await audit(req, 'export', 'xml_feed', req.body?.feed_id || null, { exported_products: selected.length });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="' + fileName + '.xlsx"; filename*=UTF-8\'\'' + encodeURIComponent(fileName + '.xlsx'));
+    res.setHeader('Content-Length', buffer.length);
+    res.send(buffer);
+  } catch (error) {
+    res.status(400).json({ error: error.message || 'Excel dosyası oluşturulamadı.' });
+  }
 });
 
 registerIyzicoRoutes(app);
