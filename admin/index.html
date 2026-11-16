@@ -114,6 +114,7 @@ th{background:#f5f7fc}
 <button data-page="dealers"><span class="ico">♧</span> Bayi Ağı</button>
 <button data-page="marketplaces"><span class="ico">⇄</span> Pazaryeri Entegrasyonları</button>
 <button data-page="xml"><span class="ico">⌘</span> XML İşlemleri</button>
+<button data-page="orders"><span class="ico">🛒</span> Siparişler</button>
 <button data-page="buybox"><span class="ico">◈</span> BuyBox</button>
 <button data-page="payments"><span class="ico">₺</span> Ödemeler</button>
 <button data-page="accounting"><span class="ico">▤</span> Muhasebe <span class="tag" style="margin-left:5px">PASİF</span></button>
@@ -236,6 +237,12 @@ th{background:#f5f7fc}
 <div class="card" style="margin-bottom:15px"><h2>XML kaynağından kataloğa aktar</h2><div class="field"><label for="catalogXmlFeed">Kayıtlı XML kaynağı</label><select id="catalogXmlFeed"><option value="">Kaynak seçin</option></select></div><button class="btn" type="button" onclick="importCatalogXml()">XML ürünlerini kataloğa aktar</button><p class="section-note">İçe aktarılan ürünler taslak olur; kontrol edip satışa açın. XML güncellemesinde mevcut yayın durumu korunur.</p></div>
 <div class="card"><h2>Katalog ürünleri</h2><div class="tablebox"><table><thead><tr><th>Ürün</th><th>Alış</th><th>Kâr</th><th>Satış</th><th>Stok</th><th>Durum</th><th>İşlem</th></tr></thead><tbody id="catalogRows"><tr><td colspan="7">Ürünler yükleniyor…</td></tr></tbody></table></div></div>
 </section>
+<section class="page" id="orders">
+<div class="head"><div><h1>Mağaza Siparişleri</h1><p>Katalog üzerinden gelen müşteri sipariş taleplerini inceleyin ve durumlarını güncelleyin.</p></div><button class="btn light" type="button" onclick="loadCatalogOrders()">Yenile</button></div>
+<div class="notice"><b>Ödeme durumu:</b> Bu siparişler şu an ödeme alınmadan talep olarak kaydedilir. Müşteriyle stok, teslimat ve ödeme yöntemi için iletişime geçin.</div>
+<p class="section-note" id="catalogOrdersMessage" role="status"></p>
+<div class="tablebox"><table><thead><tr><th>Sipariş</th><th>Müşteri</th><th>Ürünler</th><th>Tutar</th><th>Durum</th><th>Tarih</th><th>İşlem</th></tr></thead><tbody id="catalogOrdersRows"><tr><td colspan="7">Siparişler yükleniyor…</td></tr></tbody></table></div>
+</section>
 <section class="page" id="buybox"><div class="head"><div><h1>BuyBox Yönetimi</h1><p>Rakip fiyat izleme ve BuyBox hizmetlerinin operasyon alanı.</p></div></div><div class="empty-state"><b>BuyBox servisi henüz bağlı değil.</b><br>Ürün eşleştirme, fiyat izleme sıklığı, bildirim ve raporlama modülleri servis altyapısıyla birlikte geliştirilecek.</div></section>
 <section class="page" id="payments"><div class="head"><div><h1>Ödeme Yönetimi</h1><p>Abonelik tahsilat kayıtları ve ödeme bildirimleri.</p></div><button class="btn light" onclick="loadResource('payments')">Yenile</button></div><div class="notice">Ödeme kayıtları burada salt okunur gösterilir. Gerçek tahsilat veya iade işlemi ödeme kuruluşunun doğrulanmış API/webhook akışı kurulmadan yapılamaz.</div><div class="toolbar"><input id="paymentsSearch" placeholder="Sağlayıcı, referans veya durum ara" oninput="queueResourceSearch('payments')"></div><div id="paymentsMessage" class="section-note"></div><div class="tablebox"><table><thead><tr><th>Sağlayıcı / Referans</th><th>Müşteri ID</th><th>Tutar</th><th>Durum</th><th>Ödeme tarihi</th></tr></thead><tbody id="paymentsRows"><tr><td colspan="5">Kayıtlar yükleniyor…</td></tr></tbody></table></div><p class="section-note" id="paymentsPager"></p></section>
 <section class="page" id="accounting"><div class="head"><div><h1>Muhasebe</h1><p>Gelir-gider, bayi komisyonları, tahsilat ve finansal kayıtlar.</p></div><span class="tag gray">MODÜL PASİF</span></div><div class="notice"><b>Muhasebe modülü henüz aktif edilmemiştir.</b> Bu bölüm yönetim panelinde hazır tutulmaktadır. Aktifleştirme yapılana kadar kayıt oluşturma, düzenleme, silme ve finansal hesaplama işlemleri kapalıdır.</div><div class="grid"><div class="metric"><label>Muhasebe Genel Bakış</label><strong>—</strong><small class="state">Pasif</small></div><div class="metric"><label>Gelir – Gider Takibi</label><strong>—</strong><small class="state">Pasif</small></div><div class="metric"><label>Bayi Komisyonları</label><strong>—</strong><small class="state">Pasif</small></div><div class="metric"><label>Tahsilat Raporları</label><strong>—</strong><small class="state">Pasif</small></div></div><div class="card" style="margin-top:15px"><h2>Finansal kayıt alanları</h2><div class="tablebox"><table><thead><tr><th>Alt bölüm</th><th>Durum</th><th>Açıklama</th></tr></thead><tbody><tr><td>Gelir – Gider Takibi</td><td><span class="tag gray">Pasif</span></td><td>Gelir ve gider kayıtları</td></tr><tr><td>Bayi Komisyonları</td><td><span class="tag gray">Pasif</span></td><td>Bayi / alt bayi hakedişleri</td></tr><tr><td>Tahsilat Raporları</td><td><span class="tag gray">Pasif</span></td><td>Ödeme ve tahsilat dökümleri</td></tr><tr><td>Fatura ve Ödeme Kayıtları</td><td><span class="tag gray">Pasif</span></td><td>Fatura ve ödeme geçmişi</td></tr></tbody></table></div><p class="section-note">Modül, ileride güvenli veritabanı ve muhasebe iş kuralları bağlandığında yönetici tarafından etkinleştirilebilir.</p></div></section>
@@ -334,7 +341,7 @@ const ADMIN_TOKEN_KEY = "trend_admin_access_token";
 let firebasePublicConfig = null;
 let hepsiburadaTestedThisSession = false;
 
-const titles={home:"Genel Bakış",customers:"Müşteri Yönetimi",subscriptions:"Entegrasyon Paketleri ve Abonelikler","store-packages":"E-Ticaret Mağazası Paketleri",dealers:"Bayi Ağı",marketplaces:"Pazaryeri Entegrasyonları",xml:"XML İşlemleri",catalog:"Ürün Kataloğu",buybox:"BuyBox Yönetimi",payments:"Ödeme Yönetimi",accounting:"Muhasebe",ads:"Reklam Alanları",settings:"Sistem Ayarları"};
+const titles={home:"Genel Bakış",customers:"Müşteri Yönetimi",subscriptions:"Entegrasyon Paketleri ve Abonelikler","store-packages":"E-Ticaret Mağazası Paketleri",dealers:"Bayi Ağı",marketplaces:"Pazaryeri Entegrasyonları",xml:"XML İşlemleri",catalog:"Ürün Kataloğu",orders:"Mağaza Siparişleri",buybox:"BuyBox Yönetimi",payments:"Ödeme Yönetimi",accounting:"Muhasebe",ads:"Reklam Alanları",settings:"Sistem Ayarları"};
 
 function go(id){
   document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===id));
@@ -344,6 +351,7 @@ function go(id){
   if(id==="marketplaces") loadMarketplaceStatus();
   if(id==="xml") loadXmlFeeds();
   if(id==="catalog"){loadCatalogProducts();loadXmlFeeds();}
+  if(id==="orders") loadCatalogOrders();
   if(id==="ads") loadAdManager();
   if(["customers","subscriptions","dealers","payments"].includes(id)) loadResource(id);
 }
@@ -776,6 +784,30 @@ async function loadCatalogProducts(){
   select.innerHTML='<option value="">Kaynak seçin</option>'+(feedData.feeds||[]).map(f=>'<option value="'+escapeHtml(f.id)+'">'+escapeHtml(f.name)+' (%'+Number(f.margin_percent||0)+')</option>').join('');
   if(selected)select.value=selected;
  }catch(error){rows.innerHTML='<tr><td colspan="7">Katalog yüklenemedi.</td></tr>';catalogMessage(error.message,true);}
+}
+async function loadCatalogOrders(){
+ const rows=document.getElementById('catalogOrdersRows'),message=document.getElementById('catalogOrdersMessage');
+ if(!rows)return;
+ rows.innerHTML='<tr><td colspan="7">Siparişler yükleniyor…</td></tr>';if(message)message.textContent='';
+ try{
+  const data=await adminApi('/api/v1/admin/catalog/orders'),orders=data.orders||[];
+  rows.innerHTML=orders.length?orders.map(order=>{
+   const buyer=order.buyer||{},items=(order.items||[]).map(item=>escapeHtml(item.name)+' × '+Number(item.quantity||0)).join('<br>');
+   const statusLabels={new:'Yeni',confirmed:'Onaylandı',cancelled:'İptal',fulfilled:'Tamamlandı'};
+   const actions=order.status==='new'
+    ?'<button class="logout-btn" onclick="setCatalogOrderStatus(\''+escapeHtml(order.id)+'\',\'confirmed\')">Onayla</button> <button class="logout-btn" onclick="setCatalogOrderStatus(\''+escapeHtml(order.id)+'\',\'cancelled\')">İptal</button>'
+    :order.status==='confirmed'?'<button class="logout-btn" onclick="setCatalogOrderStatus(\''+escapeHtml(order.id)+'\',\'fulfilled\')">Tamamlandı</button>':'—';
+   return '<tr><td><strong>#'+escapeHtml(order.order_number)+'</strong><br><small>'+Number(order.item_count||0)+' adet</small></td><td><strong>'+escapeHtml(buyer.name)+'</strong><br>'+escapeHtml(buyer.phone)+'<br><small>'+escapeHtml(buyer.email||'')+'</small><br><small>'+escapeHtml(buyer.address)+'</small></td><td>'+items+'</td><td><strong>'+(Number(order.total_minor||0)/100).toLocaleString('tr-TR',{minimumFractionDigits:2})+' TL</strong></td><td><span class="tag '+(order.status==='new'?'':'green')+'">'+(statusLabels[order.status]||escapeHtml(order.status))+'</span><br><small>Ödeme alınmadı</small></td><td>'+formatDate(order.created_at)+'</td><td>'+actions+'</td></tr>';
+  }).join(''):'<tr><td colspan="7">Henüz sipariş bulunmuyor.</td></tr>';
+ }catch(error){rows.innerHTML='<tr><td colspan="7">Siparişler alınamadı.</td></tr>';if(message)message.textContent=error.message;}
+}
+async function setCatalogOrderStatus(id,status){
+ const labels={confirmed:'onaylamak',cancelled:'iptal etmek',fulfilled:'tamamlandı olarak işaretlemek'};
+ if(!confirm('Bu siparişi '+labels[status]+' istiyor musunuz?'))return;
+ try{
+  await adminApi('/api/v1/admin/catalog/orders/'+encodeURIComponent(id),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});
+  await loadCatalogOrders();
+ }catch(error){const message=document.getElementById('catalogOrdersMessage');if(message)message.textContent=error.message;}
 }
 async function saveCatalogProduct(){
  const id=document.getElementById('catalogProductId').value,saleRaw=document.getElementById('catalogSale').value;
