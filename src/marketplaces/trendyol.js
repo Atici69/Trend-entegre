@@ -209,11 +209,21 @@ async function buildValidation(db, feedId) {
   const rows = [];
   const payloads = [];
   const cache = { categories: new Map(), values: new Map() };
+  // Barkodları ilk turda say: aynı barkodlu kayıtların hiçbirini yanlışlıkla gönderime hazır sayma.
+  const barcodeCounts = new Map();
+  for (const product of products) {
+    const barcode = text(product['Barkod']).trim();
+    if (barcode) barcodeCounts.set(barcode, (barcodeCounts.get(barcode) || 0) + 1);
+  }
   for (const product of products) {
     const sourceCategory = text(product['Kategori']);
     const mapping = byCategory.get(normalize(sourceCategory));
     const marginPercent = Number(feed.margin_percent || 0);
     const errors = productBaseErrors(product, mapping, marginPercent);
+    const barcode = text(product['Barkod']).trim();
+    if (barcode && (barcodeCounts.get(barcode) || 0) > 1) {
+      errors.push('Aynı barkod XML içinde birden fazla üründe kullanılmış: ' + barcode + '. Bu barkodlu kayıtların tamamı gönderimden çıkarılmalıdır.');
+    }
     let attributes = [];
     if (mapping?.categoryId) {
       try {
