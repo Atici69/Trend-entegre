@@ -1,4 +1,4 @@
-const REQUIRED_FIELDS = ['barcode', 'title', 'productMainId', 'brandId', 'categoryId', 'quantity', 'stockCode', 'dimensionalWeight', 'description', 'listPrice', 'salePrice', 'vatRate', 'images', 'attributes'];
+const REQUIRED_FIELDS = ['barcode', 'title', 'productMainId', 'brandId', 'categoryId', 'quantity', 'stockCode', 'dimensionalWeight', 'description', 'listPrice', 'salePrice', 'vatRate', 'origin', 'images', 'attributes'];
 
 function numeric(value) {
   const parsed = Number(String(value ?? '').replace(',', '.'));
@@ -20,6 +20,7 @@ export function validateTrendyolProduct(source, mapping = {}) {
   const description = String(source.Açıklama || '').trim();
   const dimensionalWeight = numeric(source['Desi'] ?? source.dimensionalWeight);
   const vatRate = numeric(source['KDV Oranı'] ?? source.vatRate);
+  const origin = String(source['Menşei'] ?? source.origin ?? '').trim().toUpperCase();
 
   if (!title) errors.push('Ürün adı eksik.');
   if (title.length > 100) errors.push('Ürün adı Trendyol için 100 karakteri aşamaz.');
@@ -32,6 +33,7 @@ export function validateTrendyolProduct(source, mapping = {}) {
   if (stock === null || stock < 0 || !Number.isInteger(stock)) errors.push('Stok miktarı geçerli bir tam sayı olmalıdır.');
   if (dimensionalWeight === null || dimensionalWeight <= 0) errors.push('Desi / dimensionalWeight bilgisi eksik.');
   if (vatRate === null || ![0, 1, 10, 20].includes(vatRate)) errors.push('KDV oranı eksik veya geçersiz (0, 1, 10, 20 olmalı).');
+  if (!/^[A-Z]{2}$/.test(origin)) errors.push('Menşei ülke kodu eksik veya geçersiz (iki harfli ülke kodu gerekli).');
   if (!image) errors.push('Ürün görseli eksik.');
   else {
     try { if (new URL(image).protocol !== 'https:') errors.push('Ürün görseli HTTPS olmalıdır.'); }
@@ -54,7 +56,7 @@ export function validateTrendyolProduct(source, mapping = {}) {
     normalized: {
       barcode, title, productMainId: sku, stockCode: sku, brand,
       brandId: brandId ? Number(brandId) : null, categoryId: category ? Number(category) : null,
-      quantity: stock, dimensionalWeight, vatRate, listPrice: salePrice, salePrice,
+      quantity: stock, dimensionalWeight, vatRate, origin, listPrice: salePrice, salePrice,
       description, images: image ? [{ url: image }] : [],
       attributes: Array.isArray(mapping.attributes) ? mapping.attributes.map(attribute => ({
         attributeId: Number(attribute.attributeId),
