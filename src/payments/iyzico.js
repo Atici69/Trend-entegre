@@ -181,6 +181,7 @@ export function registerIyzicoRoutes(app) {
       const order = orderSnap.data();
       if (order.uid !== req.user.uid) return res.status(403).json({ error: 'Bu sipariş için ödeme başlatamazsınız.' });
       if (order.payment_status === 'paid') return res.status(409).json({ error: 'Bu siparişin ödemesi zaten tamamlanmış.' });
+      if (order.payment_status === 'pending') return res.status(409).json({ error: 'Bu sipariş için bir ödeme işlemi zaten başlatılmış. Sonucu bekleyin; ödeme ekranı kapanmışsa destek ekibiyle iletişime geçin.' });
       if (order.status !== 'new') return res.status(409).json({ error: 'Yalnızca yeni durumdaki siparişler ödenebilir.' });
       const items = Array.isArray(order.items) ? order.items : [];
       const totalMinor = Number(order.total_minor);
@@ -256,6 +257,7 @@ export function registerIyzicoRoutes(app) {
         if (!currentSnap.exists || currentSnap.data().uid !== req.user.uid) throw new Error('Sipariş artık bulunamıyor.');
         const current = currentSnap.data();
         if (current.payment_status === 'paid') throw new Error('Bu siparişin ödemesi zaten tamamlanmış.');
+        if (current.payment_status === 'pending') throw new Error('Bu sipariş için bir ödeme işlemi zaten başlatılmış.');
         if (current.status !== 'new' || Number(current.total_minor) !== totalMinor) throw new Error('Sipariş ödeme için uygun durumda değil.');
         transaction.create(attemptRef, {
           type: 'catalog_order', uid: req.user.uid, email: req.user.email,
@@ -266,7 +268,8 @@ export function registerIyzicoRoutes(app) {
         });
         transaction.update(orderRef, {
           payment_status: 'pending', payment_method: 'iyzico',
-          payment_attempt_id: hash(result.token), updated_at: FieldValue.serverTimestamp(),
+          payment_attempt_id: hash(result.token), payment_attempt_started_at: FieldValue.serverTimestamp(),
+          updated_at: FieldValue.serverTimestamp(),
         });
       });
       res.json({
@@ -331,6 +334,7 @@ export function registerIyzicoRoutes(app) {
           if (order.uid !== attempt.uid || Number(order.total_minor) !== attempt.gross_amount_minor || order.currency !== 'TRY') {
             throw new Error('Ödeme siparişiyle tutarı eşleşmedi.');
           }
+          if (order.payment_attempt_id !== hash(token)) throw new Error('Bu ödeme denemesi artık geçerli değil.');
           if (order.payment_status === 'paid') {
             transaction.set(attemptRef, {
               status: 'paid', provider_payment_id: String(result.paymentId),
