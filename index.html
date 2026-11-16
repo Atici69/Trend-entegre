@@ -728,6 +728,7 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
 </div>
 <div class="catalog-category-picker"><label for="publicCatalogCategories">Kategori seçin</label><select id="publicCatalogCategories" aria-label="Ürün kategorisi"><option value="Tümü">Tüm kategoriler</option></select></div>
 <div id="publicCatalogGrid" class="commerce-grid" aria-live="polite"></div>
+<div id="publicCatalogDetail" class="catalog-detail" hidden aria-live="polite"></div>
 <div id="publicCatalogPagination" class="catalog-pagination" aria-label="Ürün sayfaları"></div>
 <div id="catalogCartToast" role="status" aria-live="polite" aria-atomic="true"></div>
 <div class="store-cart" id="storeCart">
@@ -909,7 +910,7 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
 #katalog .catalog-pagination button:disabled{opacity:.4;cursor:not-allowed}
 #katalog .catalog-pagination span{font-size:13px;font-weight:750;color:var(--m);padding:0 8px}
 #katalog .catalog-toolbar input{width:100%}
-#katalog .commerce-grid{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:28px}
+#katalog .catalog-detail{background:#fff;border:1px solid var(--l);border-radius:20px;padding:clamp(16px,3vw,30px);margin:0 0 28px}#katalog .catalog-detail[hidden]{display:none}#katalog .catalog-detail-back{border:1px solid var(--l);background:#fff;color:var(--n);border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;margin-bottom:20px}#katalog .catalog-detail-layout{display:grid;grid-template-columns:1fr 1fr;gap:clamp(20px,4vw,42px)}#katalog .catalog-detail-image{width:100%;max-height:520px;object-fit:contain;border:1px solid var(--l);border-radius:16px;padding:18px}#katalog .catalog-detail h2{font-size:clamp(22px,3vw,32px);color:var(--n);margin:10px 0}#katalog .catalog-detail-description{white-space:pre-wrap;line-height:1.8;color:var(--m);font-size:15px}#katalog .catalog-detail-price{display:block;font-size:30px;font-weight:900;color:var(--n);margin:18px 0 8px}#katalog .catalog-detail-meta{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}#katalog .catalog-detail-meta span{background:#f1f4f9;border-radius:8px;padding:7px 10px;font-size:12px}#katalog .catalog-detail-add{border:0;border-radius:11px;background:#f4772b;color:#fff;padding:13px 20px;font-weight:900;cursor:pointer;margin-top:14px}#katalog .catalog-product h3 a{color:inherit;text-decoration:none}@media(max-width:700px){#katalog .catalog-detail-layout{grid-template-columns:1fr}#katalog .catalog-detail-image{max-height:360px}}#katalog .commerce-grid{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:28px}
 #katalog .catalog-product{box-shadow:0 8px 24px #101b3f0a;transition:transform .18s ease,box-shadow .18s ease}
 #katalog .catalog-product:hover{transform:translateY(-3px);box-shadow:0 14px 30px #101b3f16}
 #katalog .catalog-product img{object-fit:contain}
@@ -1038,6 +1039,8 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
   showCartToast(product.name,current+1);
   const note=byId("storeOrderMessage");if(note)note.textContent="✓ "+product.name+" sepete eklendi.";
  }
+  function openCatalogProduct(id){const product=products.find(item=>String(item.id)===String(id));if(!product)return;const url=new URL(location.href);url.searchParams.set("urun",id);url.hash="katalog";history.pushState({catalogProduct:id},"",url);renderCatalogRoute();byId("katalog")?.scrollIntoView({behavior:"smooth",block:"start"});}
+  function renderCatalogRoute(){const detail=byId("publicCatalogDetail"),grid=byId("publicCatalogGrid"),pagination=byId("publicCatalogPagination"),toolbar=byId("publicCatalogSearch")?.closest(".catalog-toolbar"),category=byId("publicCatalogCategories")?.closest(".catalog-category-picker");if(!detail||!grid)return;const id=new URLSearchParams(location.search).get("urun"),p=id?products.find(item=>String(item.id)===String(id)):null;if(!p){detail.hidden=true;detail.innerHTML="";grid.hidden=false;if(pagination)pagination.hidden=false;if(toolbar)toolbar.hidden=false;if(category)category.hidden=false;return;}const image=p.image_url?'<img class="catalog-detail-image" src="'+esc(p.image_url)+'" alt="'+esc(p.name)+'">':'<div class="catalog-no-image">Görsel eklenmemiş</div>';const stock=Number(p.stock)||0;detail.innerHTML='<button type="button" class="catalog-detail-back" id="catalogDetailBack">← Ürünlere dön</button><div class="catalog-detail-layout"><div>'+image+'</div><div><span class="catalog-category">'+esc(p.display_category||p.category||"Katalog")+'</span><h2>'+esc(p.name)+'</h2><div class="catalog-detail-meta"><span>Stok kodu: '+esc(p.sku||"Belirtilmemiş")+'</span><span>Marka: '+esc(p.brand||"Belirtilmemiş")+'</span><span>'+(stock>0?"Stokta · "+stock+" adet":"Stokta yok")+'</span></div><strong class="catalog-detail-price">'+money(p.sale_price)+'</strong><div class="catalog-detail-description">'+esc(p.description||"Ürün açıklaması henüz eklenmemiş.")+'</div><button type="button" class="catalog-detail-add" id="catalogDetailAdd" '+(stock>0?"":"disabled")+'>Sepete ekle</button></div></div>';detail.hidden=false;grid.hidden=true;if(pagination)pagination.hidden=true;if(toolbar)toolbar.hidden=true;if(category)category.hidden=true;byId("catalogDetailBack")?.addEventListener("click",()=>{const url=new URL(location.href);url.searchParams.delete("urun");url.hash="katalog";history.pushState({},"",url);renderCatalogRoute();});byId("catalogDetailAdd")?.addEventListener("click",()=>addToCart(String(p.id)));}
  async function loadCatalog(){
   const grid=byId("publicCatalogGrid"),message=byId("publicCatalogMessage");
   if(!grid||!message)return;
@@ -1077,7 +1080,7 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
     grid.innerHTML=visible.length?visible.map(p=>{
      const image=p.image_url?'<img src="'+esc(p.image_url)+'" alt="'+esc(p.name)+'" loading="lazy">':'<div class="catalog-no-image">Görsel eklenmemiş</div>';
      const inStock=Number(p.stock)>0;
-     return '<article class="catalog-product">'+image+'<div class="catalog-info"><span class="catalog-category">'+esc(p.display_category)+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(p.description||"")+'</p><strong class="catalog-price">'+money(p.sale_price)+'</strong><span class="catalog-stock">'+(inStock?"Stokta · "+Number(p.stock)+" adet":"Stokta yok")+'</span><button class="catalog-add" type="button" data-add-to-cart="'+esc(p.id)+'" '+(!inStock?'disabled':'')+'>Sepete ekle</button></div></article>';
+     return '<article class="catalog-product" data-open-product="'+esc(p.id)+'">'+image+'<div class="catalog-info"><span class="catalog-category">'+esc(p.display_category)+'</span><h3><a href="?urun='+encodeURIComponent(p.id)+'#katalog" data-open-product="'+esc(p.id)+'">'+esc(p.name)+'</a></h3><p>'+esc(p.description||"")+'</p><strong class="catalog-price">'+money(p.sale_price)+'</strong><span class="catalog-stock">'+(inStock?"Stokta · "+Number(p.stock)+" adet":"Stokta yok")+'</span><button class="catalog-add" type="button" data-add-to-cart="'+esc(p.id)+'" '+(!inStock?'disabled':'')+'>Sepete ekle</button></div></article>';
     }).join(""):'<p class="muted">Bu kategoride ürün bulunamadı.</p>';
     if(pagination)pagination.innerHTML='<button type="button" data-catalog-page="1" '+(currentPage<=1?'disabled':'')+' aria-label="İlk sayfaya git">« Başa git</button><button type="button" data-catalog-page="'+(currentPage-1)+'" '+(currentPage<=1?'disabled':'')+'>‹ Önceki</button><span>Sayfa '+currentPage+' / '+pageCount+'</span><button type="button" data-catalog-page="'+(currentPage+1)+'" '+(currentPage>=pageCount?'disabled':'')+'>Sonraki ›</button><button type="button" data-catalog-page="'+pageCount+'" '+(currentPage>=pageCount?'disabled':'')+' aria-label="Son sayfaya git">Sona git »</button>';
     if(categoryBar)categoryBar.value=selectedCategory;
@@ -1093,6 +1096,8 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
     byId("publicCatalogGrid")?.scrollIntoView({behavior:"smooth",block:"start"});
    });
    renderProducts();
+   if(!grid.dataset.detailClickBound){grid.dataset.detailClickBound="1";grid.addEventListener("click",event=>{if(event.target instanceof Element&&event.target.closest("[data-add-to-cart]"))return;const trigger=event.target instanceof Element?event.target.closest("[data-open-product]"):null;if(!trigger)return;event.preventDefault();openCatalogProduct(String(trigger.dataset.openProduct||""));});}
+   window.addEventListener("popstate",renderCatalogRoute);renderCatalogRoute();
    if(!grid.dataset.cartClickBound){
     grid.dataset.cartClickBound="1";
     grid.addEventListener("click",event=>{
