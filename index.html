@@ -728,6 +728,7 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
  <select id="publicCatalogCategory" aria-label="Kategoriye göre filtrele"><option value="">Tüm kategoriler</option></select>
 </div>
 <div id="publicCatalogGrid" class="commerce-grid" aria-live="polite"></div>
+<div id="catalogCartToast" role="status" aria-live="polite" aria-atomic="true"></div>
 <div class="store-cart" id="storeCart">
  <div class="store-cart-head"><div><h3>Alışveriş sepetim</h3><p>Ürünleri sepete ekleyin, sipariş talebinizi gönderin.</p></div><strong id="storeCartTotal">0,00 TL</strong></div>
  <div id="storeCartItems" class="store-cart-items">Sepetiniz henüz boş.</div>
@@ -933,6 +934,11 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
 #katalog .store-order-fields .store-address{grid-column:1/-1}
 #katalog .store-payment-note{font-size:12px;line-height:1.6;color:var(--m)}
 #katalog #storeOrderMessage{font-size:13px;font-weight:750}
+#katalog #catalogCartToast{display:none;position:fixed;z-index:10050;right:24px;bottom:96px;max-width:min(420px,calc(100vw - 32px));padding:15px 18px;border-radius:14px;background:#138a50;color:#fff;box-shadow:0 12px 32px #10203b30;font-size:14px;font-weight:800;line-height:1.5}
+#katalog #catalogCartToast.show{display:block;animation:cartToastIn .2s ease-out}
+#katalog #catalogCartToast a{display:inline-block;margin-left:10px;color:#fff;text-decoration:underline;font-weight:900}
+@keyframes cartToastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+#katalog .store-cart-head h3 .cart-count{display:inline-flex;align-items:center;justify-content:center;min-width:25px;height:25px;margin-left:7px;padding:0 7px;border-radius:99px;background:var(--n);color:#fff;font-size:12px;vertical-align:middle}
 #katalog .catalog-add{display:block;width:100%;border:0;border-radius:10px;margin-top:12px;padding:10px;background:var(--n);color:#fff;font-size:12px;font-weight:850;cursor:pointer}
 #katalog .catalog-add:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:560px){#katalog .store-cart{padding:14px}#katalog .store-order-fields{grid-template-columns:1fr}#katalog .store-order-fields .store-address{grid-column:auto}#katalog .store-cart-head>strong{font-size:18px}}
@@ -993,6 +999,9 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
  function renderCart(){
   const box=byId("storeCartItems"),total=byId("storeCartTotal");
   if(!box||!total)return;
+  const count=[...cart.values()].reduce((sum,item)=>sum+item.quantity,0);
+  const heading=byId("storeCart")?.querySelector(".store-cart-head h3");
+  if(heading)heading.innerHTML='Alışveriş sepetim <span class="cart-count">'+count+'</span>';
   if(!cart.size){box.textContent="Sepetiniz henüz boş.";total.textContent=money(0);return;}
   let sum=0;
   box.innerHTML=[...cart.entries()].map(([id,item])=>{
@@ -1001,6 +1010,14 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
   }).join("");
   total.textContent=money(sum);
  }
+ let toastTimer=null;
+ function showCartToast(productName,quantity){
+  const toast=byId("catalogCartToast");if(!toast)return;
+  toast.innerHTML='✓ '+esc(productName)+' sepete eklendi. Sepetinizde '+quantity+' adet ürün var. <a href="#storeCart">Sepeti görüntüle</a>';
+  toast.classList.add("show");
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>toast.classList.remove("show"),5000);
+ }
  function addToCart(id){
   const product=products.find(item=>String(item.id)===String(id));
   if(!product){const note=byId("storeOrderMessage");if(note)note.textContent="Ürün sepet listesinde bulunamadı. Sayfayı Ctrl + F5 ile yenileyip tekrar deneyin.";return;}
@@ -1008,7 +1025,8 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
   if(current>=10){byId("storeOrderMessage").textContent="Bir üründen en fazla 10 adet ekleyebilirsiniz.";return;}
   if(Number(product.stock)>0&&current>=Number(product.stock)){byId("storeOrderMessage").textContent="Mevcut stok adedine ulaştınız.";return;}
   cart.set(id,{product,quantity:current+1});renderCart();
-  const note=byId("storeOrderMessage");if(note)note.textContent=product.name+" sepete eklendi.";
+  showCartToast(product.name,current+1);
+  const note=byId("storeOrderMessage");if(note)note.textContent="✓ "+product.name+" sepete eklendi.";
  }
  async function loadCatalog(){
   const grid=byId("publicCatalogGrid"),message=byId("publicCatalogMessage");
