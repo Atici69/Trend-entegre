@@ -705,6 +705,30 @@ app.post('/api/v1/admin/catalog/import-xml', requireAdmin, async (req, res) => {
   } catch (error) { res.status(400).json({ error: error.message || 'XML ürünleri kataloğa aktarılamadı.' }); }
 });
 
+app.post('/api/v1/admin/xml/upload', express.text({ type: ['application/xml', 'text/xml'], limit: '25mb' }), requireAdmin, async (req, res) => {
+  try {
+    const xml = typeof req.body === 'string' ? req.body.replace(/^\\uFEFF/, '').trim() : '';
+    if (!xml) return res.status(400).json({ error: 'XML dosyası boş veya okunamadı.' });
+    const products = parseProducts(xml);
+    const decodeHeader = value => {
+      try { return decodeURIComponent(String(value || '')); } catch { return ''; }
+    };
+    const suppliedName = decodeHeader(req.get('X-XML-Name')) || decodeHeader(req.get('X-XML-Filename'));
+    const name = (suppliedName || 'Yüklenen XML').replace(/\\.[^.]+$/, '').replace(/[<>:"/\\\\|?*\\x00-\\x1f]/g, ' ').trim().slice(0, 100) || 'Yüklenen XML';
+    const marginPercent = normalizeProfitMargin(req.get('X-XML-Margin') ?? 0);
+    const now = new Date().toISOString();
+    const ref = await req.firestore.collection('xml_feeds').add({
+      name, products_count: products.length, margin_percent: marginPercent, discount_percent: 0,
+      last_tested_at: now, created_at: now, updated_at: now, created_by: req.adminUser.id,
+      upload_type: 'file',
+    });
+    await audit(req, 'upload', 'xml_feed', ref.id, { name, products_count: products.length });
+    res.status(201).json({ feed: { id: ref.id, name, products_count: products.length, margin_percent: marginPercent, discount_percent: 0, last_tested_at: now } });
+  } catch (error) {
+    res.status(400).json({ error: error.message || 'XML dosyası yüklenemedi.' });
+  }
+});
+
 app.get('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
   try {
     const snapshot = await req.firestore.collection('xml_feeds').get();
