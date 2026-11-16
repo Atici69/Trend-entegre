@@ -886,7 +886,7 @@ function loadTrendyolFeedSettings(){
  document.getElementById("trendyolMarginPercent").value=feed?.margin_percent??0;
  document.getElementById("trendyolMarginMessage").textContent=feed?"Kayıtlı marj: %"+Number(feed.margin_percent||0).toLocaleString("tr-TR"):"Önce bir XML kaynağı seçin.";
 }
-async function saveTrendyolMargin(){
+async async function saveTrendyolMargin(){
  const feedId=document.getElementById("trendyolValidateFeed").value;
  const value=Number(document.getElementById("trendyolMarginPercent").value);
  const button=document.getElementById("trendyolMarginSaveButton"),message=document.getElementById("trendyolMarginMessage");
