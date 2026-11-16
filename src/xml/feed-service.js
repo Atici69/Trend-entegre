@@ -168,16 +168,16 @@ export function parseProducts(xml) {
   if (!raw.length) throw new Error('Ürün kayıtları bulunamadı. Ürün etiketleri product, item, urun veya offer olmalıdır.');
   const products = raw.map((item, index) => ({
     'Ürün ID': findField(item, ['id', 'product_id', 'productid']),
-    'Ürün Adı': findField(item, ['name', 'title', 'product_name', 'productname', 'urunadi', 'ürünadı']),
-    'SKU': findField(item, ['sku', 'stock_code', 'stockcode', 'model']),
+    'Ürün Adı': findField(item, ['name', 'title', 'product_name', 'productname', 'urunadi', 'ürünadı', 'baslik']),
+    'SKU': findField(item, ['sku', 'stock_code', 'stockcode', 'model', 'stok_kodu']),
     'Barkod': findField(item, ['barcode', 'gtin', 'ean', 'barcode_number']),
-    'Marka': findField(item, ['brand', 'manufacturer', 'marka']),
+    'Marka': findField(item, ['brand', 'manufacturer', 'marka', 'marka_baslik']),
     'Kategori': findField(item, ['category', 'category_name', 'kategori']),
     'Fiyat': findField(item, ['price', 'sale_price', 'selling_price', 'fiyat']),
-    'Para Birimi': findField(item, ['currency', 'currency_code', 'parabirimi']),
+    'Para Birimi': findField(item, ['currency', 'currency_code', 'parabirimi', 'kur_tipi']),
     'Stok': findField(item, ['quantity', 'stock', 'stock_quantity', 'qty', 'stok']),
-    'Görsel URL': findField(item, ['image', 'image_url', 'picture', 'picture_url', 'gorsel']),
-    'Açıklama': findField(item, ['description', 'short_description', 'aciklama', 'açıklama']),
+    'Görsel URL': findField(item, ['image', 'image_url', 'picture', 'picture_url', 'gorsel', 'urun_resim_1']),
+    'Açıklama': findField(item, ['description', 'short_description', 'aciklama', 'açıklama', 'kisa_aciklama']),
   }));
   return products;
 }
