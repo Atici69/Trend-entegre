@@ -662,10 +662,11 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
 #eticaret-paketleri .commerce-card .btn{color:#fff!important}
 </style>
 </head><body>
-<header><div class="w nav"><a href="#" aria-label="Trend-Entegre ana sayfa"><img class="brand-logo" src="assets/trend-entegre-logo.svg" alt="Trend-Entegre — Tek XML, tüm pazaryerleri"></a><nav class="premium-nav"><a href="#cozum">Çözümler</a><a href="#nasil">Nasıl çalışır?</a><a href="#paketler">Paketler</a><a href="#iletisim">Bayilik</a></nav><div class="auth-actions"><span class="auth-user" id="authUserLabel"></span><button class="btn" id="authOpenBtn" type="button">Giriş / Kayıt</button></div></div></header>
+<header><div class="w nav"><a href="#" aria-label="Trend-Entegre ana sayfa"><img class="brand-logo" src="assets/trend-entegre-logo.svg" alt="Trend-Entegre — Tek XML, tüm pazaryerleri"></a><nav class="premium-nav"><a href="#katalog">Katalog</a><a href="#cozum">Çözümler</a><a href="#nasil">Nasıl çalışır?</a><a href="#paketler">Paketler</a><a href="#iletisim">Bayilik</a></nav><div class="auth-actions"><span class="auth-user" id="authUserLabel"></span><button class="btn" id="authOpenBtn" type="button">Giriş / Kayıt</button></div></div></header>
 
 <nav class="mobile-dock" aria-label="Mobil ana gezinme">
   <a href="#" aria-label="Ana sayfa" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><span>Ana Sayfa</span></a>
+  <a href="#katalog" aria-label="Ürün Kataloğu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16l-1.5 15h-13z"/><path d="M9 9a3 3 0 0 0 6 0"/></svg><span>Katalog</span></a>
   <a href="#eticaret-paketleri" aria-label="Hizmet kategorileri"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg><span>Kategoriler</span></a>
   <a href="xml-merkezi.html" aria-label="XML Ürün Merkezi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10"/><circle cx="18" cy="19" r="2"/></svg><span>XML Merkezi</span></a>
   <a href="#entegrasyon-paketleri" aria-label="Paketler"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg><span>Paketler</span></a>
@@ -717,6 +718,13 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
       <div class="visual-footer"><span>XML kaynağı</span><strong>→</strong><span>Çoklu kanal</span><strong>→</strong><span>Tek panel</span></div>
     </div>
   </div>
+</section>
+<section id="katalog" class="soft">
+<div class="w">
+<div class="head"><span class="k">Trend-Entegre mağaza</span><h2>Ürün Kataloğu</h2><p>Mağazamızda satışa açılan ürünleri burada inceleyebilirsiniz.</p></div>
+<div id="publicCatalogMessage" class="muted" style="text-align:center;margin-bottom:18px">Ürünler yükleniyor…</div>
+<div id="publicCatalogGrid" class="commerce-grid" aria-live="polite"></div>
+</div>
 </section>
 <section id="cozum"><div class="w"><div class="head"><span class="k">Tek kaynaktan çoklu pazaryeri</span><h2>XML dosyanız, pazaryerlerinize hazır hale gelsin.</h2><p>Her pazaryerinin ürün alanları ve veri ihtiyaçları farklı olabilir. Trend-Entegre, ürün verilerinizi pazaryeri bazında düzenlemeyi ve yönetmeyi kolaylaştırmak için tasarlanıyor.</p></div><div class="grid3"><article class="card"><span class="ico">↔</span><h3>Pazaryeri bazlı XML dönüşümü</h3><p>Tedarikçi XML verinizi hedef pazaryerinin ürün yapısına göre hazırlamaya yönelik dönüşüm akışı.</p></article><article class="card"><span class="ico">▦</span><h3>Excel içe / dışa aktarma</h3><p>XML ürün listenizi içe alın, Excel'e aktararak düzenleyin ve dosyanızı dışa çıkarın.</p></article><article class="card"><span class="ico">◉</span><h3>Merkezi ürün kontrolü</h3><p>Ürün, fiyat, stok ve varyant verilerinizi tek çalışma alanında takip etmeye yönelik yapı.</p></article></div></div></section><div class="trend-ad-slot" data-ad-slot="home_slider" aria-label="Sponsorlu reklam alanı"></div>
 <section class="soft" id="nasil"><div class="w"><div class="head"><span class="k">Basit iş akışı</span><h2>Üç adımda pazaryerlerine hazırlanın.</h2><p>Dağınık ürün dosyaları yerine anlaşılır ve tekrarlanabilir bir süreç.</p></div><div class="grid3 steps"><article class="card"><div class="num">01</div><h3>XML kaynağınızı ekleyin</h3><p>Tedarikçinizin XML bağlantısını tanımlayın veya ürün dosyanızı içe aktarın.</p></article><article class="card"><div class="num">02</div><h3>Hedef pazaryerini seçin</h3><p>Ürünlerinizi göndermek istediğiniz pazaryerine göre verileri düzenleyin.</p></article><article class="card"><div class="num">03</div><h3>Kontrol edin ve dışa aktarın</h3><p>Ürün listenizi gözden geçirin ve uygun çıktı biçimiyle sonraki adıma geçin.</p></article></div></div></section><div class="trend-ad-slot" data-ad-slot="guide_content" aria-label="Sponsorlu reklam alanı"></div>
@@ -857,6 +865,20 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
 .trend-ad-card a{color:inherit;text-decoration:none}
 .trend-ad-card a:hover h3{text-decoration:underline}
 @media(max-width:600px){.trend-ad-slot{width:calc(100% - 26px)}.trend-ad-card{grid-template-columns:1fr;gap:10px}.trend-ad-card img{max-height:170px}}
+
+#katalog .commerce-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+#katalog .catalog-product{display:flex;flex-direction:column;min-width:0;background:#fff;border:1px solid var(--l);border-radius:16px;overflow:hidden}
+#katalog .catalog-product img{width:100%;height:190px;object-fit:contain;background:#fff;padding:12px}
+#katalog .catalog-product .catalog-no-image{height:190px;display:grid;place-items:center;background:#eef1f7;color:#66718b;font-size:13px}
+#katalog .catalog-product .catalog-info{padding:15px;display:flex;flex-direction:column;flex:1}
+#katalog .catalog-product .catalog-category{font-size:11px;color:var(--m);font-weight:800}
+#katalog .catalog-product h3{font-size:15px;line-height:1.4;color:var(--n);margin:7px 0}
+#katalog .catalog-product p{font-size:12px;color:var(--m);line-height:1.5;flex:1;margin:0 0 12px}
+#katalog .catalog-product .catalog-price{font-size:22px;font-weight:900;color:var(--n)}
+#katalog .catalog-product .catalog-stock{font-size:11px;color:#13845c;margin-top:5px}
+@media(max-width:800px){#katalog .commerce-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){#katalog .commerce-grid{grid-template-columns:1fr 1fr}#katalog .catalog-product img,#katalog .catalog-product .catalog-no-image{height:140px}#katalog .catalog-product .catalog-info{padding:11px}#katalog .catalog-product h3{font-size:13px}#katalog .catalog-product .catalog-price{font-size:18px}}
+
 </style><script>
 (function(){
  const API="https://trend-entegre.onrender.com/api/v1/ads/";
@@ -898,4 +920,29 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
  show(0);restart();
 })();
 </script>
+
+<script id="public-catalog-script">
+(function(){
+ const endpoint="https://trend-entegre.onrender.com/api/v1/catalog/products";
+ const esc=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+ const money=value=>Number(value||0).toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2})+" TL";
+ async function loadCatalog(){
+  const grid=document.getElementById("publicCatalogGrid"),message=document.getElementById("publicCatalogMessage");
+  if(!grid||!message)return;
+  try{
+   const response=await fetch(endpoint);
+   if(!response.ok)throw new Error("Ürünler şu anda alınamıyor.");
+   const data=await response.json(),products=Array.isArray(data.products)?data.products:[];
+   if(!products.length){message.textContent="Katalogda henüz satışa açık ürün bulunmuyor.";return;}
+   message.textContent=products.length+" ürün listeleniyor.";
+   grid.innerHTML=products.map(p=>{
+    const image=p.image_url?'<img src="'+esc(p.image_url)+'" alt="'+esc(p.name)+'" loading="lazy">':'<div class="catalog-no-image">Görsel eklenmemiş</div>';
+    return '<article class="catalog-product">'+image+'<div class="catalog-info"><span class="catalog-category">'+esc(p.category||"Ürün")+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(p.description||"")+'</p><strong class="catalog-price">'+money(p.sale_price)+'</strong><span class="catalog-stock">'+(Number(p.stock)>0?"Stokta":"Stok bilgisi için iletişime geçin")+'</span></div></article>';
+   }).join("");
+  }catch(error){message.textContent=error.message||"Katalog yüklenemedi.";}
+ }
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",loadCatalog);else loadCatalog();
+})();
+</script>
+
 </body></html>
