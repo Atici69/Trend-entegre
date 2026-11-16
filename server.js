@@ -519,6 +519,30 @@ app.post('/api/v1/orders', requireCustomer, async (req, res) => {
   }
 });
 
+app.get('/api/v1/customer/orders', requireCustomer, async (req, res) => {
+  try {
+    const snapshot = await req.customerDb.collection('catalog_orders')
+      .where('uid', '==', req.customerUser.uid).limit(50).get();
+    const orders = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id, order_number: data.order_number, status: data.status,
+        payment_status: data.payment_status, payment_method: data.payment_method,
+        items: Array.isArray(data.items) ? data.items.map(item => ({
+          name: item.name, quantity: item.quantity,
+          unit_price_minor: item.unit_price_minor, line_total_minor: item.line_total_minor,
+        })) : [],
+        item_count: data.item_count, total_minor: data.total_minor, currency: data.currency || 'TRY',
+        created_at: data.created_at?.toDate?.()?.toISOString?.() || null,
+      };
+    }).sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+    res.json({ orders });
+  } catch (error) {
+    console.error('Customer orders read failed:', error?.message || 'Unknown error');
+    res.status(503).json({ error: 'Sipariş geçmişiniz şu anda alınamıyor.' });
+  }
+});
+
 app.get('/api/v1/admin/catalog/orders', requireAdmin, async (req, res) => {
   try {
     const snapshot = await req.firestore.collection('catalog_orders').orderBy('created_at', 'desc').limit(100).get();
