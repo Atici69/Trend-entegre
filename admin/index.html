@@ -177,6 +177,15 @@ th{background:#f5f7fc}
 <div class="head"><div><h1>XML İşlemleri</h1><p>Tedarikçi XML kaynaklarını ekleyin, ürünleri kontrol edin ve Excel'e aktarın.</p></div><button class="btn light" type="button" onclick="loadXmlFeeds()">Kaynakları yenile</button></div>
 <div class="notice"><b>Güvenli aktarım:</b> XML kaynakları yalnızca HTTPS üzerinden okunur. Yerel / özel ağ adresleri engellenir; dosya boyutu 25 MB, dışa aktarma üst sınırı 5.000 üründür. Bu yönetim ekranı yalnızca yetkili yöneticilere açıktır.</div>
 <div class="card" style="margin-bottom:15px">
+<h2>XML dosyasını bilgisayardan yükle</h2>
+<div class="two">
+<div class="field"><label for="xmlUploadFile">XML dosyası (en fazla 25 MB)</label><input id="xmlUploadFile" type="file" accept=".xml,application/xml,text/xml"></div>
+<div class="field"><label for="xmlUploadHint">Yükleme bilgisi</label><input id="xmlUploadHint" type="text" value="Ürünler kontrol edilerek tedarikçi kaynağına kaydedilir." readonly></div>
+</div>
+<div class="toolbar"><button class="btn" id="xmlUploadButton" type="button" onclick="uploadXmlFile()">XML dosyasını yükle ve ürünleri oku</button></div>
+<p class="section-note">Yüklenen dosyanın ürün kayıtları güvenli şekilde saklanır; daha sonra Katalog'a aktarabilir, kâr oranı belirleyebilir ve Excel/CSV/XML olarak dışa aktarabilirsiniz.</p>
+</div>
+<div class="card" style="margin-bottom:15px">
 <h2>Yeni tedarikçi XML kaynağı</h2>
 <div class="two">
 <div class="field"><label for="xmlFeedName">Kaynak adı</label><input id="xmlFeedName" maxlength="100" placeholder="Örn. ABC Tedarikçi"></div>
@@ -692,6 +701,36 @@ function selectXmlFeed(id){
  const select=document.getElementById('xmlExportSource');select.value=id;
  const feed=xmlFeedCache.find(item=>item.id===id);
  if(feed){document.getElementById('xmlFeedName').value=feed.name;document.getElementById('xmlFeedUrl').value=feed.url;document.getElementById('xmlMarginPercent').value=feed.margin_percent??0;}
+}
+async function uploadXmlFile(){
+ const file=document.getElementById('xmlUploadFile')?.files?.[0];
+ const name=document.getElementById('xmlFeedName').value.trim() || (file?.name||'').replace(/\\.xml$/i,'');
+ const marginPercent=Number(document.getElementById('xmlMarginPercent').value||0);
+ const button=document.getElementById('xmlUploadButton');
+ if(!file){xmlMessage('Önce bilgisayarınızdan bir XML dosyası seçin.',true);return;}
+ if(file.size>25*1024*1024){xmlMessage('XML dosyası 25 MB sınırını aşıyor.',true);return;}
+ if(!file.name.toLowerCase().endsWith('.xml')){xmlMessage('Lütfen .xml uzantılı bir dosya seçin.',true);return;}
+ if(name.length<2){xmlMessage('Kaynak adına en az 2 karakter girin.',true);return;}
+ if(!Number.isFinite(marginPercent)||marginPercent<0||marginPercent>1000){xmlMessage('Kâr oranı 0 ile 1000 arasında olmalıdır.',true);return;}
+ button.disabled=true;button.textContent='Dosya yükleniyor ve ürünler okunuyor…';
+ try{
+  const response=await fetch(API_BASE_URL+'/api/v1/admin/xml/upload',{method:'POST',headers:{'Content-Type':'text/plain; charset=utf-8','Authorization':'Bearer '+adminToken(),'X-XML-Filename':encodeURIComponent(file.name)},body:await file.text()});
+  const data=await response.json().catch(()=>({}));
+  if(response.status===401||response.status===403){adminLogout('Yönetici oturumu doğrulanamadı. Yeniden giriş yapın.');throw new Error('Yönetici oturumu doğrulanamadı.');}
+  if(!response.ok)throw new Error(data.error||'XML dosyası yüklenemedi.');
+  const feed=data.feed||{};
+  document.getElementById('xmlPreviewCard').style.display='block';
+  document.getElementById('xmlProductCount').textContent=Number(feed.products_count||0).toLocaleString('tr-TR')+' ürün';
+  const items=data.preview||[],keys=items.length?Object.keys(items[0]):[];
+  document.getElementById('xmlPreviewHead').innerHTML='<tr>'+keys.map(key=>'<th>'+escapeHtml(key)+'</th>').join('')+'</tr>';
+  document.getElementById('xmlPreviewRows').innerHTML=items.map(item=>'<tr>'+keys.map(key=>'<td>'+escapeHtml(item[key]||'—')+'</td>').join('')+'</tr>').join('');
+  document.getElementById('xmlUploadFile').value='';
+  await loadXmlFeeds();
+  document.getElementById('xmlExportSource').value=feed.id||'';
+  document.getElementById('xmlFeedName').value=feed.name||name;
+  xmlMessage('XML dosyası kaydedildi. '+Number(feed.products_count||0).toLocaleString('tr-TR')+' ürün bulundu. Kâr oranı %'+marginPercent+' olarak kaydedildi.');
+ }catch(error){xmlMessage(error.message,true);}
+ finally{button.disabled=false;button.textContent='XML dosyasını yükle ve ürünleri oku';}
 }
 async function previewXmlFeed(){
  const button=document.getElementById('xmlPreviewButton'),url=document.getElementById('xmlFeedUrl').value.trim();
