@@ -398,8 +398,28 @@ async function loadCustomerOrders(){
   list.innerHTML=orders.map(order=>{
    const date=order.created_at?new Date(order.created_at).toLocaleString('tr-TR'):'Tarih bilgisi yok';
    const lines=(order.items||[]).map(item=>esc(item.name)+' × '+Number(item.quantity||0)).join(', ');
-   return '<article style="border:1px solid #e5e9f1;border-radius:10px;padding:12px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><strong>Sipariş #'+esc(order.order_number)+'</strong><strong>'+money(order.total_minor)+'</strong></div><p style="margin:6px 0;color:#64708a;font-size:12px">'+esc(date)+' · '+esc(statuses[order.status]||'İşlemde')+'</p><p style="margin:0;font-size:13px">'+lines+'</p></article>';
+   const paymentLabel=order.payment_status==='paid'?'Ödeme alındı':order.payment_status==='failed'?'Ödeme başarısız':'Ödeme bekleniyor';
+   const canPay=order.status==='new'&&order.payment_status!=='paid';
+   const payButton=canPay?'<button type="button" data-pay-order="'+esc(order.id)+'" style="margin-top:10px;border:0;border-radius:8px;padding:9px 13px;background:#f4772b;color:#fff;font-weight:800;cursor:pointer">iyzico ile öde</button>':'';
+   return '<article style="border:1px solid #e5e9f1;border-radius:10px;padding:12px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><strong>Sipariş #'+esc(order.order_number)+'</strong><strong>'+money(order.total_minor)+'</strong></div><p style="margin:6px 0;color:#64708a;font-size:12px">'+esc(date)+' · '+esc(statuses[order.status]||'İşlemde')+' · '+paymentLabel+'</p><p style="margin:0;font-size:13px">'+lines+'</p>'+payButton+'</article>';
   }).join('');
+  if(!list.dataset.paymentHandlerBound){
+   list.dataset.paymentHandlerBound='1';
+   list.addEventListener('click',async event=>{
+    const button=event.target.closest('[data-pay-order]');if(!button)return;
+    button.disabled=true;button.textContent='Ödeme hazırlanıyor…';
+    try{
+     const currentUser=auth.currentUser;if(!currentUser||!currentUser.emailVerified)throw new Error('Ödeme için tekrar giriş yapıp e-posta adresinizi doğrulayın.');
+     const idToken=await currentUser.getIdToken();
+     const response=await fetch('https://trend-entegre.onrender.com/api/v1/payments/iyzico/orders/'+encodeURIComponent(button.dataset.payOrder)+'/initialize',{method:'POST',headers:{Authorization:'Bearer '+idToken}});
+     const result=await response.json().catch(()=>({}));
+     if(!response.ok)throw new Error(result.error||'Ödeme başlatılamadı.');
+     const paymentUrl=new URL(result.paymentPageUrl);
+     if(paymentUrl.protocol!=='https:')throw new Error('Güvenli olmayan ödeme adresi engellendi.');
+     window.location.assign(paymentUrl.toString());
+    }catch(error){button.disabled=false;button.textContent='Tekrar dene';const note=document.createElement('p');note.textContent=error.message||'Ödeme başlatılamadı.';note.style.color='#b42318';button.after(note);}
+   });
+  }
  }catch(error){list.textContent=error.message||'Siparişler yüklenemedi.';}
 }
 async function ensureBillingProfile(user){
@@ -427,4 +447,4 @@ profileForm.addEventListener('submit',async event=>{
  }catch(error){profileError.textContent=error.message||'Profil kaydedilemedi.';profileError.classList.add('show');}
  finally{profileSave.disabled=false;profileSave.textContent='Profili kaydet';}
 });
-const paymentResult=new URLSearchParams(window.location.search).get('payment');if(paymentResult){const messages={success:'Ödemeniz doğrulandı. 12 aylık üyeliğiniz etkinleştirildi.',failed:'Ödeme tamamlanmadı.',error:'Ödeme sonucu doğrulanamadı. Destek ekibiyle iletişime geçin.'};alert(messages[paymentResult]||'Ödeme sonucu alındı.');const clean=new URL(window.location.href);clean.searchParams.delete('payment');clean.searchParams.delete('plan');window.history.replaceState({},'',clean.toString());}
+const paymentParams=new URLSearchParams(window.location.search);const paymentResult=paymentParams.get('payment');if(paymentResult){const isCatalogPurchase=paymentParams.get('purchase')==='catalog';const messages=isCatalogPurchase?{success:'Mağaza siparişinizin ödemesi doğrulandı. Siparişiniz hesabınızda görüntülenebilir.',failed:'Mağaza siparişiniz için ödeme tamamlanmadı. Hesabım > Siparişlerim bölümünden tekrar deneyebilirsiniz.',error:'Mağaza siparişinizin ödeme sonucu doğrulanamadı. Destek ekibiyle iletişime geçin.'}:{success:'Ödemeniz doğrulandı. 12 aylık üyeliğiniz etkinleştirildi.',failed:'Ödeme tamamlanmadı.',error:'Ödeme sonucu doğrulanamadı. Destek ekibiyle iletişime geçin.'};alert(messages[paymentResult]||'Ödeme sonucu alındı.');const clean=new URL(window.location.href);['payment','plan','purchase','order'].forEach(key=>clean.searchParams.delete(key));window.history.replaceState({},'',clean.toString());}
