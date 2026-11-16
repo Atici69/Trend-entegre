@@ -77,7 +77,8 @@ function requestOnce(url, addressRecords) {
       }
       const declaredLength = Number(response.headers['content-length'] || 0);
       if (declaredLength > MAX_XML_BYTES) {
-        response.destroy(new Error('XML dosyası 25 MB sınırını aşıyor.'));
+        response.resume();
+        reject(new Error('XML dosyası 25 MB sınırını aşıyor.'));
         return;
       }
       const chunks = [];
