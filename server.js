@@ -729,7 +729,7 @@ app.post('/api/v1/admin/xml/upload', requireAdmin, express.text({ type: ['text/p
     try { fileName = decodeURIComponent(rawFileName); } catch {}
     try { name = decodeURIComponent(rawName); } catch {}
     name = name.replace(/\.xml$/i, '').trim().slice(0, 100) || 'XML dosyası';
-    fileName = fileName.replace(/[\\\\/\\r\\n]/g, '_').slice(0, 180) || 'tedarikci.xml';
+    fileName = fileName.replaceAll('\\\\', '_').replaceAll('/', '_').replace(/[\r\n]/g, '_').slice(0, 180) || 'tedarikci.xml';
     const marginPercent = normalizeProfitMargin(req.headers['x-xml-margin'] ?? req.query.marginPercent ?? 0);
     const now = new Date().toISOString();
     const feedRef = await req.firestore.collection('xml_feeds').add({
