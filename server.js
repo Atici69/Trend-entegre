@@ -702,7 +702,8 @@ app.get('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
       .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
     res.json({ feeds });
   } catch (error) {
-    res.status(503).json({ error: 'XML kaynakları alınamadı.' });
+    console.error('Admin XML feed list failed:', error?.message || 'Unknown error');
+    res.status(503).json({ error: 'XML kaynakları alınamadı. Firestore okuma hatası: ' + (error?.message || 'Bilinmeyen hata') });
   }
 });
 
