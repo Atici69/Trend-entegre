@@ -854,6 +854,123 @@ app.post('/api/v1/admin/xml/export', requireAdmin, async (req, res) => {
   }
 });
 
+
+// Advertising management: fixed placement catalog and public, counter-only tracking.
+const AD_SLOTS = [
+  { id: 'home_top', name: 'Ana sayfa üst alanı', page: 'Ana Sayfa' },
+  { id: 'between_packages', name: 'Paketler arası alan', page: 'Paketler' },
+  { id: 'home_bottom', name: 'Ana sayfa alt alanı', page: 'Ana Sayfa' },
+];
+const AD_STATUSES = ['draft', 'pending', 'approved', 'paused'];
+function adText(value, max = 500) { return String(value ?? '').trim().slice(0, max); }
+function validWebUrl(value, protocols = ['https:']) {
+  if (!value) return true;
+  try { return protocols.includes(new URL(value).protocol); } catch { return false; }
+}
+function normalizeAdPayload(body, previous = {}) {
+  const source = { ...previous, ...(body || {}) };
+  const slot_id = adText(source.slot_id, 80);
+  const advertiser_name = adText(source.advertiser_name, 120);
+  const advertiser_email = adText(source.advertiser_email, 160).toLowerCase();
+  const title = adText(source.title, 120);
+  const description = adText(source.description, 600);
+  const image_url = adText(source.image_url, 2048);
+  const target_url = adText(source.target_url, 2048);
+  const starts_at = adText(source.starts_at, 40);
+  const ends_at = adText(source.ends_at, 40);
+  const price = Number(source.price);
+  const billing_period = source.billing_period === 'period' ? 'period' : 'daily';
+  const status = adText(source.status || 'draft', 20);
+  const start = Date.parse(starts_at), end = Date.parse(ends_at);
+  if (!AD_SLOTS.some(slot => slot.id === slot_id)) throw new Error('Geçerli bir reklam alanı seçin.');
+  if (advertiser_name.length < 2 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(advertiser_email)) throw new Error('Reklam veren adı ve geçerli e-posta gereklidir.');
+  if (title.length < 3 || description.length < 3) throw new Error('Reklam başlığı ve açıklaması en az 3 karakter olmalıdır.');
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) throw new Error('Reklam başlangıç ve bitiş tarihleri geçersiz.');
+  if (!Number.isFinite(price) || price < 0 || price > 100000000) throw new Error('Reklam bedeli geçersiz.');
+  if (!['daily', 'period'].includes(billing_period) || !AD_STATUSES.includes(status)) throw new Error('Reklam dönemi veya durumu geçersiz.');
+  if (!validWebUrl(image_url, ['https:']) || !validWebUrl(target_url, ['https:', 'http:'])) throw new Error('Görsel HTTPS, hedef bağlantı HTTP veya HTTPS olmalıdır.');
+  return { slot_id, advertiser_name, advertiser_email, title, description, image_url, target_url,
+    starts_at: new Date(start).toISOString(), ends_at: new Date(end).toISOString(),
+    price: Math.round(price * 100) / 100, billing_period, status };
+}
+app.get('/api/v1/admin/ads', requireAdmin, async (req, res) => {
+  try {
+    const snapshot = await req.firestore.collection('ad_campaigns').get();
+    const campaigns = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+    res.json({ slots: AD_SLOTS, campaigns });
+  } catch (error) {
+    console.error('Admin ad list failed:', error?.message || 'Unknown error');
+    res.status(503).json({ error: 'Reklam kampanyaları alınamadı.' });
+  }
+});
+app.post('/api/v1/admin/ads', requireAdmin, async (req, res) => {
+  try {
+    const campaign = normalizeAdPayload(req.body);
+    const now = new Date().toISOString();
+    const ref = await req.firestore.collection('ad_campaigns').add({
+      ...campaign, impressions: 0, clicks: 0, created_at: now, updated_at: now,
+      created_by: req.adminUser.id,
+    });
+    await audit(req, 'create', 'ad_campaign', ref.id, { slot_id: campaign.slot_id, status: campaign.status });
+    res.status(201).json({ campaign: { id: ref.id, ...campaign, impressions: 0, clicks: 0 } });
+  } catch (error) { res.status(400).json({ error: error.message || 'Reklam kampanyası kaydedilemedi.' }); }
+});
+app.patch('/api/v1/admin/ads/:id', requireAdmin, async (req, res) => {
+  try {
+    const ref = req.firestore.collection('ad_campaigns').doc(req.params.id);
+    const snap = await ref.get();
+    if (!snap.exists) return res.status(404).json({ error: 'Reklam kampanyası bulunamadı.' });
+    const campaign = normalizeAdPayload(req.body, snap.data());
+    await ref.update({ ...campaign, updated_at: new Date().toISOString(), updated_by: req.adminUser.id });
+    await audit(req, 'update', 'ad_campaign', ref.id, { slot_id: campaign.slot_id, status: campaign.status });
+    res.json({ campaign: { id: ref.id, ...snap.data(), ...campaign } });
+  } catch (error) { res.status(400).json({ error: error.message || 'Reklam kampanyası güncellenemedi.' }); }
+});
+app.get('/api/v1/ads/:slotId', async (req, res) => {
+  const slotId = adText(req.params.slotId, 80);
+  if (!AD_SLOTS.some(slot => slot.id === slotId)) return res.status(404).json({ campaigns: [] });
+  try {
+    const now = Date.now();
+    const snapshot = await getFirebaseAdmin()?.db.collection('ad_campaigns')
+      .where('slot_id', '==', slotId).where('status', '==', 'approved').get();
+    if (!snapshot) return res.status(503).json({ campaigns: [] });
+    const campaigns = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(ad => Date.parse(ad.starts_at) <= now && Date.parse(ad.ends_at) >= now)
+      .slice(0, 4)
+      .map(({ id, title, description, image_url, target_url }) => ({ id, title, description, image_url, target_url }));
+    res.set('Cache-Control', 'public, max-age=30');
+    res.json({ campaigns });
+  } catch (error) {
+    console.error('Public ad read failed:', error?.message || 'Unknown error');
+    res.status(503).json({ campaigns: [] });
+  }
+});
+async function countAdEvent(req, res, field) {
+  const id = adText(req.params.id, 180);
+  if (!id) return res.status(400).json({ ok: false });
+  try {
+    const db = getFirebaseAdmin()?.db;
+    if (!db) return res.status(503).json({ ok: false });
+    const ref = db.collection('ad_campaigns').doc(id);
+    const result = await db.runTransaction(async transaction => {
+      const snap = await transaction.get(ref);
+      if (!snap.exists) return false;
+      const ad = snap.data();
+      const now = Date.now();
+      if (ad.status !== 'approved' || Date.parse(ad.starts_at) > now || Date.parse(ad.ends_at) < now) return false;
+      transaction.update(ref, { [field]: FieldValue.increment(1), updated_at: FieldValue.serverTimestamp() });
+      return true;
+    });
+    res.status(result ? 200 : 404).json({ ok: result });
+  } catch (error) {
+    console.error('Ad event counter failed:', error?.message || 'Unknown error');
+    res.status(503).json({ ok: false });
+  }
+}
+app.post('/api/v1/ads/:id/impression', (req, res) => countAdEvent(req, res, 'impressions'));
+app.post('/api/v1/ads/:id/click', (req, res) => countAdEvent(req, res, 'clicks'));
+
 registerIyzicoRoutes(app);
 
 app.use((err, _req, res, _next) => {
