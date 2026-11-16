@@ -723,6 +723,11 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
 <div class="w">
 <div class="head"><span class="k">Trend-Entegre mağaza</span><h2>Ürün Kataloğu</h2><p>Mağazamızda satışa açılan ürünleri burada inceleyebilirsiniz.</p></div>
 <div id="publicCatalogMessage" class="muted" style="text-align:center;margin-bottom:18px">Ürünler yükleniyor…</div>
+<div class="catalog-toolbar">
+ <input id="publicCatalogSearch" type="search" placeholder="Ürün adı, marka veya barkod ara" aria-label="Katalogda ürün ara">
+ <select id="publicCatalogCategory" aria-label="Kategoriye göre filtrele"><option value="">Tüm kategoriler</option></select>
+</div>
+<div id="publicCatalogGrid" class="commerce-grid" aria-live="polite"></div>
 <div class="store-cart" id="storeCart">
  <div class="store-cart-head"><div><h3>Alışveriş sepetim</h3><p>Ürünleri sepete ekleyin, sipariş talebinizi gönderin.</p></div><strong id="storeCartTotal">0,00 TL</strong></div>
  <div id="storeCartItems" class="store-cart-items">Sepetiniz henüz boş.</div>
@@ -739,7 +744,6 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
   <p id="storeOrderMessage" role="status" aria-live="polite"></p>
  </form>
 </div>
-<div id="publicCatalogGrid" class="commerce-grid" aria-live="polite"></div>
 </div>
 </section>
 <section id="cozum"><div class="w"><div class="head"><span class="k">Tek kaynaktan çoklu pazaryeri</span><h2>XML dosyanız, pazaryerlerinize hazır hale gelsin.</h2><p>Her pazaryerinin ürün alanları ve veri ihtiyaçları farklı olabilir. Trend-Entegre, ürün verilerinizi pazaryeri bazında düzenlemeyi ve yönetmeyi kolaylaştırmak için tasarlanıyor.</p></div><div class="grid3"><article class="card"><span class="ico">↔</span><h3>Pazaryeri bazlı XML dönüşümü</h3><p>Tedarikçi XML verinizi hedef pazaryerinin ürün yapısına göre hazırlamaya yönelik dönüşüm akışı.</p></article><article class="card"><span class="ico">▦</span><h3>Excel içe / dışa aktarma</h3><p>XML ürün listenizi içe alın, Excel'e aktararak düzenleyin ve dosyanızı dışa çıkarın.</p></article><article class="card"><span class="ico">◉</span><h3>Merkezi ürün kontrolü</h3><p>Ürün, fiyat, stok ve varyant verilerinizi tek çalışma alanında takip etmeye yönelik yapı.</p></article></div></div></section><div class="trend-ad-slot" data-ad-slot="home_slider" aria-label="Sponsorlu reklam alanı"></div>
@@ -886,7 +890,18 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
 .trend-ad-card a:hover h3{text-decoration:underline}
 @media(max-width:600px){.trend-ad-slot{width:calc(100% - 26px)}.trend-ad-card{grid-template-columns:1fr;gap:10px}.trend-ad-card img{max-height:170px}}
 
-#katalog .commerce-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+#katalog .catalog-toolbar{display:flex;gap:12px;margin:0 0 22px}
+#katalog .catalog-toolbar input,#katalog .catalog-toolbar select{min-width:0;border:1px solid var(--l);border-radius:11px;background:#fff;padding:12px 14px;font:inherit;color:var(--t)}
+#katalog .catalog-toolbar input{flex:1}
+#katalog .catalog-toolbar select{width:min(240px,38%)}
+#katalog .commerce-grid{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:28px}
+#katalog .catalog-product{box-shadow:0 8px 24px #101b3f0a;transition:transform .18s ease,box-shadow .18s ease}
+#katalog .catalog-product:hover{transform:translateY(-3px);box-shadow:0 14px 30px #101b3f16}
+#katalog .catalog-product img{object-fit:contain}
+#katalog .catalog-product .catalog-info{min-height:210px}
+#katalog .catalog-product h3{min-height:42px}
+#katalog .catalog-product .catalog-price{margin-top:auto}
+@media(max-width:560px){#katalog .catalog-toolbar{flex-direction:column}#katalog .catalog-toolbar select{width:100%}}
 #katalog .catalog-product{display:flex;flex-direction:column;min-width:0;background:#fff;border:1px solid var(--l);border-radius:16px;overflow:hidden}
 #katalog .catalog-product img{width:100%;height:190px;object-fit:contain;background:#fff;padding:12px}
 #katalog .catalog-product .catalog-no-image{height:190px;display:grid;place-items:center;background:#eef1f7;color:#66718b;font-size:13px}
@@ -999,12 +1014,25 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
    if(!response.ok)throw new Error("Ürünler şu anda alınamıyor.");
    const data=await response.json();products=Array.isArray(data.products)?data.products:[];
    if(!products.length){message.textContent="Katalogda henüz satışa açık ürün bulunmuyor.";return;}
-   message.textContent=products.length+" ürün listeleniyor.";
-   grid.innerHTML=products.map(p=>{
-    const image=p.image_url?'<img src="'+esc(p.image_url)+'" alt="'+esc(p.name)+'" loading="lazy">':'<div class="catalog-no-image">Görsel eklenmemiş</div>';
-    const inStock=Number(p.stock)>0;
-    return '<article class="catalog-product">'+image+'<div class="catalog-info"><span class="catalog-category">'+esc(p.category||"Ürün")+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(p.description||"")+'</p><strong class="catalog-price">'+money(p.sale_price)+'</strong><span class="catalog-stock">'+(inStock?"Stokta · "+Number(p.stock)+" adet":"Stokta yok")+'</span><button class="catalog-add" type="button" data-add-to-cart="'+esc(p.id)+'" '+(!inStock?'disabled':'')+'>Sepete ekle</button></div></article>';
-   }).join("");
+   const category=byId("publicCatalogCategory"),search=byId("publicCatalogSearch");
+   const categories=[...new Set(products.map(p=>String(p.category||"Ürün").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"tr"));
+   if(category)category.innerHTML='<option value="">Tüm kategoriler</option>'+categories.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join("");
+   function renderProducts(){
+    const query=(search?.value||"").trim().toLocaleLowerCase("tr-TR"),chosen=category?.value||"";
+    const filtered=products.filter(p=>{
+     const hay=[p.name,p.brand,p.sku,p.barcode,p.category].join(" ").toLocaleLowerCase("tr-TR");
+     return (!query||hay.includes(query))&&(!chosen||String(p.category||"Ürün").trim()===chosen);
+    });
+    message.textContent=filtered.length+" / "+products.length+" ürün gösteriliyor.";
+    grid.innerHTML=filtered.length?filtered.map(p=>{
+     const image=p.image_url?'<img src="'+esc(p.image_url)+'" alt="'+esc(p.name)+'" loading="lazy">':'<div class="catalog-no-image">Görsel eklenmemiş</div>';
+     const inStock=Number(p.stock)>0;
+     return '<article class="catalog-product">'+image+'<div class="catalog-info"><span class="catalog-category">'+esc(p.category||"Ürün")+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(p.description||"")+'</p><strong class="catalog-price">'+money(p.sale_price)+'</strong><span class="catalog-stock">'+(inStock?"Stokta · "+Number(p.stock)+" adet":"Stokta yok")+'</span><button class="catalog-add" type="button" data-add-to-cart="'+esc(p.id)+'" '+(!inStock?'disabled':'')+'>Sepete ekle</button></div></article>';
+    }).join(""):'<p class="muted">Aramanızla eşleşen ürün bulunamadı.</p>';
+   }
+   search?.addEventListener("input",renderProducts);
+   category?.addEventListener("change",renderProducts);
+   renderProducts();
   }catch(error){message.textContent=error.message||"Katalog yüklenemedi.";}
  }
  document.addEventListener("click",event=>{
