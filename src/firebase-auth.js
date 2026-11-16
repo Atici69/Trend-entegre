@@ -409,6 +409,10 @@ async function loadCustomerOrders(){
    list.addEventListener('click',async event=>{
     const button=event.target.closest('[data-pay-order]');if(!button)return;
     button.disabled=true;button.textContent='Ödeme hazırlanıyor…';
+    const paymentTab=window.open('about:blank','_blank');
+    if(!paymentTab){button.disabled=false;button.textContent='Tekrar dene';const note=document.createElement('p');note.textContent='Ödeme sekmesi açılamadı. Açılır pencerelere izin verip tekrar deneyin.';note.style.color='#b42318';button.after(note);return;}
+    paymentTab.document.title='Trend-Entegre · Güvenli ödeme';
+    paymentTab.document.body.textContent='iyzico güvenli ödeme sayfası hazırlanıyor…';
     try{
      const currentUser=auth.currentUser;if(!currentUser||!currentUser.emailVerified)throw new Error('Ödeme için tekrar giriş yapıp e-posta adresinizi doğrulayın.');
      const idToken=await currentUser.getIdToken();
@@ -417,9 +421,8 @@ async function loadCustomerOrders(){
      if(!response.ok)throw new Error(result.error||'Ödeme başlatılamadı.');
      const paymentUrl=new URL(result.paymentPageUrl);
      if(paymentUrl.protocol!=='https:')throw new Error('Güvenli olmayan ödeme adresi engellendi.');
-     const paymentTab=window.open(paymentUrl.toString(),'_blank','noopener');
-     if(!paymentTab)throw new Error('Ödeme sekmesi açılamadı. Açılır pencerelere izin verip tekrar deneyin.');
-    }catch(error){button.disabled=false;button.textContent='Tekrar dene';const note=document.createElement('p');note.textContent=error.message||'Ödeme başlatılamadı.';note.style.color='#b42318';button.after(note);}
+     paymentTab.location.replace(paymentUrl.toString());
+    }catch(error){paymentTab.close();button.disabled=false;button.textContent='Tekrar dene';const note=document.createElement('p');note.textContent=error.message||'Ödeme başlatılamadı.';note.style.color='#b42318';button.after(note);}
    });
   }
  }catch(error){list.textContent=error.message||'Siparişler yüklenemedi.';}
