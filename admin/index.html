@@ -193,7 +193,7 @@ th{background:#f5f7fc}
 <div class="card" id="xmlPreviewCard" style="display:none;margin-bottom:15px">
 <h2>Ürün önizlemesi <span class="tag green" id="xmlProductCount"></span></h2>
 <div class="tablebox"><table><thead id="xmlPreviewHead"></thead><tbody id="xmlPreviewRows"></tbody></table></div>
-<p class="section-note">Önizleme ilk 10 ürünü gösterir. Excel aktarımında ürün adedini seçebilirsiniz.</p>
+<p class="section-note">Önizlemede alış fiyatı, seçtiğiniz kâr oranı ve hesaplanan satış fiyatı görünür. Excel aktarımında da bu üç bilgi yer alır.</p>
 </div>
 <div class="card">
 <h2>Excel (XLSX) dışa aktarma</h2>
@@ -638,7 +638,7 @@ async function loadXmlFeeds(){
   const select=document.getElementById('xmlExportSource'),selected=select.value;
   select.innerHTML='<option value="">Kaynak seçin</option>'+xmlFeedCache.map(feed=>'<option value="'+escapeHtml(feed.id)+'">'+escapeHtml(feed.name)+'</option>').join('');
   if(selected)select.value=selected;
- }catch(error){rows.innerHTML='<tr><td colspan="4">XML kaynakları alınamadı.</td></tr>';xmlMessage(error.message,true);}
+ }catch(error){rows.innerHTML='<tr><td colspan="5">XML kaynakları alınamadı.</td></tr>';xmlMessage(error.message,true);}
 }
 function selectXmlFeed(id){
  const select=document.getElementById('xmlExportSource');select.value=id;
@@ -659,7 +659,7 @@ async function previewXmlFeed(){
   const items=data.preview||[],keys=items.length?Object.keys(items[0]):[];
   document.getElementById('xmlPreviewHead').innerHTML='<tr>'+keys.map(key=>'<th>'+escapeHtml(key)+'</th>').join('')+'</tr>';
   document.getElementById('xmlPreviewRows').innerHTML=items.map(item=>'<tr>'+keys.map(key=>'<td>'+escapeHtml(item[key]||'—')+'</td>').join('')+'</tr>').join('');
-  xmlMessage('Bağlantı başarılı. '+Number(data.totalProducts).toLocaleString('tr-TR')+' ürün bulundu. Kaynağı kaydedebilir veya dışa aktarabilirsiniz.');
+  xmlMessage('Bağlantı başarılı. '+Number(data.totalProducts).toLocaleString('tr-TR')+' ürün bulundu. Alış ve satış fiyatları kâr oranına göre hesaplandı.');
  }catch(error){document.getElementById('xmlPreviewCard').style.display='none';xmlMessage(error.message,true);}
  finally{button.disabled=false;button.textContent='Bağlantıyı test et ve ürünleri oku';}
 }
