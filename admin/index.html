@@ -114,6 +114,7 @@ th{background:#f5f7fc}
 <button data-page="store-packages"><span class="ico">▤</span> E-Ticaret Paketleri</button>
 <button data-page="dealers"><span class="ico">♧</span> Bayi Ağı</button>
 <button data-page="marketplaces"><span class="ico">⇄</span> Pazaryeri Entegrasyonları</button>
+<button data-page="marketplace-products"><span class="ico">↗</span> Pazaryeri Ürün Aktarımı</button>
 <button data-page="xml"><span class="ico">⌘</span> XML İşlemleri</button>
 <button data-page="catalog"><span class="ico">▣</span> Katalog Yönetimi</button>
 <button data-page="orders"><span class="ico">🛒</span> Siparişler</button>
@@ -204,6 +205,36 @@ th{background:#f5f7fc}
 <div class="tablebox"><table><thead><tr><th>Kaynak</th><th>Ürün sayısı</th><th>Kâr oranı</th><th>Son kontrol</th><th>İşlem</th></tr></thead><tbody id="xmlFeedRows"><tr><td colspan="5">Kaynaklar yükleniyor…</td></tr></tbody></table></div>
 <div class="toolbar" style="margin-top:12px"><button class="btn light" type="button" onclick="saveXmlMargin()">Seçili kaynağın kâr oranını kaydet</button></div>
 </div>
+<div class="card" id="xmlPreviewCard" style="display:none;margin-bottom:15px">
+<h2>Ürün önizlemesi <span class="tag green" id="xmlProductCount"></span></h2>
+<div class="tablebox"><table><thead id="xmlPreviewHead"></thead><tbody id="xmlPreviewRows"></tbody></table></div>
+<p class="section-note">Önizlemede alış fiyatı, seçtiğiniz kâr oranı ve hesaplanan satış fiyatı görünür. Excel aktarımında da bu üç bilgi yer alır.</p>
+</div>
+<div class="card">
+<div class="card" style="margin-bottom:15px">
+<h2>URL ile büyük XML aktarımı</h2>
+<p class="section-note">Bu hizmet şu an ücretsizdir. XML bağlantınızı ekleyip ürünleri kontrol edebilir, seçtiğiniz kayıtları Excel, CSV veya ürün XML biçiminde dışa aktarabilirsiniz.</p>
+<div class="two">
+<div class="field"><label>Dosya boyutu üst sınırı</label><input type="text" value="25 MB" readonly></div>
+<div class="field"><label>Ürün / kayıt limiti</label><input type="text" value="5.000 ürün" readonly></div>
+<div class="field"><label>Ücretlendirme</label><input type="text" value="Şimdilik ücretsiz" readonly></div>
+<div class="field"><label>Erişim kontrolü</label><input type="text" value="Yönetici doğrulaması gerekli" readonly></div>
+</div>
+<p class="section-note">Ödeme doğrulaması şu an devre dışıdır. Ücretli kullanım daha sonra etkinleştirilebilir. Büyük dosyalar için akış tabanlı işleme henüz etkin değildir; mevcut güvenli indirme ve ürün limitleri uygulanır.</p>
+</div>
+<h2>Dosya dışa aktarma</h2>
+<div class="two">
+<div class="field"><label for="xmlExportSource">Kaynak</label><select id="xmlExportSource"><option value="">Önce bir kaynak ekleyin</option></select></div>
+<div class="field"><label for="xmlExportFormat">Çıktı biçimi</label><select id="xmlExportFormat"><option value="xlsx">Excel / XLSX</option><option value="csv">CSV</option><option value="xml">Pazaryeri XML (standart ürün şeması)</option></select></div>
+<div class="field"><label for="xmlExportLimit">Aktarılacak ürün sayısı</label><select id="xmlExportLimit"><option value="10">İlk 10 ürün</option><option value="30">İlk 30 ürün</option><option value="100">İlk 100 ürün</option><option value="1000">İlk 1.000 ürün</option><option value="5000">İlk 5.000 ürün</option><option value="all" selected>Tüm ürünler (en fazla 5.000)</option></select></div>
+</div>
+<button class="btn" id="xmlExportButton" type="button" onclick="exportXmlFeed()">Dosyayı oluştur ve indir</button>
+<p class="section-note">Dışa aktarma sırasında kaynak yeniden okunur. XLSX, CSV veya standart ürün XML biçiminde dosya oluşturulur.</p>
+</div>
+</section>
+<section class="page" id="marketplace-products">
+<div class="head"><div><h1>Pazaryeri Ürün Aktarımı</h1><p>XML kaynaklarınızı pazaryerlerine hazırlayın, doğrulayın ve kontrollü biçimde gönderin. XML kaynak yönetimi ayrı bölümde kalır.</p></div></div>
+<div class="notice"><b>Aktarım merkezi:</b> Bu bölüm XML kaynaklarını kullanır; kaynak ekleme, düzenleme ve fiyatlandırma işlemleri XML İşlemleri bölümünden yapılır. Ön kontrol, ürün gönderimi yapmaz.</div>
 <div class="card" style="margin-bottom:15px">
 <h2>Trendyol'a aktarım ön kontrolü</h2>
 <p class="section-note">Seçtiğiniz XML kaynağındaki ürünleri Trendyol zorunlu alanları açısından kontrol eder. Bu işlem mağazanıza ürün göndermez.</p>
@@ -233,32 +264,7 @@ th{background:#f5f7fc}
 <div class="toolbar" style="margin-top:12px"><button class="btn" type="button" onclick="saveTrendyolFeedMappings()">Eşleştirmeleri kaydet</button></div>
 <p class="section-note" id="trendyolMappingMessage" role="status">Henüz eşleştirme yüklenmedi.</p>
 </div>
-<div class="card" id="xmlPreviewCard" style="display:none;margin-bottom:15px">
-<h2>Ürün önizlemesi <span class="tag green" id="xmlProductCount"></span></h2>
-<div class="tablebox"><table><thead id="xmlPreviewHead"></thead><tbody id="xmlPreviewRows"></tbody></table></div>
-<p class="section-note">Önizlemede alış fiyatı, seçtiğiniz kâr oranı ve hesaplanan satış fiyatı görünür. Excel aktarımında da bu üç bilgi yer alır.</p>
-</div>
-<div class="card">
-<div class="card" style="margin-bottom:15px">
-<h2>URL ile büyük XML aktarımı</h2>
-<p class="section-note">Bu hizmet şu an ücretsizdir. XML bağlantınızı ekleyip ürünleri kontrol edebilir, seçtiğiniz kayıtları Excel, CSV veya ürün XML biçiminde dışa aktarabilirsiniz.</p>
-<div class="two">
-<div class="field"><label>Dosya boyutu üst sınırı</label><input type="text" value="25 MB" readonly></div>
-<div class="field"><label>Ürün / kayıt limiti</label><input type="text" value="5.000 ürün" readonly></div>
-<div class="field"><label>Ücretlendirme</label><input type="text" value="Şimdilik ücretsiz" readonly></div>
-<div class="field"><label>Erişim kontrolü</label><input type="text" value="Yönetici doğrulaması gerekli" readonly></div>
-</div>
-<p class="section-note">Ödeme doğrulaması şu an devre dışıdır. Ücretli kullanım daha sonra etkinleştirilebilir. Büyük dosyalar için akış tabanlı işleme henüz etkin değildir; mevcut güvenli indirme ve ürün limitleri uygulanır.</p>
-</div>
-<h2>Dosya dışa aktarma</h2>
-<div class="two">
-<div class="field"><label for="xmlExportSource">Kaynak</label><select id="xmlExportSource"><option value="">Önce bir kaynak ekleyin</option></select></div>
-<div class="field"><label for="xmlExportFormat">Çıktı biçimi</label><select id="xmlExportFormat"><option value="xlsx">Excel / XLSX</option><option value="csv">CSV</option><option value="xml">Pazaryeri XML (standart ürün şeması)</option></select></div>
-<div class="field"><label for="xmlExportLimit">Aktarılacak ürün sayısı</label><select id="xmlExportLimit"><option value="10">İlk 10 ürün</option><option value="30">İlk 30 ürün</option><option value="100">İlk 100 ürün</option><option value="1000">İlk 1.000 ürün</option><option value="5000">İlk 5.000 ürün</option><option value="all" selected>Tüm ürünler (en fazla 5.000)</option></select></div>
-</div>
-<button class="btn" id="xmlExportButton" type="button" onclick="exportXmlFeed()">Dosyayı oluştur ve indir</button>
-<p class="section-note">Dışa aktarma sırasında kaynak yeniden okunur. XLSX, CSV veya standart ürün XML biçiminde dosya oluşturulur.</p>
-</div>
+
 </section>
 <section class="page" id="catalog">
 <div class="head"><div><h1>Katalog Yönetimi</h1><p>Mağazada satışa sunulan ürünleri, tedarikçi kayıtlarını, fiyatları, stokları ve yayın durumlarını tek merkezden yönetin.</p></div><div class="toolbar"><button class="btn light" type="button" onclick="loadCatalogProducts()">↻ Yenile</button><button class="btn" type="button" onclick="resetCatalogForm();document.getElementById('catalogFormHeading').scrollIntoView({behavior:'smooth'})">+ Yeni ürün</button></div></div>
@@ -418,7 +424,7 @@ let firebasePublicConfig = null;
 let hepsiburadaTestedThisSession = false;
 let trendyolTestedThisSession = false;
 
-const titles={home:"Genel Bakış",customers:"Müşteri Yönetimi",subscriptions:"Entegrasyon Paketleri ve Abonelikler","store-packages":"E-Ticaret Mağazası Paketleri",dealers:"Bayi Ağı",marketplaces:"Pazaryeri Entegrasyonları",xml:"XML İşlemleri",catalog:"Ürün Kataloğu",orders:"Mağaza Siparişleri",buybox:"BuyBox Yönetimi",payments:"Ödeme Yönetimi",accounting:"Muhasebe",ads:"Reklam Alanları",settings:"Sistem Ayarları"};
+const titles={home:"Genel Bakış",customers:"Müşteri Yönetimi",subscriptions:"Entegrasyon Paketleri ve Abonelikler","store-packages":"E-Ticaret Mağazası Paketleri",dealers:"Bayi Ağı",marketplaces:"Pazaryeri Entegrasyonları","marketplace-products":"Pazaryeri Ürün Aktarımı",xml:"XML İşlemleri",catalog:"Ürün Kataloğu",orders:"Mağaza Siparişleri",buybox:"BuyBox Yönetimi",payments:"Ödeme Yönetimi",accounting:"Muhasebe",ads:"Reklam Alanları",settings:"Sistem Ayarları"};
 
 function go(id){
   document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===id));
