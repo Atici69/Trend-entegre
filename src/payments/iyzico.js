@@ -104,7 +104,7 @@ export function registerIyzicoRoutes(app) {
 
   async function requireStoreAdmin(req, res, next) {
     try {
-      const token = req.headers.authorization?.match(/^Bearer\\s+(.+)$/i)?.[1];
+      const token = req.headers.authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
       const firebase = firebaseServices();
       if (!firebase || !token) return res.status(401).json({ error: 'Yönetici oturumu doğrulanamadı.' });
       const decoded = await firebase.auth.verifyIdToken(token);
