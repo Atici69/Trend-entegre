@@ -52,7 +52,10 @@ function returnUrl(status, planId, orderId) {
     const url = new URL(base);
     url.searchParams.set('payment', status);
     if (planId) url.searchParams.set('plan', planId);
-    if (orderId) url.searchParams.set('order', orderId);
+    if (orderId) {
+      url.searchParams.set('order', orderId);
+      url.searchParams.set('purchase', 'catalog');
+    }
     return url.toString();
   } catch { return null; }
 }
