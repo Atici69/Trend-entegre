@@ -264,15 +264,19 @@ async function audit(req, action, resource, id, metadata = {}) {
 
 app.get('/api/v1/admin/overview', requireAdmin, async (req, res) => {
   try {
-    const names = ['customers', 'subscriptions', 'dealers', 'payments'];
-    const snapshots = await Promise.all(names.map((name) => req.firestore.collection(name).get()));
-    const activeSubscriptions = snapshots[1].docs.filter((doc) => doc.data().status === 'active').length;
+    // Aggregation counts avoid downloading every document just to render dashboard totals.
+    const [customers, activeSubscriptions, dealers, payments] = await Promise.all([
+      req.firestore.collection('customers').count().get(),
+      req.firestore.collection('subscriptions').where('status', '==', 'active').count().get(),
+      req.firestore.collection('dealers').count().get(),
+      req.firestore.collection('payments').count().get(),
+    ]);
     res.json({
       counts: {
-        customers: snapshots[0].size,
-        activeSubscriptions,
-        dealers: snapshots[2].size,
-        payments: snapshots[3].size,
+        customers: customers.data().count,
+        activeSubscriptions: activeSubscriptions.data().count,
+        dealers: dealers.data().count,
+        payments: payments.data().count,
       },
     });
   } catch (error) {
@@ -656,6 +660,7 @@ app.delete('/api/v1/admin/catalog/products/:id', requireAdmin, async (req, res) 
     const snap = await ref.get();
     if (!snap.exists) return res.status(404).json({ error: 'Ürün bulunamadı.' });
     await ref.delete();
+    invalidateXmlFeedListCache();
     await audit(req, 'delete', 'catalog_product', ref.id);
     res.json({ ok: true });
   } catch { res.status(503).json({ error: 'Ürün silinemedi.' }); }
@@ -736,6 +741,7 @@ app.post('/api/v1/admin/xml/upload', express.text({ type: ['application/xml', 't
       margin_percent: marginPercent, discount_percent: 0, last_tested_at: now,
       created_at: now, updated_at: now, created_by: req.adminUser.id, upload_type: 'file',
     });
+    invalidateXmlFeedListCache();
     await audit(req, 'upload', 'xml_feed', ref.id, { name, products_count: products.length });
     res.status(201).json({ feed: { id: ref.id, name, products_count: products.length, margin_percent: marginPercent, discount_percent: 0, last_tested_at: now } });
   } catch (error) {
@@ -743,11 +749,23 @@ app.post('/api/v1/admin/xml/upload', express.text({ type: ['application/xml', 't
   }
 });
 
+const xmlFeedListCache = { value: null, expiresAt: 0 };
+function invalidateXmlFeedListCache() {
+  xmlFeedListCache.value = null;
+  xmlFeedListCache.expiresAt = 0;
+}
 app.get('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
   try {
+    if (xmlFeedListCache.value && xmlFeedListCache.expiresAt > Date.now()) {
+      res.set('Cache-Control', 'private, max-age=15');
+      return res.json({ feeds: xmlFeedListCache.value });
+    }
     const snapshot = await req.firestore.collection('xml_feeds').get();
     const feeds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+    xmlFeedListCache.value = feeds;
+    xmlFeedListCache.expiresAt = Date.now() + 15_000;
+    res.set('Cache-Control', 'private, max-age=15');
     res.json({ feeds });
   } catch (error) {
     console.error('Admin XML feed list failed:', error?.message || 'Unknown error');
@@ -788,6 +806,7 @@ app.post('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
       name, url, products_count: products.length, margin_percent: marginPercent, discount_percent: discountPercent, last_tested_at: now,
       created_at: now, updated_at: now, created_by: req.adminUser.id,
     });
+    invalidateXmlFeedListCache();
     await audit(req, 'create', 'xml_feed', ref.id, { name, products_count: products.length });
     res.status(201).json({ feed: { id: ref.id, name, url, products_count: products.length, margin_percent: marginPercent, discount_percent: discountPercent, last_tested_at: now } });
   } catch (error) {
@@ -807,6 +826,7 @@ app.patch('/api/v1/admin/xml/feeds/:id', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Güncellenecek kâr veya indirim oranı belirtilmedi.' });
     }
     await ref.update(updates);
+    invalidateXmlFeedListCache();
     await audit(req, 'update_pricing', 'xml_feed', req.params.id, {
       margin_percent: updates.margin_percent ?? existing.data().margin_percent ?? 0,
       discount_percent: updates.discount_percent ?? existing.data().discount_percent ?? 0,
