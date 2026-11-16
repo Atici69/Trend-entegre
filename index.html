@@ -1053,9 +1053,11 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
  const esc=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
  const money=value=>Number(value||0).toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2})+" TL";
  const cart=new Map();
+ try{const saved=JSON.parse(localStorage.getItem("trendCatalogCart")||"[]");if(Array.isArray(saved))saved.forEach(item=>{if(item&&item.product&&item.product.id!=null)cart.set(String(item.product.id),{product:item.product,quantity:Math.max(1,Number(item.quantity)||1)});});}catch(error){}
  let products=[];
  const byId=id=>document.getElementById(id);
  function renderCart(){
+  try{localStorage.setItem("trendCatalogCart",JSON.stringify([...cart.values()]));}catch(error){}
   const box=byId("storeCartItems"),total=byId("storeCartTotal");
   if(!box||!total)return;
   const count=[...cart.values()].reduce((sum,item)=>sum+item.quantity,0);
