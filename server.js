@@ -7,6 +7,7 @@ import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
+import { createClient } from '@libsql/client';
 import { randomUUID } from 'node:crypto';
 import { marketplaceStatus } from './src/marketplaces/index.js';
 import { registerTrendyolRoutes } from './src/marketplaces/trendyol.js';
@@ -64,6 +65,34 @@ function getFirebaseAdmin() {
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'trend-entegre-api', timestamp: new Date().toISOString() });
+});
+
+// Read-only connectivity check for the optional Turso database.
+app.get('/health/turso', async (_req, res) => {
+  const url = process.env.TURSO_DATABASE_URL?.trim();
+  const authToken = process.env.TURSO_AUTH_TOKEN?.trim();
+  if (!url || !authToken) {
+    return res.status(503).json({ ok: false, configured: false, error: 'Turso ortam değişkenleri eksik.' });
+  }
+
+  let client;
+  try {
+    client = createClient({ url, authToken });
+    const result = await client.execute('SELECT 1 AS connection_ok');
+    const connectionOk = Number(result.rows?.[0]?.connection_ok) === 1;
+    return res.status(connectionOk ? 200 : 503).json({
+      ok: connectionOk,
+      configured: true,
+      database: 'turso',
+      check: 'SELECT 1',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Turso connectivity check failed:', error?.message || 'Unknown error');
+    return res.status(503).json({ ok: false, configured: true, error: 'Turso bağlantısı kurulamadı. Render ortam değişkenlerini ve Turso token yetkisini kontrol edin.' });
+  } finally {
+    try { client?.close(); } catch {}
+  }
 });
 
 
