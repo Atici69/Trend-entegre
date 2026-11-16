@@ -106,15 +106,17 @@ async function attributeValueList(categoryId, attributeId) {
     encodeURIComponent(categoryId) + '/attributes/' + encodeURIComponent(attributeId) + '/values?size=1000&page=0');
   return parseAttributeValues(data);
 }
-async function makeAttributes(product, categoryId, mapping) {
-  const categoryData = await trendyolRequest('/integration/product/product-categories/' +
-    encodeURIComponent(categoryId) + '/attributes');
-  const definitions = asArray(categoryData?.categoryAttributes || categoryData?.attributes);
+async function makeAttributes(product, categoryId, mapping, cache) {
+  if (!cache.categories.has(categoryId)) {
+    cache.categories.set(categoryId, trendyolRequest('/integration/product/product-categories/' +
+      encodeURIComponent(categoryId) + '/attributes').then(data =>
+        asArray(data?.categoryAttributes || data?.attributes)));
+  }
+  const definitions = await cache.categories.get(categoryId);
   const required = definitions.filter(item => item.required);
   const configured = asArray(mapping.attributes);
   const result = [];
   const errors = [];
-  const valuesCache = new Map();
   for (const definition of definitions) {
     const attribute = definition.attribute || definition;
     const attributeId = String(attribute.id ?? definition.attributeId ?? '');
@@ -134,12 +136,13 @@ async function makeAttributes(product, categoryId, mapping) {
       result.push({ attributeId: Number(attributeId), customAttributeValue: raw.slice(0, 50) });
       continue;
     }
-    if (!valuesCache.has(attributeId)) {
-      try { valuesCache.set(attributeId, await attributeValueList(categoryId, attributeId)); }
-      catch { valuesCache.set(attributeId, []); }
+    const cacheKey = categoryId + ':' + attributeId;
+    if (!cache.values.has(cacheKey)) {
+      cache.values.set(cacheKey, attributeValueList(categoryId, attributeId).catch(() => []));
     }
+    const values = await cache.values.get(cacheKey);
     const wanted = normalize(raw);
-    const matched = valuesCache.get(attributeId).find(item => normalize(item.value) === wanted);
+    const matched = values.find(item => normalize(item.value) === wanted);
     if (matched) result.push({ attributeId: Number(attributeId), attributeValueId: Number(matched.id) });
     else if (definition.required) errors.push((attribute.name || 'Özellik') + ': "' + raw + '" Trendyol değer listesinde eşleşmedi.');
   }
@@ -152,7 +155,7 @@ async function makeAttributes(product, categoryId, mapping) {
   }
   return { result, errors, definitions };
 }
-function productBaseErrors(product, mapping, cfg) {
+function productBaseErrors(product, mapping) {
   const errors = [];
   const barcode = text(product['Barkod']);
   const title = text(product['Ürün Adı']);
@@ -180,14 +183,15 @@ async function buildValidation(db, feedId) {
   const byCategory = new Map(mappings.map(item => [normalize(item.sourceCategory), item]));
   const rows = [];
   const payloads = [];
+  const cache = { categories: new Map(), values: new Map() };
   for (const product of products) {
     const sourceCategory = text(product['Kategori']);
     const mapping = byCategory.get(normalize(sourceCategory));
-    const errors = productBaseErrors(product, mapping, configSafe());
+    const errors = productBaseErrors(product, mapping);
     let attributes = [];
     if (mapping?.categoryId) {
       try {
-        const mapped = await makeAttributes(product, mapping.categoryId, mapping);
+        const mapped = await makeAttributes(product, mapping.categoryId, mapping, cache);
         attributes = mapped.result;
         errors.push(...mapped.errors);
       } catch (error) { errors.push('Kategori özellikleri alınamadı: ' + error.message); }
@@ -227,10 +231,6 @@ async function buildValidation(db, feedId) {
     note: blocked ? 'Eksik alanlar tamamlanmadan gönderim yapılamaz.' : 'Tüm zorunlu alanlar kontrol edildi. Gönderim için onay bekleniyor.',
   };
 }
-function configSafe() {
-  try { return config(); } catch { return null; }
-}
-
 export function registerTrendyolRoutes(app, requireAdmin) {
   app.get('/api/v1/marketplaces/trendyol/brands', requireAdmin, async (req, res) => {
     try {
