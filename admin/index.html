@@ -1030,8 +1030,8 @@ function restoreTrendyolBatchState(){
  const message=document.getElementById('trendyolBatchMessage');
  const button=document.getElementById('trendyolPublishButton');
  if(id&&input)input.value=id;
- if(pending&&!id){
-  if(message)message.textContent='Önceki gönderim isteğinin sonucu belirsiz. Çift gönderimi önlemek için yeniden gönderim kilitlendi; Trendyol mağaza panelinden kontrol edin.';
+ if(pending){
+  if(message)message.textContent=id?'Önceki gönderimin Batch ID bilgisi saklandı. Önce aktarım sonucunu kontrol edin; sonuç kesinleşmeden yeniden göndermeyin.':'Önceki gönderim isteğinin sonucu belirsiz. Çift gönderimi önlemek için yeniden gönderim kilitlendi; Trendyol mağaza panelinden kontrol edin.';
   if(button){button.disabled=true;button.textContent='Önceki gönderimi kontrol edin';}
  }else if(id&&message){
   message.textContent='Son Batch ID bu tarayıcıda saklandı. Aktarım sonucunu kontrol edebilirsiniz.';
