@@ -1087,7 +1087,7 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
   showCartToast(product.name,current+1);
   const note=byId("storeOrderMessage");if(note)note.textContent="✓ "+product.name+" sepete eklendi.";
  }
-  function openCatalogProduct(id){const product=products.find(item=>String(item.id)===String(id));if(!product)return;const url=new URL(location.href);url.searchParams.set("urun",id);url.hash="katalog";history.pushState({catalogProduct:id},"",url);renderCatalogRoute();byId("katalog")?.scrollIntoView({behavior:"smooth",block:"start"});}
+  function openCatalogProduct(id){const product=products.find(item=>String(item.id)===String(id));if(!product)return;location.href="product.html?urun="+encodeURIComponent(id);}
   function renderCatalogRoute(){
    const detail=byId("publicCatalogDetail"),grid=byId("publicCatalogGrid"),pagination=byId("publicCatalogPagination"),toolbar=byId("publicCatalogSearch")?.closest(".catalog-toolbar"),category=byId("publicCatalogCategories")?.closest(".catalog-category-picker");
    if(!detail||!grid)return;
@@ -1152,7 +1152,7 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
     grid.innerHTML=visible.length?visible.map(p=>{
      const image=p.image_url?'<img src="'+esc(p.image_url)+'" alt="'+esc(p.name)+'" loading="lazy">':'<div class="catalog-no-image">Görsel eklenmemiş</div>';
      const inStock=Number(p.stock)>0;
-     return '<article class="catalog-product" data-open-product="'+esc(p.id)+'">'+image+'<div class="catalog-info"><span class="catalog-category">'+esc(p.display_category)+'</span><h3><a href="?urun='+encodeURIComponent(p.id)+'#katalog" data-open-product="'+esc(p.id)+'">'+esc(p.name)+'</a></h3><p>'+esc(p.description||"")+'</p><strong class="catalog-price">'+money(p.sale_price)+'</strong><span class="catalog-stock">'+(inStock?"Stokta · "+Number(p.stock)+" adet":"Stokta yok")+'</span><button class="catalog-add" type="button" data-add-to-cart="'+esc(p.id)+'" '+(!inStock?'disabled':'')+'>Sepete ekle</button></div></article>';
+     return '<article class="catalog-product" data-open-product="'+esc(p.id)+'">'+image+'<div class="catalog-info"><span class="catalog-category">'+esc(p.display_category)+'</span><h3><a href="product.html?urun='+encodeURIComponent(p.id)+'" data-open-product="'+esc(p.id)+'">'+esc(p.name)+'</a></h3><p>'+esc(p.description||"")+'</p><strong class="catalog-price">'+money(p.sale_price)+'</strong><span class="catalog-stock">'+(inStock?"Stokta · "+Number(p.stock)+" adet":"Stokta yok")+'</span><button class="catalog-add" type="button" data-add-to-cart="'+esc(p.id)+'" '+(!inStock?'disabled':'')+'>Sepete ekle</button></div></article>';
     }).join(""):'<p class="muted">Bu kategoride ürün bulunamadı.</p>';
     if(pagination)pagination.innerHTML='<button type="button" data-catalog-page="1" '+(currentPage<=1?'disabled':'')+' aria-label="İlk sayfaya git">« Başa git</button><button type="button" data-catalog-page="'+(currentPage-1)+'" '+(currentPage<=1?'disabled':'')+'>‹ Önceki</button><span>Sayfa '+currentPage+' / '+pageCount+'</span><button type="button" data-catalog-page="'+(currentPage+1)+'" '+(currentPage>=pageCount?'disabled':'')+'>Sonraki ›</button><button type="button" data-catalog-page="'+pageCount+'" '+(currentPage>=pageCount?'disabled':'')+' aria-label="Son sayfaya git">Sona git »</button>';
     if(categoryBar)categoryBar.value=selectedCategory;
