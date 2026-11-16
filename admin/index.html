@@ -131,7 +131,7 @@ th{background:#f5f7fc}
 <div class="metric"><label>Ödeme durumu</label><strong id="metricPayments">—</strong><small>Ödeme kaydı</small></div>
 </div>
 <div class="columns"><div class="card"><h2>Sistem bağlantıları</h2><div class="tablebox"><table><thead><tr><th>Modül</th><th>Durum</th></tr></thead><tbody id="systemStatusRows"><tr><td colspan="2">Sistem durumları sunucudan alınıyor…</td></tr></tbody></table></div></div>
-<div class="card"><h2>Hızlı erişim</h2><div class="quick"><button onclick="go('subscriptions')">Paket ve abonelikler<span>Ürün paketlerini düzenle</span></button><button onclick="go('dealers')">Bayi ağı<span>Bayi ve alt bayi yapısı</span></button><button onclick="go('xml')">XML işlemleri<span>Aktarım iş akışları</span></button><button onclick="go('ads')">Reklam alanları<span>Slider ve banner taslakları</span></button></div></div></div>
+<div class="card"><h2>Hızlı erişim</h2><div class="quick"><button onclick="go('subscriptions')">Paket ve abonelikler<span>Ürün paketlerini düzenle</span></button><button onclick="go('dealers')">Bayi ağı<span>Bayi ve alt bayi yapısı</span></button><button onclick="go('xml')">XML işlemleri<span>Aktarım iş akışları</span></button><button onclick="go('catalog')">Katalog<span>Ürün ekle, düzenle ve satışa aç</span></button><button onclick="go('ads')">Reklam alanları<span>Slider ve banner taslakları</span></button></div></div></div>
 </section>
 <section class="page" id="customers"><div class="head"><div><h1>Müşteri Yönetimi</h1><p>Müşteri kayıtları, firma bilgileri ve hesap durumları.</p></div><button class="btn" onclick="createRecord('customers')">+ Müşteri ekle</button></div><div class="toolbar"><input id="customersSearch" placeholder="Firma, müşteri veya e-posta ara" oninput="queueResourceSearch('customers')"><button class="btn light" onclick="loadResource('customers')">Yenile</button></div><div id="customersMessage" class="section-note"></div><div class="tablebox"><table><thead><tr><th>Müşteri / Firma</th><th>E-posta</th><th>Telefon</th><th>Durum</th><th>Kayıt</th><th>İşlem</th></tr></thead><tbody id="customersRows"><tr><td colspan="6">Kayıtlar yükleniyor…</td></tr></tbody></table></div><p class="section-note" id="customersPager"></p></section>
 <section class="page" id="subscriptions"><div class="head"><div><h1>Paketler ve Abonelikler</h1><p>E-ticaret mağazası, pazaryeri entegrasyonu, BuyBox ve XML hizmetlerini ayrı kategorilerde yönetin.</p></div></div>
@@ -204,6 +204,25 @@ th{background:#f5f7fc}
 <button class="btn" id="xmlExportButton" type="button" onclick="exportXmlFeed()">Excel dosyasını oluştur ve indir</button>
 <p class="section-note">Dışa aktarma sırasında kaynak yeniden okunur; ürünler XLSX dosyası olarak indirilir.</p>
 </div>
+</section>
+<section class="page" id="catalog">
+<div class="head"><div><h1>Ürün Kataloğu</h1><p>XML ürünlerini kataloğa aktarın veya kendi ürünlerinizi ekleyin. Ürünleri taslakta tutabilir ya da satışa açabilirsiniz.</p></div><button class="btn light" type="button" onclick="loadCatalogProducts()">Yenile</button></div>
+<div class="notice"><b>Satış fiyatı:</b> Alış fiyatı ve kâr oranı ayrı saklanır. Satış fiyatını otomatik hesaplatabilir veya elle belirleyebilirsiniz. XML'den gelen ürünler önce taslak olarak eklenir.</div>
+<div class="card" style="margin-bottom:15px"><h2 id="catalogFormHeading">Yeni ürün ekle</h2><input id="catalogProductId" type="hidden">
+<div class="two">
+<div class="field"><label for="catalogName">Ürün adı</label><input id="catalogName" maxlength="180" placeholder="Ürün adı"></div>
+<div class="field"><label for="catalogSku">Stok kodu / SKU</label><input id="catalogSku" maxlength="100" placeholder="SKU"></div>
+<div class="field"><label for="catalogCategory">Kategori</label><input id="catalogCategory" maxlength="100" placeholder="Örn. Elektronik"></div>
+<div class="field"><label for="catalogImage">Görsel URL</label><input id="catalogImage" type="url" maxlength="2048" placeholder="https://..."></div>
+<div class="field"><label for="catalogCost">Alış fiyatı (TL)</label><input id="catalogCost" type="number" min="0" step="0.01" value="0"></div>
+<div class="field"><label for="catalogMargin">Kâr oranı (%)</label><input id="catalogMargin" type="number" min="0" max="1000" step="0.01" value="0"></div>
+<div class="field"><label for="catalogSale">Satış fiyatı (TL) - elle değiştirebilirsiniz</label><input id="catalogSale" type="number" min="0" step="0.01" placeholder="Boş bırakılırsa otomatik hesaplanır"></div>
+<div class="field"><label for="catalogStock">Stok</label><input id="catalogStock" type="number" min="0" step="1" value="0"></div>
+<div class="field"><label for="catalogStatus">Yayın durumu</label><select id="catalogStatus"><option value="draft">Taslak</option><option value="active">Satışta</option><option value="archived">Arşiv</option></select></div>
+<div class="field"><label for="catalogDescription">Ürün açıklaması</label><textarea id="catalogDescription" rows="3" maxlength="5000" placeholder="Ürün açıklaması"></textarea></div>
+</div><div class="toolbar"><button class="btn" type="button" onclick="saveCatalogProduct()">Ürünü kaydet</button><button class="btn light" type="button" onclick="resetCatalogForm()">Yeni ürün / Formu temizle</button></div><p class="section-note" id="catalogMessage" role="status"></p></div>
+<div class="card" style="margin-bottom:15px"><h2>XML kaynağından kataloğa aktar</h2><div class="field"><label for="catalogXmlFeed">Kayıtlı XML kaynağı</label><select id="catalogXmlFeed"><option value="">Kaynak seçin</option></select></div><button class="btn" type="button" onclick="importCatalogXml()">XML ürünlerini kataloğa aktar</button><p class="section-note">İçe aktarılan ürünler taslak olur; kontrol edip satışa açın. XML güncellemesinde mevcut yayın durumu korunur.</p></div>
+<div class="card"><h2>Katalog ürünleri</h2><div class="tablebox"><table><thead><tr><th>Ürün</th><th>Alış</th><th>Kâr</th><th>Satış</th><th>Stok</th><th>Durum</th><th>İşlem</th></tr></thead><tbody id="catalogRows"><tr><td colspan="7">Ürünler yükleniyor…</td></tr></tbody></table></div></div>
 </section>
 <section class="page" id="buybox"><div class="head"><div><h1>BuyBox Yönetimi</h1><p>Rakip fiyat izleme ve BuyBox hizmetlerinin operasyon alanı.</p></div></div><div class="empty-state"><b>BuyBox servisi henüz bağlı değil.</b><br>Ürün eşleştirme, fiyat izleme sıklığı, bildirim ve raporlama modülleri servis altyapısıyla birlikte geliştirilecek.</div></section>
 <section class="page" id="payments"><div class="head"><div><h1>Ödeme Yönetimi</h1><p>Abonelik tahsilat kayıtları ve ödeme bildirimleri.</p></div><button class="btn light" onclick="loadResource('payments')">Yenile</button></div><div class="notice">Ödeme kayıtları burada salt okunur gösterilir. Gerçek tahsilat veya iade işlemi ödeme kuruluşunun doğrulanmış API/webhook akışı kurulmadan yapılamaz.</div><div class="toolbar"><input id="paymentsSearch" placeholder="Sağlayıcı, referans veya durum ara" oninput="queueResourceSearch('payments')"></div><div id="paymentsMessage" class="section-note"></div><div class="tablebox"><table><thead><tr><th>Sağlayıcı / Referans</th><th>Müşteri ID</th><th>Tutar</th><th>Durum</th><th>Ödeme tarihi</th></tr></thead><tbody id="paymentsRows"><tr><td colspan="5">Kayıtlar yükleniyor…</td></tr></tbody></table></div><p class="section-note" id="paymentsPager"></p></section>
@@ -303,7 +322,7 @@ const ADMIN_TOKEN_KEY = "trend_admin_access_token";
 let firebasePublicConfig = null;
 let hepsiburadaTestedThisSession = false;
 
-const titles={home:"Genel Bakış",customers:"Müşteri Yönetimi",subscriptions:"Entegrasyon Paketleri ve Abonelikler","store-packages":"E-Ticaret Mağazası Paketleri",dealers:"Bayi Ağı",marketplaces:"Pazaryeri Entegrasyonları",xml:"XML İşlemleri",buybox:"BuyBox Yönetimi",payments:"Ödeme Yönetimi",accounting:"Muhasebe",ads:"Reklam Alanları",settings:"Sistem Ayarları"};
+const titles={home:"Genel Bakış",customers:"Müşteri Yönetimi",subscriptions:"Entegrasyon Paketleri ve Abonelikler","store-packages":"E-Ticaret Mağazası Paketleri",dealers:"Bayi Ağı",marketplaces:"Pazaryeri Entegrasyonları",xml:"XML İşlemleri",catalog:"Ürün Kataloğu",buybox:"BuyBox Yönetimi",payments:"Ödeme Yönetimi",accounting:"Muhasebe",ads:"Reklam Alanları",settings:"Sistem Ayarları"};
 
 function go(id){
   document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===id));
@@ -312,6 +331,7 @@ function go(id){
   window.scrollTo({top:0,behavior:"smooth"});
   if(id==="marketplaces") loadMarketplaceStatus();
   if(id==="xml") loadXmlFeeds();
+  if(id==="catalog") loadCatalogProducts();
   if(id==="ads") loadAdManager();
   if(["customers","subscriptions","dealers","payments"].includes(id)) loadResource(id);
 }
