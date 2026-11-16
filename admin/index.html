@@ -261,6 +261,8 @@ th{background:#f5f7fc}
   <div class="field"><label for="catalogStatus">Yayın durumu</label><select id="catalogStatus"><option value="draft">Taslak</option><option value="active">Satışta</option><option value="archived">Arşiv</option></select></div>
  </div>
  <div class="field"><label for="catalogDescription">Ürün açıklaması</label><textarea id="catalogDescription" rows="4" maxlength="5000" placeholder="Ürün açıklaması, özellikleri ve detayları"></textarea></div>
+ <div class="field"><label for="catalogFeatures">Ürün özellikleri (her satıra Özellik: Değer)</label><textarea id="catalogFeatures" rows="5" maxlength="10000" placeholder="Materyal: 925 ayar gümüş&#10;Renk: Sarı altın&#10;Taş: Zirkon&#10;Uzunluk: 45 cm"></textarea><small>Örnek: Materyal: 925 ayar gümüş</small></div>
+ <div class="field"><label for="catalogGallery">Ek ürün görselleri (her satıra bir HTTPS görsel adresi)</label><textarea id="catalogGallery" rows="4" maxlength="14000" placeholder="https://..."></textarea><small>Ana görselin dışında en fazla 7 ek fotoğraf.</small></div>
  <div class="toolbar"><button class="btn" type="button" onclick="saveCatalogProduct()">Ürünü kaydet</button><button class="btn light" type="button" onclick="resetCatalogForm()">Formu temizle</button></div>
  <p class="section-note" id="catalogMessage" role="status"></p>
 </div>
@@ -834,7 +836,7 @@ async function exportXmlFeed(){
 let catalogCache=[];
 function catalogMessage(message,error=false){const el=document.getElementById('catalogMessage');if(el){el.textContent=message;el.style.color=error?'#a52d20':'#13845c';}}
 function resetCatalogForm(){
- ['catalogProductId','catalogName','catalogSku','catalogBarcode','catalogBrand','catalogCategory','catalogImage','catalogDescription'].forEach(id=>document.getElementById(id).value='');
+ ['catalogProductId','catalogName','catalogSku','catalogBarcode','catalogBrand','catalogCategory','catalogImage','catalogDescription','catalogFeatures','catalogGallery'].forEach(id=>document.getElementById(id).value='');
  ['catalogCost','catalogStock'].forEach(id=>document.getElementById(id).value='0');
  document.getElementById('catalogMargin').value='40';document.getElementById('catalogSale').value='';
  document.getElementById('catalogCurrency').value='TRY';document.getElementById('catalogStatus').value='draft';
@@ -842,7 +844,7 @@ function resetCatalogForm(){
 }
 function editCatalogProduct(id){
  const p=catalogCache.find(x=>x.id===id);if(!p)return;
- const values={catalogProductId:p.id,catalogName:p.name,catalogSku:p.sku,catalogBarcode:p.barcode,catalogBrand:p.brand,catalogCategory:p.category,catalogImage:p.image_url,catalogDescription:p.description,catalogCost:p.cost_price,catalogMargin:p.margin_percent,catalogSale:p.sale_price,catalogStock:p.stock,catalogCurrency:p.currency||'TRY',catalogStatus:p.status||'draft'};
+ const values={catalogProductId:p.id,catalogName:p.name,catalogSku:p.sku,catalogBarcode:p.barcode,catalogBrand:p.brand,catalogCategory:p.category,catalogImage:p.image_url,catalogDescription:p.description,catalogFeatures:(Array.isArray(p.features)?p.features:[]).map(x=>x.name+': '+x.value).join('\n'),catalogGallery:(Array.isArray(p.gallery_images)?p.gallery_images:[]).join('\n'),catalogCost:p.cost_price,catalogMargin:p.margin_percent,catalogSale:p.sale_price,catalogStock:p.stock,catalogCurrency:p.currency||'TRY',catalogStatus:p.status||'draft'};
  Object.entries(values).forEach(([key,value])=>document.getElementById(key).value=value??'');
  document.getElementById('catalogFormHeading').textContent='Ürünü düzenle · '+(p.name||'');
  document.getElementById('catalogFormHeading').scrollIntoView({behavior:'smooth',block:'center'});
@@ -930,7 +932,7 @@ async function setCatalogOrderStatus(id,status){
 }
 async function saveCatalogProduct(){
  const id=document.getElementById('catalogProductId').value,saleRaw=document.getElementById('catalogSale').value;
- const payload={name:document.getElementById('catalogName').value.trim(),sku:document.getElementById('catalogSku').value.trim(),barcode:document.getElementById('catalogBarcode').value.trim(),brand:document.getElementById('catalogBrand').value.trim(),category:document.getElementById('catalogCategory').value.trim(),currency:document.getElementById('catalogCurrency').value,image_url:document.getElementById('catalogImage').value.trim(),description:document.getElementById('catalogDescription').value.trim(),cost_price:Number(document.getElementById('catalogCost').value||0),margin_percent:Number(document.getElementById('catalogMargin').value||0),stock:Number(document.getElementById('catalogStock').value||0),status:document.getElementById('catalogStatus').value};
+ const payload={name:document.getElementById('catalogName').value.trim(),sku:document.getElementById('catalogSku').value.trim(),barcode:document.getElementById('catalogBarcode').value.trim(),brand:document.getElementById('catalogBrand').value.trim(),category:document.getElementById('catalogCategory').value.trim(),currency:document.getElementById('catalogCurrency').value,image_url:document.getElementById('catalogImage').value.trim(),description:document.getElementById('catalogDescription').value.trim(),features:document.getElementById('catalogFeatures').value.split(/\r?\n/).map(line=>{const index=line.indexOf(':');return index>0?{name:line.slice(0,index).trim(),value:line.slice(index+1).trim()}:null;}).filter(Boolean),gallery_images:document.getElementById('catalogGallery').value.split(/\r?\n/).map(value=>value.trim()).filter(Boolean).slice(0,7),cost_price:Number(document.getElementById('catalogCost').value||0),margin_percent:Number(document.getElementById('catalogMargin').value||0),stock:Number(document.getElementById('catalogStock').value||0),status:document.getElementById('catalogStatus').value};
  if(saleRaw!=='')payload.sale_price=Number(saleRaw);
  if(!payload.name){catalogMessage('Ürün adı zorunludur.',true);return;}
  try{
