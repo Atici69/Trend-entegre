@@ -634,7 +634,8 @@ app.post('/api/v1/admin/xml/export', requireAdmin, async (req, res) => {
     } else if (format === 'csv') {
       const safeRows = selected.map(row => Object.fromEntries(Object.entries(row).map(([key, value]) => {
         const text = String(value ?? '');
-        return [key, /^[=+@\\-\\t\\r]/.test(text) ? "'" + text : text];
+        const first = text.charCodeAt(0);
+        return [key, [61, 43, 45, 64, 9, 13].includes(first) ? "'" + text : text];
       })));
       const worksheet = XLSX.utils.json_to_sheet(safeRows);
       buffer = Buffer.from(XLSX.utils.sheet_to_csv(worksheet, { FS: ';' }), 'utf8');
