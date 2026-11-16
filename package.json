@@ -15,6 +15,7 @@
     "@capacitor/android": "^7.4.3",
     "@capacitor/browser": "^7.0.2",
     "@capacitor/core": "^7.4.3",
+    "@libsql/client": "^0.15.15",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
