@@ -198,6 +198,7 @@ export function parseProducts(xml) {
     // Varsayılan kargo desisi: tedarikçi XML'inde değer yoksa 1 kabul edilir.
     'Desi': findField(item, ['desi', 'dimensional_weight', 'dimensionalweight', 'cargo_des', 'kargo_desi']) || '1',
     'KDV Oranı': findField(item, ['vat_rate', 'vatrate', 'kdv', 'kdv_orani', 'kdvorani']),
+    'Menşei': findField(item, ['origin', 'country_of_origin', 'countryoforigin', 'origin_code', 'menşei', 'mensei', 'ulke_kodu']),
     'Görsel URL': findField(item, ['image', 'image_url', 'image_link', 'main_image', 'picture', 'picture_url', 'gorsel', 'urun_resim_1']),
     'Açıklama': findField(item, ['description', 'short_description', 'long_description', 'aciklama', 'açıklama', 'kisa_aciklama']),
   }));
