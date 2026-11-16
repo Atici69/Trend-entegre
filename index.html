@@ -723,6 +723,22 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
 <div class="w">
 <div class="head"><span class="k">Trend-Entegre mağaza</span><h2>Ürün Kataloğu</h2><p>Mağazamızda satışa açılan ürünleri burada inceleyebilirsiniz.</p></div>
 <div id="publicCatalogMessage" class="muted" style="text-align:center;margin-bottom:18px">Ürünler yükleniyor…</div>
+<div class="store-cart" id="storeCart">
+ <div class="store-cart-head"><div><h3>Alışveriş sepetim</h3><p>Ürünleri sepete ekleyin, sipariş talebinizi gönderin.</p></div><strong id="storeCartTotal">0,00 TL</strong></div>
+ <div id="storeCartItems" class="store-cart-items">Sepetiniz henüz boş.</div>
+ <form id="storeOrderForm" class="store-order-form">
+  <h4>Sipariş ve teslimat bilgileri</h4>
+  <div class="store-order-fields">
+   <label>Ad soyad<input name="name" required maxlength="120" autocomplete="name" placeholder="Adınız soyadınız"></label>
+   <label>Telefon<input name="phone" required maxlength="30" autocomplete="tel" placeholder="05XX XXX XX XX"></label>
+   <label>E-posta (isteğe bağlı)<input name="email" type="email" maxlength="160" autocomplete="email" placeholder="ornek@eposta.com"></label>
+   <label class="store-address">Teslimat adresi<textarea name="address" required minlength="8" maxlength="600" autocomplete="street-address" placeholder="Mahalle, cadde, sokak, bina ve daire bilgisi"></textarea></label>
+  </div>
+  <p class="store-payment-note">Bu aşamada ödeme alınmaz. Sipariş talebiniz kaydedilir; stok ve teslimat onayı için sizinle iletişime geçilir.</p>
+  <button class="btn" id="storeOrderButton" type="submit">Sipariş talebi gönder</button>
+  <p id="storeOrderMessage" role="status" aria-live="polite"></p>
+ </form>
+</div>
 <div id="publicCatalogGrid" class="commerce-grid" aria-live="polite"></div>
 </div>
 </section>
@@ -877,6 +893,27 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
 #katalog .catalog-product .catalog-price{font-size:22px;font-weight:900;color:var(--n)}
 #katalog .catalog-product .catalog-stock{font-size:11px;color:#13845c;margin-top:5px}
 #katalog .catalog-product .catalog-order{display:block;text-align:center;margin-top:12px;padding:10px 12px;border-radius:10px;background:#f4772b;color:#fff;font-size:12px;font-weight:850}
+#katalog .store-cart{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;margin:0 0 24px;box-shadow:0 10px 30px #1720440a}
+#katalog .store-cart-head{display:flex;align-items:center;justify-content:space-between;gap:14px}
+#katalog .store-cart-head h3{margin:0;color:var(--n);font-size:19px}
+#katalog .store-cart-head p{margin:5px 0 0;color:var(--m);font-size:12px}
+#katalog .store-cart-head>strong{font-size:22px;color:var(--n)}
+#katalog .store-cart-items{margin:15px 0;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);color:var(--m);font-size:13px}
+#katalog .store-cart-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;color:var(--ink)}
+#katalog .store-cart-row button{border:1px solid var(--line);background:#fff;border-radius:7px;padding:5px 9px}
+#katalog .store-cart-row input{width:58px;padding:6px;border:1px solid var(--line);border-radius:7px}
+#katalog .store-order-form h4{margin:12px 0;color:var(--n)}
+#katalog .store-order-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#katalog .store-order-fields label{display:grid;gap:6px;font-size:11px;font-weight:800;color:var(--m)}
+#katalog .store-order-fields input,#katalog .store-order-fields textarea{width:100%;min-width:0;border:1px solid var(--line);border-radius:9px;padding:11px;font:inherit}
+#katalog .store-order-fields textarea{min-height:76px;resize:vertical}
+#katalog .store-order-fields .store-address{grid-column:1/-1}
+#katalog .store-payment-note{font-size:12px;line-height:1.6;color:var(--m)}
+#katalog #storeOrderMessage{font-size:13px;font-weight:750}
+#katalog .catalog-add{display:block;width:100%;border:0;border-radius:10px;margin-top:12px;padding:10px;background:var(--n);color:#fff;font-size:12px;font-weight:850;cursor:pointer}
+#katalog .catalog-add:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:560px){#katalog .store-cart{padding:14px}#katalog .store-order-fields{grid-template-columns:1fr}#katalog .store-order-fields .store-address{grid-column:auto}#katalog .store-cart-head>strong{font-size:18px}}
+
 @media(max-width:800px){#katalog .commerce-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){#katalog .commerce-grid{grid-template-columns:1fr 1fr}#katalog .catalog-product img,#katalog .catalog-product .catalog-no-image{height:140px}#katalog .catalog-product .catalog-info{padding:11px}#katalog .catalog-product h3{font-size:13px}#katalog .catalog-product .catalog-price{font-size:18px}}
 
@@ -924,26 +961,80 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
 
 <script id="public-catalog-script">
 (function(){
- const endpoint="https://trend-entegre.onrender.com/api/v1/catalog/products";
+ const api="https://trend-entegre.onrender.com/api/v1";
  const esc=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
  const money=value=>Number(value||0).toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2})+" TL";
+ const cart=new Map();
+ let products=[];
+ const byId=id=>document.getElementById(id);
+ function renderCart(){
+  const box=byId("storeCartItems"),total=byId("storeCartTotal");
+  if(!box||!total)return;
+  if(!cart.size){box.textContent="Sepetiniz henüz boş.";total.textContent=money(0);return;}
+  let sum=0;
+  box.innerHTML=[...cart.entries()].map(([id,item])=>{
+   const line=Number(item.product.sale_price||0)*item.quantity;sum+=line;
+   return '<div class="store-cart-row"><div><strong>'+esc(item.product.name)+'</strong><br><small>'+money(item.product.sale_price)+' / adet</small></div><div><input aria-label="'+esc(item.product.name)+' adet" type="number" min="1" max="10" value="'+item.quantity+'" data-cart-quantity="'+esc(id)+'"> <button type="button" data-cart-remove="'+esc(id)+'">Kaldır</button></div><strong>'+money(line)+'</strong></div>';
+  }).join("");
+  total.textContent=money(sum);
+ }
+ function addToCart(id){
+  const product=products.find(item=>item.id===id);
+  if(!product)return;
+  const current=cart.get(id)?.quantity||0;
+  if(current>=10){byId("storeOrderMessage").textContent="Bir üründen en fazla 10 adet ekleyebilirsiniz.";return;}
+  if(Number(product.stock)>0&&current>=Number(product.stock)){byId("storeOrderMessage").textContent="Mevcut stok adedine ulaştınız.";return;}
+  cart.set(id,{product,quantity:current+1});renderCart();
+  byId("storeOrderMessage").textContent=product.name+" sepete eklendi.";
+ }
  async function loadCatalog(){
-  const grid=document.getElementById("publicCatalogGrid"),message=document.getElementById("publicCatalogMessage");
+  const grid=byId("publicCatalogGrid"),message=byId("publicCatalogMessage");
   if(!grid||!message)return;
   try{
-   const response=await fetch(endpoint);
+   const response=await fetch(api+"/catalog/products");
    if(!response.ok)throw new Error("Ürünler şu anda alınamıyor.");
-   const data=await response.json(),products=Array.isArray(data.products)?data.products:[];
+   const data=await response.json();products=Array.isArray(data.products)?data.products:[];
    if(!products.length){message.textContent="Katalogda henüz satışa açık ürün bulunmuyor.";return;}
    message.textContent=products.length+" ürün listeleniyor.";
    grid.innerHTML=products.map(p=>{
     const image=p.image_url?'<img src="'+esc(p.image_url)+'" alt="'+esc(p.name)+'" loading="lazy">':'<div class="catalog-no-image">Görsel eklenmemiş</div>';
-    const orderText='Merhaba, şu ürünü sipariş etmek istiyorum: '+p.name+' | SKU: '+(p.sku||'Belirtilmemiş')+' | Fiyat: '+money(p.sale_price);
-     const orderUrl='https://wa.me/905458959469?text='+encodeURIComponent(orderText);\n     return '<article class="catalog-product">'+image+'<div class="catalog-info"><span class="catalog-category">'+esc(p.category||"Ürün")+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(p.description||"")+'</p><strong class="catalog-price">'+money(p.sale_price)+'</strong><span class="catalog-stock">'+(Number(p.stock)>0?"Stokta":"Stok bilgisi için iletişime geçin")+'</span><a class="catalog-order" href="'+orderUrl+'" target="_blank" rel="noopener noreferrer">WhatsApp ile sipariş ver</a></div></article>';
+    const inStock=Number(p.stock)>0;
+    return '<article class="catalog-product">'+image+'<div class="catalog-info"><span class="catalog-category">'+esc(p.category||"Ürün")+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(p.description||"")+'</p><strong class="catalog-price">'+money(p.sale_price)+'</strong><span class="catalog-stock">'+(inStock?"Stokta · "+Number(p.stock)+" adet":"Stokta yok")+'</span><button class="catalog-add" type="button" data-add-to-cart="'+esc(p.id)+'" '+(!inStock?'disabled':'')+'>Sepete ekle</button></div></article>';
    }).join("");
   }catch(error){message.textContent=error.message||"Katalog yüklenemedi.";}
  }
- if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",loadCatalog);else loadCatalog();
+ document.addEventListener("click",event=>{
+  const add=event.target.closest("[data-add-to-cart]");
+  if(add){addToCart(add.dataset.addToCart);return;}
+  const remove=event.target.closest("[data-cart-remove]");
+  if(remove){cart.delete(remove.dataset.cartRemove);renderCart();}
+ });
+ document.addEventListener("change",event=>{
+  const input=event.target.closest("[data-cart-quantity]");
+  if(!input)return;
+  const item=cart.get(input.dataset.cartQuantity);if(!item)return;
+  const quantity=Math.max(1,Math.min(10,Number.parseInt(input.value,10)||1));
+  item.quantity=Number(item.product.stock)>0?Math.min(quantity,Number(item.product.stock)):quantity;
+  cart.set(input.dataset.cartQuantity,item);renderCart();
+ });
+ const form=byId("storeOrderForm");
+ if(form)form.addEventListener("submit",async event=>{
+  event.preventDefault();
+  const message=byId("storeOrderMessage"),button=byId("storeOrderButton");
+  if(!cart.size){message.textContent="Önce sepetinize ürün ekleyin.";return;}
+  const formData=new FormData(form);
+  const buyer={name:formData.get("name"),phone:formData.get("phone"),email:formData.get("email"),address:formData.get("address")};
+  button.disabled=true;button.textContent="Sipariş gönderiliyor…";message.textContent="";
+  try{
+   const response=await fetch(api+"/orders",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({buyer,items:[...cart.entries()].map(([product_id,item])=>({product_id,quantity:item.quantity}))})});
+   const data=await response.json().catch(()=>({}));
+   if(!response.ok)throw new Error(data.error||"Sipariş gönderilemedi.");
+   cart.clear();renderCart();form.reset();
+   message.textContent="Sipariş talebiniz alındı. Sipariş numaranız: "+data.order.order_number+". Ödeme ve teslimat onayı için sizinle iletişime geçeceğiz.";
+  }catch(error){message.textContent=error.message||"Sipariş gönderilemedi.";}
+  finally{button.disabled=false;button.textContent="Sipariş talebi gönder";}
+ });
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{renderCart();loadCatalog();});else{renderCart();loadCatalog();}
 })();
 </script>
 
