@@ -18,6 +18,8 @@ export function validateTrendyolProduct(source, mapping = {}) {
   const stock = numeric(source.Stok);
   const image = String(source['Görsel URL'] || '').trim();
   const description = String(source.Açıklama || '').trim();
+  const dimensionalWeight = numeric(source['Desi'] ?? source.dimensionalWeight);
+  const vatRate = numeric(source['KDV Oranı'] ?? source.vatRate);
 
   if (!title) errors.push('Ürün adı eksik.');
   if (!barcode) errors.push('Barkod eksik.');
@@ -26,7 +28,9 @@ export function validateTrendyolProduct(source, mapping = {}) {
   if (!brandId) errors.push('Trendyol marka eşleştirmesi yapılmamış.');
   if (!category) errors.push('Trendyol kategori eşleştirmesi yapılmamış.');
   if (salePrice === null || salePrice <= 0) errors.push('Geçerli satış fiyatı bulunamadı.');
-  if (stock === null || stock < 0) errors.push('Geçerli stok miktarı bulunamadı.');
+  if (stock === null || stock < 0 || !Number.isInteger(stock)) errors.push('Stok miktarı geçerli bir tam sayı olmalıdır.');
+  if (dimensionalWeight === null || dimensionalWeight <= 0) errors.push('Desi / dimensionalWeight bilgisi eksik.');
+  if (vatRate === null || ![0, 1, 10, 20].includes(vatRate)) errors.push('KDV oranı eksik veya geçersiz (0, 1, 10, 20 olmalı).');
   if (!image) errors.push('Ürün görseli eksik.');
   else {
     try { if (new URL(image).protocol !== 'https:') errors.push('Ürün görseli HTTPS olmalıdır.'); }
@@ -42,7 +46,7 @@ export function validateTrendyolProduct(source, mapping = {}) {
     normalized: {
       barcode, title, productMainId: sku, stockCode: sku, brand,
       brandId: brandId || null, categoryId: category || null,
-      quantity: stock, listPrice: salePrice, salePrice,
+      quantity: stock, dimensionalWeight, vatRate, listPrice: salePrice, salePrice,
       currencyType: 'TRY', description, images: image ? [image] : [],
       attributes: Array.isArray(mapping.attributes) ? mapping.attributes : [],
     },
