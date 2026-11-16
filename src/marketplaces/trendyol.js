@@ -272,6 +272,24 @@ async function buildValidation(db, feedId) {
   };
 }
 export function registerTrendyolRoutes(app, requireAdmin) {
+  app.post('/api/v1/marketplaces/trendyol/test', requireAdmin, async (_req, res) => {
+    try {
+      const cfg = config();
+      const data = await trendyolRequest('/integration/product/product-categories');
+      const categories = flattenCategories(data);
+      res.json({
+        ok: true, status: 'connected', environment: 'configured',
+        httpStatus: 200, productCategoryCount: categories.length,
+        supplierId: cfg.supplierId,
+        message: 'Trendyol API kimlik doğrulaması başarılı; kategori servisi yanıt verdi.',
+      });
+    } catch (error) {
+      res.status(502).json({
+        ok: false, status: 'connection_failed',
+        message: error.message || 'Trendyol API bağlantısı doğrulanamadı.',
+      });
+    }
+  });
   app.get('/api/v1/marketplaces/trendyol/brands', requireAdmin, async (req, res) => {
     try {
       const name = text(req.query.name);
