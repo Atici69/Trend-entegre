@@ -68,6 +68,7 @@ th{background:#f5f7fc}
  .auth-card{border-radius:20px}
 }
 
+.catalog-form-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0 13px}.catalog-subhead{font-size:13px;color:var(--navy);margin:12px 0 4px;padding-top:10px;border-top:1px solid var(--line)}.catalog-filters input{flex:2 1 260px}.catalog-filters select{flex:1 1 155px}.catalog-table{min-width:1120px}.catalog-table td{vertical-align:middle}.catalog-table small{color:var(--muted)}.catalog-action{display:inline-flex;gap:5px;flex-wrap:wrap}.catalog-action button{margin:2px}.catalog-metrics .metric strong{font-size:23px}@media(max-width:900px){.catalog-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.catalog-form-grid{grid-template-columns:1fr}.catalog-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 <style id="trend-admin-tablet-navigation">
 @media (min-width:561px) and (max-width:900px){
@@ -114,6 +115,7 @@ th{background:#f5f7fc}
 <button data-page="dealers"><span class="ico">♧</span> Bayi Ağı</button>
 <button data-page="marketplaces"><span class="ico">⇄</span> Pazaryeri Entegrasyonları</button>
 <button data-page="xml"><span class="ico">⌘</span> XML İşlemleri</button>
+<button data-page="catalog"><span class="ico">▣</span> Katalog Yönetimi</button>
 <button data-page="orders"><span class="ico">🛒</span> Siparişler</button>
 <button data-page="buybox"><span class="ico">◈</span> BuyBox</button>
 <button data-page="payments"><span class="ico">₺</span> Ödemeler</button>
@@ -230,23 +232,55 @@ th{background:#f5f7fc}
 </div>
 </section>
 <section class="page" id="catalog">
-<div class="head"><div><h1>Ürün Kataloğu</h1><p>XML ürünlerini kataloğa aktarın veya kendi ürünlerinizi ekleyin. Ürünleri taslakta tutabilir ya da satışa açabilirsiniz.</p></div><button class="btn light" type="button" onclick="loadCatalogProducts()">Yenile</button></div>
-<div class="notice"><b>Satış fiyatı:</b> Alış fiyatı ve kâr oranı ayrı saklanır. Satış fiyatını otomatik hesaplatabilir veya elle belirleyebilirsiniz. XML'den gelen ürünler önce taslak olarak eklenir.</div>
-<div class="card" style="margin-bottom:15px"><h2 id="catalogFormHeading">Yeni ürün ekle</h2><input id="catalogProductId" type="hidden">
-<div class="two">
-<div class="field"><label for="catalogName">Ürün adı</label><input id="catalogName" maxlength="180" placeholder="Ürün adı"></div>
-<div class="field"><label for="catalogSku">Stok kodu / SKU</label><input id="catalogSku" maxlength="100" placeholder="SKU"></div>
-<div class="field"><label for="catalogCategory">Kategori</label><input id="catalogCategory" maxlength="100" placeholder="Örn. Elektronik"></div>
-<div class="field"><label for="catalogImage">Görsel URL</label><input id="catalogImage" type="url" maxlength="2048" placeholder="https://..."></div>
-<div class="field"><label for="catalogCost">Alış fiyatı (TL)</label><input id="catalogCost" type="number" min="0" step="0.01" value="0"></div>
-<div class="field"><label for="catalogMargin">Kâr oranı (%)</label><input id="catalogMargin" type="number" min="0" max="1000" step="0.01" value="0" oninput="document.getElementById(&quot;catalogSale&quot;).value=&quot;&quot;"></div>
-<div class="field"><label for="catalogSale">Satış fiyatı (TL) - elle değiştirebilirsiniz</label><input id="catalogSale" type="number" min="0" step="0.01" placeholder="Boş bırakılırsa otomatik hesaplanır"></div>
-<div class="field"><label for="catalogStock">Stok</label><input id="catalogStock" type="number" min="0" step="1" value="0"></div>
-<div class="field"><label for="catalogStatus">Yayın durumu</label><select id="catalogStatus"><option value="draft">Taslak</option><option value="active">Satışta</option><option value="archived">Arşiv</option></select></div>
-<div class="field"><label for="catalogDescription">Ürün açıklaması</label><textarea id="catalogDescription" rows="3" maxlength="5000" placeholder="Ürün açıklaması"></textarea></div>
-</div><div class="toolbar"><button class="btn" type="button" onclick="saveCatalogProduct()">Ürünü kaydet</button><button class="btn light" type="button" onclick="resetCatalogForm()">Yeni ürün / Formu temizle</button></div><p class="section-note" id="catalogMessage" role="status"></p></div>
-<div class="card" style="margin-bottom:15px"><h2>XML kaynağından kataloğa aktar</h2><div class="field"><label for="catalogXmlFeed">Kayıtlı XML kaynağı</label><select id="catalogXmlFeed"><option value="">Kaynak seçin</option></select></div><button class="btn" type="button" onclick="importCatalogXml()">XML ürünlerini kataloğa aktar</button><p class="section-note">İçe aktarılan ürünler taslak olur; kontrol edip satışa açın. XML güncellemesinde mevcut yayın durumu korunur.</p></div>
-<div class="card"><h2>Katalog ürünleri</h2><div class="tablebox"><table><thead><tr><th>Ürün</th><th>Alış</th><th>Kâr</th><th>Satış</th><th>Stok</th><th>Durum</th><th>İşlem</th></tr></thead><tbody id="catalogRows"><tr><td colspan="7">Ürünler yükleniyor…</td></tr></tbody></table></div></div>
+<div class="head"><div><h1>Katalog Yönetimi</h1><p>Mağazada satışa sunulan ürünleri, tedarikçi kayıtlarını, fiyatları, stokları ve yayın durumlarını tek merkezden yönetin.</p></div><div class="toolbar"><button class="btn light" type="button" onclick="loadCatalogProducts()">↻ Yenile</button><button class="btn" type="button" onclick="resetCatalogForm();document.getElementById('catalogFormHeading').scrollIntoView({behavior:'smooth'})">+ Yeni ürün</button></div></div>
+<div class="grid catalog-metrics" style="margin-bottom:15px">
+ <div class="metric"><label>Toplam ürün</label><strong id="catalogMetricTotal">—</strong><small>Katalogdaki tüm kayıtlar</small></div>
+ <div class="metric"><label>Satışta</label><strong id="catalogMetricActive">—</strong><small>Mağazada görünür ürünler</small></div>
+ <div class="metric"><label>Taslak / Arşiv</label><strong id="catalogMetricOther">—</strong><small>Yayında olmayan ürünler</small></div>
+ <div class="metric"><label>Toplam stok</label><strong id="catalogMetricStock">—</strong><small>Ürün adetlerinin toplamı</small></div>
+</div>
+<div class="notice"><b>Fiyat ve yayın kontrolü:</b> Alış fiyatı, manuel kâr oranı ve satış fiyatı ayrı yönetilir. XML ürünleri içe aktarıldığında yayına alınır; arşivdeki ürünler arşivde kalır. Ürünlerin müşterilere görünmesi için durumu “Satışta” olmalıdır.</div>
+<div class="card" style="margin-bottom:15px">
+ <div class="head" style="margin-bottom:8px"><div><h2 id="catalogFormHeading">Yeni ürün ekle</h2><p>Ürün bilgileri, stok, tedarikçi ve fiyatlandırma</p></div><span class="tag">ÜRÜN KARTI</span></div>
+ <input id="catalogProductId" type="hidden">
+ <div class="catalog-form-grid">
+  <div class="field"><label for="catalogName">Ürün adı *</label><input id="catalogName" maxlength="180" placeholder="Ürün adı" required></div>
+  <div class="field"><label for="catalogSku">Stok kodu / SKU</label><input id="catalogSku" maxlength="100" placeholder="SKU"></div>
+  <div class="field"><label for="catalogBarcode">Barkod</label><input id="catalogBarcode" maxlength="100" placeholder="Barkod numarası"></div>
+  <div class="field"><label for="catalogBrand">Marka</label><input id="catalogBrand" maxlength="120" placeholder="Ürün markası"></div>
+  <div class="field"><label for="catalogCategory">Kategori</label><input id="catalogCategory" maxlength="100" placeholder="Örn. Katalog / Elektronik"></div>
+  <div class="field"><label for="catalogCurrency">Para birimi</label><select id="catalogCurrency"><option value="TRY">TRY · Türk lirası</option><option value="USD">USD · Amerikan doları</option><option value="EUR">EUR · Euro</option><option value="GBP">GBP · İngiliz sterlini</option></select></div>
+  <div class="field"><label for="catalogImage">Ürün görsel URL</label><input id="catalogImage" type="url" maxlength="2048" placeholder="https://..."></div>
+  <div class="field"><label for="catalogStock">Stok adedi</label><input id="catalogStock" type="number" min="0" step="1" value="0"></div>
+ </div>
+ <h3 class="catalog-subhead">Fiyatlandırma</h3>
+ <div class="catalog-form-grid">
+  <div class="field"><label for="catalogCost">Alış fiyatı</label><input id="catalogCost" type="number" min="0" step="0.01" value="0"></div>
+  <div class="field"><label for="catalogMargin">Kâr oranı (%)</label><input id="catalogMargin" type="number" min="0" max="1000" step="0.01" value="40" oninput="document.getElementById('catalogSale').value=''"></div>
+  <div class="field"><label for="catalogSale">Satış fiyatı (elle düzenlenebilir)</label><input id="catalogSale" type="number" min="0" step="0.01" placeholder="Boşsa otomatik hesaplanır"></div>
+  <div class="field"><label for="catalogStatus">Yayın durumu</label><select id="catalogStatus"><option value="draft">Taslak</option><option value="active">Satışta</option><option value="archived">Arşiv</option></select></div>
+ </div>
+ <div class="field"><label for="catalogDescription">Ürün açıklaması</label><textarea id="catalogDescription" rows="4" maxlength="5000" placeholder="Ürün açıklaması, özellikleri ve detayları"></textarea></div>
+ <div class="toolbar"><button class="btn" type="button" onclick="saveCatalogProduct()">Ürünü kaydet</button><button class="btn light" type="button" onclick="resetCatalogForm()">Formu temizle</button></div>
+ <p class="section-note" id="catalogMessage" role="status"></p>
+</div>
+<div class="card" style="margin-bottom:15px">
+ <h2>XML kaynağından ürün aktarımı</h2>
+ <p class="section-note">Kayıtlı tedarikçi XML kaynağını seçin. Ürünler SKU/barkod ve kaynak kimliğiyle eşleştirilir; kayıtlı ürünler güncellenir, arşiv durumları korunur.</p>
+ <div class="toolbar"><select id="catalogXmlFeed"><option value="">Kaynak seçin</option></select><button class="btn" type="button" onclick="importCatalogXml()">XML ürünlerini kataloğa aktar</button></div>
+ <p class="section-note">Kaynağın kayıtlı kâr oranı uygulanır. İçe aktarma mevcut ürünleri çoğaltmak yerine aynı tedarikçi ürünlerini günceller.</p>
+</div>
+<div class="card">
+ <div class="head" style="margin-bottom:12px"><div><h2 style="margin:0">Ürün listesi</h2><p>Arayın, filtreleyin ve ürün kartlarını düzenleyin.</p></div><span class="tag" id="catalogResultCount">0 ürün</span></div>
+ <div class="toolbar catalog-filters">
+  <input id="catalogSearch" placeholder="Ürün, SKU, barkod veya marka ara" oninput="renderCatalogProducts()">
+  <select id="catalogStatusFilter" onchange="renderCatalogProducts()"><option value="">Tüm durumlar</option><option value="active">Satışta</option><option value="draft">Taslak</option><option value="archived">Arşiv</option></select>
+  <select id="catalogSourceFilter" onchange="renderCatalogProducts()"><option value="">Tüm kaynaklar</option><option value="xml">XML tedarikçi</option><option value="manual">Manuel</option></select>
+  <select id="catalogCategoryFilter" onchange="renderCatalogProducts()"><option value="">Tüm kategoriler</option></select>
+ </div>
+ <div class="tablebox"><table class="catalog-table"><thead><tr><th>Ürün / SKU</th><th>Barkod / Marka</th><th>Kategori</th><th>Alış</th><th>Kâr</th><th>Satış</th><th>Stok</th><th>Durum</th><th>Kaynak</th><th>İşlem</th></tr></thead><tbody id="catalogRows"><tr><td colspan="10">Ürünler yükleniyor…</td></tr></tbody></table></div>
+ <p class="section-note" id="catalogListMessage" role="status"></p>
+</div>
 </section>
 <section class="page" id="orders">
 <div class="head"><div><h1>Mağaza Siparişleri</h1><p>Katalog üzerinden gelen müşteri sipariş taleplerini inceleyin ve durumlarını güncelleyin.</p></div><button class="btn light" type="button" onclick="loadCatalogOrders()">Yenile</button></div>
@@ -800,38 +834,65 @@ async function exportXmlFeed(){
 let catalogCache=[];
 function catalogMessage(message,error=false){const el=document.getElementById('catalogMessage');if(el){el.textContent=message;el.style.color=error?'#a52d20':'#13845c';}}
 function resetCatalogForm(){
- ['catalogProductId','catalogName','catalogSku','catalogCategory','catalogImage','catalogDescription'].forEach(id=>document.getElementById(id).value='');
- ['catalogCost','catalogMargin','catalogStock'].forEach(id=>document.getElementById(id).value='0');
- document.getElementById('catalogSale').value='';
- document.getElementById('catalogStatus').value='draft';
+ ['catalogProductId','catalogName','catalogSku','catalogBarcode','catalogBrand','catalogCategory','catalogImage','catalogDescription'].forEach(id=>document.getElementById(id).value='');
+ ['catalogCost','catalogStock'].forEach(id=>document.getElementById(id).value='0');
+ document.getElementById('catalogMargin').value='40';document.getElementById('catalogSale').value='';
+ document.getElementById('catalogCurrency').value='TRY';document.getElementById('catalogStatus').value='draft';
  document.getElementById('catalogFormHeading').textContent='Yeni ürün ekle';
 }
 function editCatalogProduct(id){
  const p=catalogCache.find(x=>x.id===id);if(!p)return;
- document.getElementById('catalogProductId').value=p.id;
- document.getElementById('catalogName').value=p.name||'';
- document.getElementById('catalogSku').value=p.sku||'';
- document.getElementById('catalogCategory').value=p.category||'';
- document.getElementById('catalogImage').value=p.image_url||'';
- document.getElementById('catalogDescription').value=p.description||'';
- document.getElementById('catalogCost').value=p.cost_price??0;
- document.getElementById('catalogMargin').value=p.margin_percent??0;
- document.getElementById('catalogSale').value=p.sale_price??'';
- document.getElementById('catalogStock').value=p.stock??0;
- document.getElementById('catalogStatus').value=p.status||'draft';
- document.getElementById('catalogFormHeading').textContent='Ürünü düzenle';
+ const values={catalogProductId:p.id,catalogName:p.name,catalogSku:p.sku,catalogBarcode:p.barcode,catalogBrand:p.brand,catalogCategory:p.category,catalogImage:p.image_url,catalogDescription:p.description,catalogCost:p.cost_price,catalogMargin:p.margin_percent,catalogSale:p.sale_price,catalogStock:p.stock,catalogCurrency:p.currency||'TRY',catalogStatus:p.status||'draft'};
+ Object.entries(values).forEach(([key,value])=>document.getElementById(key).value=value??'');
+ document.getElementById('catalogFormHeading').textContent='Ürünü düzenle · '+(p.name||'');
  document.getElementById('catalogFormHeading').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function renderCatalogProducts(){
+ const rows=document.getElementById('catalogRows');if(!rows)return;
+ const term=(document.getElementById('catalogSearch')?.value||'').trim().toLocaleLowerCase('tr-TR');
+ const status=document.getElementById('catalogStatusFilter')?.value||'',source=document.getElementById('catalogSourceFilter')?.value||'',category=document.getElementById('catalogCategoryFilter')?.value||'';
+ const filtered=catalogCache.filter(p=>{
+  const hay=[p.name,p.sku,p.barcode,p.brand,p.category,p.source_feed_name].join(' ').toLocaleLowerCase('tr-TR');
+  return (!term||hay.includes(term))&&(!status||p.status===status)&&(!source||p.source===source)&&(!category||p.category===category);
+ });
+ document.getElementById('catalogResultCount').textContent=filtered.length.toLocaleString('tr-TR')+' ürün';
+ rows.innerHTML=filtered.length?filtered.map(p=>{
+  const statusLabel={draft:'Taslak',active:'Satışta',archived:'Arşiv'}[p.status]||'Taslak';
+  const statusClass=p.status==='active'?'green':p.status==='archived'?'gray':'';
+  const currency=p.currency||'TRY';
+  const money=value=>Number(value||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+' '+currency;
+  const toggle=p.status==='active'?'draft':'active',toggleLabel=p.status==='active'?'Satışı durdur':'Satışa aç';
+  return '<tr><td><strong>'+escapeHtml(p.name||'—')+'</strong><br><small>'+escapeHtml(p.sku||'SKU yok')+'</small></td><td>'+escapeHtml(p.barcode||'—')+'<br><small>'+escapeHtml(p.brand||'Marka yok')+'</small></td><td>'+escapeHtml(p.category||'Katalog')+'</td><td>'+money(p.cost_price)+'</td><td>%'+Number(p.margin_percent||0).toLocaleString('tr-TR')+'</td><td><strong>'+money(p.sale_price)+'</strong></td><td>'+Number(p.stock||0).toLocaleString('tr-TR')+'</td><td><span class="tag '+statusClass+'">'+statusLabel+'</span></td><td>'+((p.source==='xml')?'XML · '+escapeHtml(p.source_feed_name||'Tedarikçi'):'Manuel')+'</td><td><div class="catalog-action"><button class="logout-btn" onclick="editCatalogProduct(\''+escapeHtml(p.id)+'\')">Düzenle</button><button class="logout-btn" onclick="changeCatalogStatus(\''+escapeHtml(p.id)+'\',\''+toggle+'\')">'+toggleLabel+'</button><button class="logout-btn" onclick="deleteCatalogProduct(\''+escapeHtml(p.id)+'\')">Sil</button></div></td></tr>';
+ }).join(''):'<tr><td colspan="10">Filtrelere uygun ürün bulunamadı.</td></tr>';
 }
 async function loadCatalogProducts(){
  const rows=document.getElementById('catalogRows');if(!rows)return;
- rows.innerHTML='<tr><td colspan="7">Ürünler yükleniyor…</td></tr>';
+ rows.innerHTML='<tr><td colspan="10">Ürünler yükleniyor…</td></tr>';
  try{
   const data=await adminApi('/api/v1/admin/catalog/products');catalogCache=data.products||[];
-  rows.innerHTML=catalogCache.length?catalogCache.map(p=>'<tr><td><strong>'+escapeHtml(p.name)+'</strong><br><small>'+escapeHtml(p.sku||p.source||'Manuel')+'</small></td><td>'+Number(p.cost_price||0).toLocaleString('tr-TR',{minimumFractionDigits:2})+' TL</td><td>%'+Number(p.margin_percent||0).toLocaleString('tr-TR')+'</td><td>'+Number(p.sale_price||0).toLocaleString('tr-TR',{minimumFractionDigits:2})+' TL</td><td>'+Number(p.stock||0).toLocaleString('tr-TR')+'</td><td>'+({draft:'Taslak',active:'Satışta',archived:'Arşiv'}[p.status]||'Taslak')+'</td><td><button class="logout-btn" onclick="editCatalogProduct(\''+escapeHtml(p.id)+'\')">Düzenle</button> <button class="logout-btn" onclick="deleteCatalogProduct(\''+escapeHtml(p.id)+'\')">Sil</button></td></tr>').join(''):'<tr><td colspan="7">Henüz ürün yok. XML kaynağından aktarabilir veya manuel ürün ekleyebilirsiniz.</td></tr>';
+  const total=catalogCache.length,active=catalogCache.filter(p=>p.status==='active').length,other=total-active,stock=catalogCache.reduce((sum,p)=>sum+Math.max(0,Number(p.stock)||0),0);
+  document.getElementById('catalogMetricTotal').textContent=total.toLocaleString('tr-TR');
+  document.getElementById('catalogMetricActive').textContent=active.toLocaleString('tr-TR');
+  document.getElementById('catalogMetricOther').textContent=other.toLocaleString('tr-TR');
+  document.getElementById('catalogMetricStock').textContent=stock.toLocaleString('tr-TR');
+  const categories=[...new Set(catalogCache.map(p=>(p.category||'Katalog').trim()).filter(Boolean))].sort((x,y)=>x.localeCompare(y,'tr'));
+  const catSelect=document.getElementById('catalogCategoryFilter'),chosen=catSelect.value;
+  catSelect.innerHTML='<option value="">Tüm kategoriler</option>'+categories.map(c=>'<option value="'+escapeHtml(c)+'">'+escapeHtml(c)+'</option>').join('');
+  if(categories.includes(chosen))catSelect.value=chosen;
+  renderCatalogProducts();
   const feedData=await adminApi('/api/v1/admin/xml/feeds'),select=document.getElementById('catalogXmlFeed'),selected=select.value;
   select.innerHTML='<option value="">Kaynak seçin</option>'+(feedData.feeds||[]).map(f=>'<option value="'+escapeHtml(f.id)+'">'+escapeHtml(f.name)+' (%'+Number(f.margin_percent||0)+')</option>').join('');
   if(selected)select.value=selected;
- }catch(error){rows.innerHTML='<tr><td colspan="7">Katalog yüklenemedi.</td></tr>';catalogMessage(error.message,true);}
+ }catch(error){rows.innerHTML='<tr><td colspan="10">Katalog yüklenemedi.</td></tr>';catalogMessage(error.message,true);}
+}
+async function changeCatalogStatus(id,status){
+ const p=catalogCache.find(x=>x.id===id);if(!p)return;
+ const label=status==='active'?'satışa açmak':'satışını durdurup taslağa almak';
+ if(!confirm('"'+p.name+'" ürününü '+label+' istiyor musunuz?'))return;
+ try{
+  await adminApi('/api/v1/admin/catalog/products/'+encodeURIComponent(id),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});
+  catalogMessage('Ürün durumu güncellendi.');await loadCatalogProducts();
+ }catch(error){catalogMessage(error.message,true);}
 }
 async function loadCatalogOrders(){
  const rows=document.getElementById('catalogOrdersRows'),message=document.getElementById('catalogOrdersMessage');
@@ -859,8 +920,9 @@ async function setCatalogOrderStatus(id,status){
 }
 async function saveCatalogProduct(){
  const id=document.getElementById('catalogProductId').value,saleRaw=document.getElementById('catalogSale').value;
- const payload={name:document.getElementById('catalogName').value.trim(),sku:document.getElementById('catalogSku').value.trim(),category:document.getElementById('catalogCategory').value.trim(),image_url:document.getElementById('catalogImage').value.trim(),description:document.getElementById('catalogDescription').value.trim(),cost_price:Number(document.getElementById('catalogCost').value||0),margin_percent:Number(document.getElementById('catalogMargin').value||0),stock:Number(document.getElementById('catalogStock').value||0),status:document.getElementById('catalogStatus').value};
+ const payload={name:document.getElementById('catalogName').value.trim(),sku:document.getElementById('catalogSku').value.trim(),barcode:document.getElementById('catalogBarcode').value.trim(),brand:document.getElementById('catalogBrand').value.trim(),category:document.getElementById('catalogCategory').value.trim(),currency:document.getElementById('catalogCurrency').value,image_url:document.getElementById('catalogImage').value.trim(),description:document.getElementById('catalogDescription').value.trim(),cost_price:Number(document.getElementById('catalogCost').value||0),margin_percent:Number(document.getElementById('catalogMargin').value||0),stock:Number(document.getElementById('catalogStock').value||0),status:document.getElementById('catalogStatus').value};
  if(saleRaw!=='')payload.sale_price=Number(saleRaw);
+ if(!payload.name){catalogMessage('Ürün adı zorunludur.',true);return;}
  try{
   await adminApi('/api/v1/admin/catalog/products'+(id?'/'+encodeURIComponent(id):''),{method:id?'PATCH':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   resetCatalogForm();catalogMessage('Ürün kaydedildi.');await loadCatalogProducts();
