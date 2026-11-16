@@ -332,7 +332,7 @@ function go(id){
   window.scrollTo({top:0,behavior:"smooth"});
   if(id==="marketplaces") loadMarketplaceStatus();
   if(id==="xml") loadXmlFeeds();
-  if(id==="catalog") loadCatalogProducts();
+  if(id==="catalog"){loadCatalogProducts();loadXmlFeeds();}
   if(id==="ads") loadAdManager();
   if(["customers","subscriptions","dealers","payments"].includes(id)) loadResource(id);
 }
