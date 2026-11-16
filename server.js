@@ -593,6 +593,9 @@ function catalogProduct(body, previous = {}) {
   const description = catalogText(body.description ?? previous.description, 5000);
   const imageUrl = catalogText(body.image_url ?? previous.image_url, 2048);
   const sku = catalogText(body.sku ?? previous.sku, 100);
+  const barcode = catalogText(body.barcode ?? previous.barcode, 100);
+  const brand = catalogText(body.brand ?? previous.brand, 120);
+  const currency = catalogText(body.currency ?? previous.currency ?? 'TRY', 8).toUpperCase();
   const stock = Number(body.stock ?? previous.stock ?? 0);
   const cost = Number(body.cost_price ?? previous.cost_price ?? 0);
   const margin = Number(body.margin_percent ?? previous.margin_percent ?? 0);
@@ -613,7 +616,8 @@ function catalogProduct(body, previous = {}) {
     try { parsed = new URL(imageUrl); } catch { throw new Error('Görsel adresi geçersiz.'); }
     if (!['https:','http:'].includes(parsed.protocol)) throw new Error('Görsel adresi HTTP veya HTTPS olmalıdır.');
   }
-  return { name, category, description, image_url: imageUrl, sku, stock,
+  if (!['TRY','USD','EUR','GBP'].includes(currency)) throw new Error('Para birimi TRY, USD, EUR veya GBP olmalıdır.');
+  return { name, category, description, image_url: imageUrl, sku, barcode, brand, currency, stock,
     cost_price: Math.round(cost * 100) / 100, margin_percent: Math.round(margin * 100) / 100,
     sale_price: Math.round(price * 100) / 100, status, updated_at: new Date().toISOString() };
 }
