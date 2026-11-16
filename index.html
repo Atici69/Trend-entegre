@@ -736,7 +736,11 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
   <div class="store-order-fields">
    <label>Ad soyad<input name="name" required maxlength="120" autocomplete="name" placeholder="Adınız soyadınız"></label>
    <label>Telefon<input name="phone" required maxlength="30" autocomplete="tel" placeholder="05XX XXX XX XX"></label>
-   <label>E-posta (isteğe bağlı)<input name="email" type="email" maxlength="160" autocomplete="email" placeholder="ornek@eposta.com"></label>
+   <label>İl<input name="city" required maxlength="60" autocomplete="address-level1" placeholder="İl"></label>
+   <label>İlçe<input name="district" required maxlength="60" autocomplete="address-level2" placeholder="İlçe"></label>
+   <label>T.C. kimlik / Vergi numarası<input name="identityNumber" required inputmode="numeric" pattern="[0-9]{10,11}" maxlength="11" placeholder="10 veya 11 rakam"></label>
+   <label>Posta kodu<input name="zipCode" maxlength="20" autocomplete="postal-code" placeholder="Posta kodu"></label>
+   <label>E-posta<input name="email" type="email" maxlength="160" autocomplete="email" placeholder="ornek@eposta.com"></label>
    <label class="store-address">Teslimat adresi<textarea name="address" required minlength="8" maxlength="600" autocomplete="street-address" placeholder="Mahalle, cadde, sokak, bina ve daire bilgisi"></textarea></label>
   </div>
   <p class="store-payment-note">Siparişinizi oluşturduktan sonra iyzico güvenli ödeme sayfasına yönlendirilirsiniz. Kart bilgileriniz Trend-Entegre tarafından saklanmaz.</p>
@@ -1064,8 +1068,7 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
    const response=await fetch(api+"/orders",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+idToken},body:JSON.stringify({buyer,items:[...cart.entries()].map(([product_id,item])=>({product_id,quantity:item.quantity}))})});
    const data=await response.json().catch(()=>({}));
    if(!response.ok)throw new Error(data.error||"Sipariş oluşturulamadı.");
-   cart.clear();renderCart();form.reset();
-   message.textContent="Sipariş #"+data.order.order_number+" oluşturuldu. Güvenli ödeme sayfası hazırlanıyor…";
+   message.textContent="Sipariş #"+data.order.order_number+" oluşturuldu ("+money(data.order.total)+"). Güvenli ödeme sayfası hazırlanıyor…";
    const paymentResponse=await fetch(api+"/payments/iyzico/orders/"+encodeURIComponent(data.order.id)+"/initialize",{method:"POST",headers:{Authorization:"Bearer "+idToken}});
    const payment=await paymentResponse.json().catch(()=>({}));
    if(!paymentResponse.ok)throw new Error("Siparişiniz kaydedildi ancak ödeme başlatılamadı: "+(payment.error||"Lütfen Hesabım > Siparişlerim bölümünden tekrar deneyin."));
