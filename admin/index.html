@@ -180,13 +180,15 @@ th{background:#f5f7fc}
 <div class="two">
 <div class="field"><label for="xmlFeedName">Kaynak adı</label><input id="xmlFeedName" maxlength="100" placeholder="Örn. ABC Tedarikçi"></div>
 <div class="field"><label for="xmlFeedUrl">XML kaynak adresi (HTTPS)</label><input id="xmlFeedUrl" type="url" maxlength="2048" placeholder="https://tedarikci.com/urunler.xml"></div>
+<div class="field"><label for="xmlMarginPercent">Kâr oranı (%)</label><input id="xmlMarginPercent" type="number" min="0" max="1000" step="0.01" value="0" placeholder="Örn. 25"><small class="section-note">Alış fiyatının üzerine eklenecek oran. İstediğiniz zaman değiştirebilirsiniz.</small></div>
 </div>
 <div class="toolbar"><button class="btn" id="xmlPreviewButton" type="button" onclick="previewXmlFeed()">Bağlantıyı test et ve ürünleri oku</button><button class="btn light" id="xmlSaveButton" type="button" onclick="saveXmlFeed()" disabled>Kaynağı kaydet</button></div>
 <p class="section-note" id="xmlMessage" role="status">Önce XML adresini test edin. Başarılı olursa kaydedebilir ve Excel'e aktarabilirsiniz.</p>
 </div>
 <div class="card" style="margin-bottom:15px">
 <div class="head"><div><h2 style="margin:0">Kayıtlı XML kaynakları</h2><p>Eklediğiniz tedarikçi adresleri.</p></div></div>
-<div class="tablebox"><table><thead><tr><th>Kaynak</th><th>Ürün sayısı</th><th>Son kontrol</th><th>İşlem</th></tr></thead><tbody id="xmlFeedRows"><tr><td colspan="4">Kaynaklar yükleniyor…</td></tr></tbody></table></div>
+<div class="tablebox"><table><thead><tr><th>Kaynak</th><th>Ürün sayısı</th><th>Kâr oranı</th><th>Son kontrol</th><th>İşlem</th></tr></thead><tbody id="xmlFeedRows"><tr><td colspan="5">Kaynaklar yükleniyor…</td></tr></tbody></table></div>
+<div class="toolbar" style="margin-top:12px"><button class="btn light" type="button" onclick="saveXmlMargin()">Seçili kaynağın kâr oranını kaydet</button></div>
 </div>
 <div class="card" id="xmlPreviewCard" style="display:none;margin-bottom:15px">
 <h2>Ürün önizlemesi <span class="tag green" id="xmlProductCount"></span></h2>
@@ -629,10 +631,10 @@ function xmlMessage(message,isError=false){
 }
 async function loadXmlFeeds(){
  const rows=document.getElementById('xmlFeedRows');if(!rows)return;
- rows.innerHTML='<tr><td colspan="4">Kaynaklar yükleniyor…</td></tr>';
+ rows.innerHTML='<tr><td colspan="5">Kaynaklar yükleniyor…</td></tr>';
  try{
   const data=await adminApi('/api/v1/admin/xml/feeds');xmlFeedCache=data.feeds||[];
-  rows.innerHTML=xmlFeedCache.length?xmlFeedCache.map(feed=>'<tr><td><strong>'+escapeHtml(feed.name)+'</strong><br><small>'+escapeHtml(feed.url)+'</small></td><td>'+Number(feed.products_count||0).toLocaleString('tr-TR')+'</td><td>'+formatDate(feed.last_tested_at)+'</td><td><button class="logout-btn" onclick="selectXmlFeed(\''+escapeHtml(feed.id)+'\')">Seç</button> <button class="logout-btn" onclick="deleteXmlFeed(\''+escapeHtml(feed.id)+'\')">Sil</button></td></tr>').join(''):'<tr><td colspan="4">Henüz XML kaynağı eklenmedi.</td></tr>';
+  rows.innerHTML=xmlFeedCache.length?xmlFeedCache.map(feed=>'<tr><td><strong>'+escapeHtml(feed.name)+'</strong><br><small>'+escapeHtml(feed.url)+'</small></td><td>'+Number(feed.products_count||0).toLocaleString('tr-TR')+'</td><td>%'+Number(feed.margin_percent||0).toLocaleString('tr-TR')+'</td><td>'+formatDate(feed.last_tested_at)+'</td><td><button class="logout-btn" onclick="selectXmlFeed(\''+escapeHtml(feed.id)+'\')">Seç</button> <button class="logout-btn" onclick="deleteXmlFeed(\''+escapeHtml(feed.id)+'\')">Sil</button></td></tr>').join(''):'<tr><td colspan="5">Henüz XML kaynağı eklenmedi.</td></tr>';
   const select=document.getElementById('xmlExportSource'),selected=select.value;
   select.innerHTML='<option value="">Kaynak seçin</option>'+xmlFeedCache.map(feed=>'<option value="'+escapeHtml(feed.id)+'">'+escapeHtml(feed.name)+'</option>').join('');
   if(selected)select.value=selected;
@@ -641,7 +643,7 @@ async function loadXmlFeeds(){
 function selectXmlFeed(id){
  const select=document.getElementById('xmlExportSource');select.value=id;
  const feed=xmlFeedCache.find(item=>item.id===id);
- if(feed){document.getElementById('xmlFeedName').value=feed.name;document.getElementById('xmlFeedUrl').value=feed.url;}
+ if(feed){document.getElementById('xmlFeedName').value=feed.name;document.getElementById('xmlFeedUrl').value=feed.url;document.getElementById('xmlMarginPercent').value=feed.margin_percent??0;}
 }
 async function previewXmlFeed(){
  const button=document.getElementById('xmlPreviewButton'),url=document.getElementById('xmlFeedUrl').value.trim();
@@ -649,7 +651,7 @@ async function previewXmlFeed(){
  button.disabled=true;button.textContent='Bağlantı kontrol ediliyor…';
  document.getElementById('xmlSaveButton').disabled=true;xmlPreviewReady=false;
  try{
-  const data=await adminApi('/api/v1/admin/xml/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+  const data=await adminApi('/api/v1/admin/xml/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,marginPercent:Number(document.getElementById('xmlMarginPercent').value||0)})});
   xmlPreviewUrl=url;xmlPreviewReady=true;
   document.getElementById('xmlSaveButton').disabled=false;
   document.getElementById('xmlPreviewCard').style.display='block';
@@ -667,11 +669,22 @@ async function saveXmlFeed(){
  if(name.length<2){xmlMessage('Kaynak adına en az 2 karakter girin.',true);return;}
  const button=document.getElementById('xmlSaveButton');button.disabled=true;
  try{
-  const data=await adminApi('/api/v1/admin/xml/feeds',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,url})});
+  const data=await adminApi('/api/v1/admin/xml/feeds',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,url,marginPercent:Number(document.getElementById('xmlMarginPercent').value||0)})});
   xmlMessage('XML kaynağı kaydedildi. '+Number(data.feed.products_count).toLocaleString('tr-TR')+' ürün bulundu.');
   await loadXmlFeeds();document.getElementById('xmlExportSource').value=data.feed.id;
  }catch(error){xmlMessage(error.message,true);}
  finally{button.disabled=false;}
+}
+async function saveXmlMargin(){
+ const source=document.getElementById('xmlExportSource').value;
+ const marginPercent=Number(document.getElementById('xmlMarginPercent').value);
+ if(!source){xmlMessage('Önce kayıtlı bir XML kaynağını seçin.',true);return;}
+ if(!Number.isFinite(marginPercent)||marginPercent<0||marginPercent>1000){xmlMessage('Kâr oranı 0 ile 1000 arasında olmalıdır.',true);return;}
+ try{
+  await adminApi('/api/v1/admin/xml/feeds/'+encodeURIComponent(source),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({marginPercent})});
+  xmlMessage('Kâr oranı %'+marginPercent.toLocaleString('tr-TR')+' olarak kaydedildi.');
+  await loadXmlFeeds();document.getElementById('xmlExportSource').value=source;
+ }catch(error){xmlMessage(error.message,true);}
 }
 async function deleteXmlFeed(id){
  if(!confirm('Bu XML kaynağını kayıtlı kaynaklardan silmek istiyor musunuz?'))return;
