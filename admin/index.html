@@ -372,8 +372,14 @@ function adminToken(){return sessionStorage.getItem(ADMIN_TOKEN_KEY);}
 async function adminApi(path,options={}){
   const response=await fetch(API_BASE_URL+path,{...options,headers:{...(options.headers||{}),Authorization:"Bearer "+adminToken()}});
   if(response.status===401 || response.status===403){adminLogout("Oturum süreniz doldu veya yönetici yetkiniz bulunmuyor. Yeniden giriş yapın.");throw new Error("Yönetici oturumu doğrulanamadı.");}
-  const data=await response.json().catch(()=>({error:"Sunucudan geçerli yanıt alınamadı."}));
-  if(!response.ok) throw new Error(data.error||"İstek tamamlanamadı.");
+  const responseText=await response.text();
+  let data;
+  try{data=responseText?JSON.parse(responseText):{};}
+  catch{
+    const detail=responseText.replace(/<[^>]*>/g," ").replace(/\\s+/g," ").trim().slice(0,180);
+    throw new Error("Sunucu geçerli JSON dönmedi (HTTP "+response.status+")."+(detail?" Yanıt: "+detail:" Yanıt boş."));
+  }
+  if(!response.ok) throw new Error(data.error||"İstek tamamlanamadı (HTTP "+response.status+").");
   return data;
 }
 function showAdminApp(user){
