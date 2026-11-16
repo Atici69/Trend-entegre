@@ -1,0 +1,111 @@
+const API_BASE_URL = 'https://apigw.trendyol.com';
+
+function getCredentials() {
+  const supplierId = process.env.TRENDYOL_SUPPLIER_ID?.trim();
+  const apiKey = process.env.TRENDYOL_API_KEY?.trim();
+  const apiSecret = process.env.TRENDYOL_API_SECRET?.trim();
+  if (!supplierId || !apiKey || !apiSecret) return null;
+  if (!/^\d+$/.test(supplierId)) return null;
+  return { supplierId, apiKey, apiSecret };
+}
+
+function authHeaders(credentials) {
+  const token = Buffer.from(`${credentials.apiKey}:${credentials.apiSecret}`, 'utf8').toString('base64');
+  return {
+    Authorization: `Basic ${token}`,
+    'User-Agent': `${credentials.supplierId} - SelfIntegration`,
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  };
+}
+
+async function trendyolRequest(path, query = {}) {
+  const credentials = getCredentials();
+  if (!credentials) {
+    return { ok: false, status: 'not_configured', message: 'Trendyol Supplier ID, API Key ve API Secret Render ortam değişkenlerinde eksik veya hatalı.' };
+  }
+
+  const url = new URL(path.replace(':sellerId', encodeURIComponent(credentials.supplierId)), API_BASE_URL);
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined && value !== null && value !== '') url.searchParams.set(key, String(value));
+  }
+
+  let response;
+  try {
+    response = await fetch(url, {
+      method: 'GET',
+      headers: authHeaders(credentials),
+      signal: AbortSignal.timeout(15000),
+    });
+  } catch (error) {
+    return {
+      ok: false,
+      status: 'network_error',
+      message: error?.name === 'TimeoutError' ? 'Trendyol API isteği zaman aşımına uğradı.' : 'Trendyol API sunucusuna ulaşılamadı.',
+    };
+  }
+
+  const bodyText = await response.text();
+  let data = null;
+  try { data = bodyText ? JSON.parse(bodyText) : {}; } catch { data = { message: 'Trendyol API geçerli JSON yanıtı döndürmedi.' }; }
+
+  if (!response.ok) {
+    const status = response.status === 401 || response.status === 403
+      ? 'authentication_failed'
+      : response.status === 429 ? 'rate_limited' : 'request_failed';
+    return {
+      ok: false,
+      status,
+      httpStatus: response.status,
+      message: response.status === 401
+        ? 'API Key veya API Secret doğrulanamadı. Render ortam değişkenlerini kontrol edin.'
+        : response.status === 403
+          ? 'Trendyol isteği yetkilendirmedi. User-Agent veya API erişim yetkisini kontrol edin.'
+          : response.status === 429
+            ? 'Trendyol istek limiti aşıldı. Biraz bekleyip tekrar deneyin.'
+            : 'Trendyol API isteği başarısız oldu.',
+    };
+  }
+  return { ok: true, httpStatus: response.status, data };
+}
+
+export async function testTrendyolConnection() {
+  const credentials = getCredentials();
+  if (!credentials) {
+    return { ok: false, status: 'not_configured', message: 'Trendyol Supplier ID, API Key ve API Secret Render ortam değişkenlerinde tanımlanmalıdır.' };
+  }
+  const result = await trendyolRequest('/integration/product/sellers/:sellerId/products/approved', { page: 0, size: 1 });
+  if (!result.ok) return result;
+  return {
+    ok: true,
+    status: 'connected',
+    httpStatus: result.httpStatus,
+    supplierId: credentials.supplierId,
+    productCount: Number(result.data?.totalElements || 0),
+    message: 'Trendyol API bağlantısı başarılı.',
+  };
+}
+
+export async function getTrendyolProducts({ page = 0, size = 20 } = {}) {
+  const safePage = Math.max(0, Math.min(9999, Number.parseInt(page, 10) || 0));
+  const safeSize = Math.max(1, Math.min(100, Number.parseInt(size, 10) || 20));
+  const result = await trendyolRequest('/integration/product/sellers/:sellerId/products/approved', { page: safePage, size: safeSize });
+  if (!result.ok) return result;
+  return { ok: true, httpStatus: result.httpStatus, products: Array.isArray(result.data?.content) ? result.data.content : [], totalElements: Number(result.data?.totalElements || 0), totalPages: Number(result.data?.totalPages || 0), page: safePage, size: safeSize };
+}
+
+export async function getTrendyolOrders({ status = 'Created', page = 0, size = 50 } = {}) {
+  const allowedStatuses = new Set(['Created', 'Picking', 'Invoiced', 'Shipped', 'Cancelled', 'Delivered', 'UnDelivered', 'Returned', 'AtCollectionPoint', 'UnPacked', 'UnSupplied', 'Awaiting', 'Verified']);
+  const safeStatus = allowedStatuses.has(status) ? status : 'Created';
+  const safePage = Math.max(0, Math.min(9999, Number.parseInt(page, 10) || 0));
+  const safeSize = Math.max(1, Math.min(200, Number.parseInt(size, 10) || 50));
+  const result = await trendyolRequest('/integration/order/sellers/:sellerId/v2/orders', {
+    status: safeStatus,
+    page: safePage,
+    size: safeSize,
+    orderByField: 'PackageLastModifiedDate',
+    orderByDirection: 'DESC',
+  });
+  if (!result.ok) return result;
+  return { ok: true, httpStatus: result.httpStatus, orders: Array.isArray(result.data?.content) ? result.data.content : [], totalElements: Number(result.data?.totalElements || 0), totalPages: Number(result.data?.totalPages || 0), page: safePage, size: safeSize };
+}
