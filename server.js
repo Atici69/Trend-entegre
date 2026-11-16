@@ -442,7 +442,7 @@ app.get('/api/v1/catalog/products', async (req, res) => {
 });
 
 // Customer orders: prices and product availability are always re-read on the server.
-app.post('/api/v1/orders', async (req, res) => {
+app.post('/api/v1/orders', requireCustomer, async (req, res) => {
   try {
     const firebase = getFirebaseAdmin();
     if (!firebase) return res.status(503).json({ error: 'Sipariş servisi şu anda kullanılamıyor.' });
@@ -502,7 +502,8 @@ app.post('/api/v1/orders', async (req, res) => {
         order_number: orderRef.id.slice(-10).toUpperCase(),
         status: 'new', payment_status: 'not_started', stock_reserved: true,
         payment_method: 'pending_manual_confirmation',
-        buyer: { name, phone, email, address },
+        uid: req.customerUser.uid,
+        buyer: { name, phone, email: req.customerUser.email || email, address },
         items: orderItems, item_count: orderItems.reduce((sum, item) => sum + item.quantity, 0),
         total_minor: totalMinor, currency: 'TRY',
         created_at: FieldValue.serverTimestamp(), updated_at: FieldValue.serverTimestamp(),
