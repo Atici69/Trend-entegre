@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { createClient } from '@libsql/client';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -65,6 +66,25 @@ function getFirebaseAdmin() {
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'trend-entegre-api', timestamp: new Date().toISOString() });
+});
+
+app.get('/health/turso', async (_req, res) => {
+  const url = process.env.TURSO_DATABASE_URL?.trim();
+  const authToken = process.env.TURSO_AUTH_TOKEN?.trim();
+  if (!url || !authToken) {
+    return res.status(503).json({ ok: false, configured: false, database: 'turso', error: 'TURSO_DATABASE_URL or TURSO_AUTH_TOKEN is not configured' });
+  }
+  let client;
+  try {
+    client = createClient({ url, authToken });
+    await client.execute('SELECT 1');
+    return res.json({ ok: true, configured: true, database: 'turso', check: 'SELECT 1' });
+  } catch (error) {
+    console.error('Turso health check failed:', error?.message || 'Unknown error');
+    return res.status(503).json({ ok: false, configured: true, database: 'turso', error: 'Turso connection failed' });
+  } finally {
+    client?.close();
+  }
 });
 
 
