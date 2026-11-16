@@ -119,7 +119,7 @@ export async function downloadXml(source) {
 function normalizeXmlKey(value) {
   return String(value ?? '')
     .split(':').pop()
-    .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .toLocaleLowerCase('tr-TR')
     .replace(/[^a-z0-9]/g, '');
 }
