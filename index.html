@@ -957,6 +957,37 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
 @media(max-width:800px){#katalog .commerce-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){#katalog .commerce-grid{grid-template-columns:1fr 1fr}#katalog .catalog-product img,#katalog .catalog-product .catalog-no-image{height:140px}#katalog .catalog-product .catalog-info{padding:11px}#katalog .catalog-product h3{font-size:13px}#katalog .catalog-product .catalog-price{font-size:18px}}
 
+
+/* Trendyol-style product detail page */
+#publicCatalogDetail{width:min(1160px,calc(100% - 32px));margin:24px auto 64px;color:#202945}
+#publicCatalogDetail .detail-breadcrumb{font-size:13px;color:#778198;margin:0 0 18px}
+#publicCatalogDetail .detail-shell{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(340px,.95fr);gap:34px;background:#fff;border:1px solid #e5e9f1;border-radius:20px;padding:26px;box-shadow:0 12px 35px #1720440b}
+#publicCatalogDetail .detail-gallery{display:grid;grid-template-columns:76px minmax(0,1fr);gap:14px;align-items:start}
+#publicCatalogDetail .detail-thumbs{display:flex;flex-direction:column;gap:10px}
+#publicCatalogDetail .detail-thumb{width:72px;height:72px;object-fit:cover;border:1px solid #dfe5f0;border-radius:10px;cursor:pointer;background:#f7f8fb}
+#publicCatalogDetail .detail-thumb.active{border:2px solid #5146b8}
+#publicCatalogDetail .detail-main-image{width:100%;height:min(540px,55vw);min-height:340px;object-fit:contain;border-radius:14px;background:#f8f9fc}
+#publicCatalogDetail .detail-info{padding:4px 4px 10px}
+#publicCatalogDetail .detail-brand{font-size:13px;font-weight:800;color:#5146b8}
+#publicCatalogDetail .detail-title{font-size:clamp(23px,3vw,32px);line-height:1.25;letter-spacing:-.7px;margin:8px 0 14px;color:#172044}
+#publicCatalogDetail .detail-rating-note{font-size:12px;color:#778198}
+#publicCatalogDetail .detail-price{font-size:34px;font-weight:900;color:#172044;display:block;margin:22px 0 8px}
+#publicCatalogDetail .detail-stock{font-size:13px;color:#14845c;font-weight:750}
+#publicCatalogDetail .detail-buybox{border:1px solid #e5e9f1;border-radius:14px;padding:16px;margin:20px 0;background:#fcfcfe}
+#publicCatalogDetail .detail-quantity{display:flex;align-items:center;gap:10px;margin:0 0 14px;font-size:13px}
+#publicCatalogDetail .detail-quantity input{width:76px;padding:10px;border:1px solid #dfe5f0;border-radius:9px}
+#publicCatalogDetail .detail-add{width:100%;padding:15px;border:0;border-radius:11px;background:linear-gradient(105deg,#5146b8,#7165df);color:#fff;font-weight:900;font-size:15px;cursor:pointer}
+#publicCatalogDetail .detail-add:disabled{opacity:.45;cursor:not-allowed}
+#publicCatalogDetail .detail-delivery{font-size:12px;color:#68738d;margin-top:12px;line-height:1.6}
+#publicCatalogDetail .detail-panels{margin-top:22px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
+#publicCatalogDetail .detail-panel{background:#fff;border:1px solid #e5e9f1;border-radius:16px;padding:22px}
+#publicCatalogDetail .detail-panel h3{margin:0 0 14px;color:#172044;font-size:19px}
+#publicCatalogDetail .detail-description{white-space:pre-line;color:#4e5870;font-size:14px;line-height:1.85}
+#publicCatalogDetail .detail-specs{width:100%;border-collapse:collapse;font-size:13px}
+#publicCatalogDetail .detail-specs td{padding:10px 8px;border-bottom:1px solid #edf0f5}
+#publicCatalogDetail .detail-specs td:first-child{color:#778198;width:42%}
+#publicCatalogDetail .detail-back{border:0;background:transparent;color:#5146b8;font-weight:800;cursor:pointer;padding:8px 0;margin-bottom:12px}
+@media(max-width:760px){#publicCatalogDetail .detail-shell{grid-template-columns:1fr;padding:15px;gap:20px}#publicCatalogDetail .detail-gallery{grid-template-columns:58px minmax(0,1fr);gap:9px}#publicCatalogDetail .detail-thumb{width:54px;height:54px}#publicCatalogDetail .detail-main-image{height:78vw;min-height:250px}#publicCatalogDetail .detail-panels{grid-template-columns:1fr}#publicCatalogDetail .detail-price{font-size:29px}}
 </style><script>
 (function(){
  const API="https://trend-entegre.onrender.com/api/v1/ads/";
@@ -1040,7 +1071,26 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
   const note=byId("storeOrderMessage");if(note)note.textContent="✓ "+product.name+" sepete eklendi.";
  }
   function openCatalogProduct(id){const product=products.find(item=>String(item.id)===String(id));if(!product)return;const url=new URL(location.href);url.searchParams.set("urun",id);url.hash="katalog";history.pushState({catalogProduct:id},"",url);renderCatalogRoute();byId("katalog")?.scrollIntoView({behavior:"smooth",block:"start"});}
-  function renderCatalogRoute(){const detail=byId("publicCatalogDetail"),grid=byId("publicCatalogGrid"),pagination=byId("publicCatalogPagination"),toolbar=byId("publicCatalogSearch")?.closest(".catalog-toolbar"),category=byId("publicCatalogCategories")?.closest(".catalog-category-picker");if(!detail||!grid)return;const id=new URLSearchParams(location.search).get("urun"),p=id?products.find(item=>String(item.id)===String(id)):null;if(!p){detail.hidden=true;detail.innerHTML="";grid.hidden=false;if(pagination)pagination.hidden=false;if(toolbar)toolbar.hidden=false;if(category)category.hidden=false;return;}const image=p.image_url?'<img class="catalog-detail-image" src="'+esc(p.image_url)+'" alt="'+esc(p.name)+'">':'<div class="catalog-no-image">Görsel eklenmemiş</div>';const stock=Number(p.stock)||0;detail.innerHTML='<button type="button" class="catalog-detail-back" id="catalogDetailBack">← Ürünlere dön</button><div class="catalog-detail-layout"><div>'+image+'</div><div><span class="catalog-category">'+esc(p.display_category||p.category||"Katalog")+'</span><h2>'+esc(p.name)+'</h2><div class="catalog-detail-meta"><span>Stok kodu: '+esc(p.sku||"Belirtilmemiş")+'</span><span>Marka: '+esc(p.brand||"Belirtilmemiş")+'</span><span>'+(stock>0?"Stokta · "+stock+" adet":"Stokta yok")+'</span></div><strong class="catalog-detail-price">'+money(p.sale_price)+'</strong><div class="catalog-detail-description">'+esc(p.description||"Ürün açıklaması henüz eklenmemiş.")+'</div><button type="button" class="catalog-detail-add" id="catalogDetailAdd" '+(stock>0?"":"disabled")+'>Sepete ekle</button></div></div>';detail.hidden=false;grid.hidden=true;if(pagination)pagination.hidden=true;if(toolbar)toolbar.hidden=true;if(category)category.hidden=true;byId("catalogDetailBack")?.addEventListener("click",()=>{const url=new URL(location.href);url.searchParams.delete("urun");url.hash="katalog";history.pushState({},"",url);renderCatalogRoute();});byId("catalogDetailAdd")?.addEventListener("click",()=>addToCart(String(p.id)));}
+  function renderCatalogRoute(){
+   const detail=byId("publicCatalogDetail"),grid=byId("publicCatalogGrid"),pagination=byId("publicCatalogPagination"),toolbar=byId("publicCatalogSearch")?.closest(".catalog-toolbar"),category=byId("publicCatalogCategories")?.closest(".catalog-category-picker");
+   if(!detail||!grid)return;
+   const id=new URLSearchParams(location.search).get("urun"),product=id?products.find(item=>String(item.id)===String(id)):null;
+   if(!product){detail.hidden=true;detail.innerHTML="";grid.hidden=false;if(pagination)pagination.hidden=false;if(toolbar)toolbar.hidden=false;if(category)category.hidden=false;return;}
+   const gallery=[product.image_url,...(Array.isArray(product.gallery_images)?product.gallery_images:[])].filter(Boolean).filter((url,index,list)=>list.indexOf(url)===index).slice(0,8);
+   const specs=Array.isArray(product.features)?product.features.filter(x=>x&&String(x.name||"").trim()&&String(x.value||"").trim()):[];
+   const currency=String(product.currency||"TRY").toUpperCase();
+   const price=Number(product.sale_price||0).toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2})+" "+currency;
+   const stock=Number(product.stock)||0;
+   const mainImage=gallery[0]||"";
+   const imageMarkup=mainImage?'<img id="catalogDetailMainImage" class="detail-main-image" src="'+esc(mainImage)+'" alt="'+esc(product.name)+'">':'<div class="catalog-no-image detail-main-image">Ürün görseli eklenmemiş</div>';
+   const thumbs=gallery.length>1?'<div class="detail-thumbs">'+gallery.map((url,index)=>'<img class="detail-thumb '+(index===0?'active':'')+'" src="'+esc(url)+'" alt="'+esc(product.name)+' görsel '+(index+1)+'" data-detail-image="'+esc(url)+'">').join("")+'</div>':'<div></div>';
+   const detailSpecs=[["Marka",product.brand],["Kategori",product.display_category||product.category],["Stok kodu",product.sku],["Barkod",product.barcode],["Stok",stock>0?stock+" adet":"Stokta yok"],...specs.map(x=>[x.name,x.value])].filter(x=>x[1]);
+   detail.innerHTML='<button type="button" class="detail-back" id="catalogDetailBack">← Ürünlere dön</button><div class="detail-breadcrumb">Ana sayfa / Katalog / '+esc(product.display_category||product.category||"Ürün")+'</div><div class="detail-shell"><div class="detail-gallery">'+thumbs+'<div>'+imageMarkup+'</div></div><div class="detail-info"><div class="detail-brand">'+esc(product.brand||"Trend-Entegre Kataloğu")+'</div><h1 class="detail-title">'+esc(product.name)+'</h1><div class="detail-rating-note">Ürün kodu: '+esc(product.sku||"Belirtilmemiş")+'</div><strong class="detail-price">'+price+'</strong><div class="detail-stock">'+(stock>0?'✓ Stokta · '+stock+' adet mevcut':'Bu ürün şu anda stokta bulunmuyor')+'</div><div class="detail-buybox"><label class="detail-quantity">Adet <input id="catalogDetailQuantity" type="number" min="1" max="'+Math.max(1,Math.min(stock||1,10))+'" value="1" '+(stock>0?'':'disabled')+'></label><button type="button" class="detail-add" id="catalogDetailAdd" '+(stock>0?'':'disabled')+'>Sepete ekle</button><div class="detail-delivery">Güvenli ödeme · Sipariş takibi · Ürün stok bilgisi</div></div></div></div><div class="detail-panels"><section class="detail-panel"><h3>Ürün açıklaması</h3><div class="detail-description">'+esc(product.description||"Bu ürün için henüz açıklama eklenmemiş.")+'</div></section><section class="detail-panel"><h3>Ürün özellikleri</h3>'+(detailSpecs.length?'<table class="detail-specs">'+detailSpecs.map(x=>'<tr><td>'+esc(x[0])+'</td><td><strong>'+esc(x[1])+'</strong></td></tr>').join("")+'</table>':'<div class="detail-description">Bu ürün için henüz özellik bilgisi eklenmemiş.</div>')+'</section></div>';
+   detail.hidden=false;grid.hidden=true;if(pagination)pagination.hidden=true;if(toolbar)toolbar.hidden=true;if(category)category.hidden=true;
+   byId("catalogDetailBack")?.addEventListener("click",()=>{const url=new URL(location.href);url.searchParams.delete("urun");url.hash="katalog";history.pushState({},"",url);renderCatalogRoute();});
+   detail.querySelectorAll("[data-detail-image]").forEach(thumb=>thumb.addEventListener("click",()=>{const main=byId("catalogDetailMainImage");if(main)main.src=thumb.dataset.detailImage;detail.querySelectorAll(".detail-thumb").forEach(item=>item.classList.toggle("active",item===thumb));}));
+   byId("catalogDetailAdd")?.addEventListener("click",()=>{const quantity=Math.max(1,Math.min(10,Number.parseInt(byId("catalogDetailQuantity")?.value||"1",10)||1));for(let i=0;i<quantity;i++)addToCart(String(product.id));});
+  }
  async function loadCatalog(){
   const grid=byId("publicCatalogGrid"),message=byId("publicCatalogMessage");
   if(!grid||!message)return;
