@@ -122,7 +122,7 @@ export function registerIyzicoRoutes(app) {
       const now = new Date().toISOString();
       const orderRef = db.collection('orders').doc();
       const orderNumber = 'TE-' + Date.now().toString(36).toUpperCase();
-      const email = String(buyer.email || req.user.email).trim().slice(0, 160);
+      const email = String(req.user.email).trim().slice(0, 160);
       await orderRef.create({
         order_number: orderNumber,
         user_id: req.user.uid, email, provider: 'iyzico', status: 'pending_payment',
