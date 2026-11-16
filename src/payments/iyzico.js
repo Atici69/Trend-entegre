@@ -335,7 +335,6 @@ export function registerIyzicoRoutes(app) {
             throw new Error('Ödeme siparişiyle tutarı eşleşmedi.');
           }
           if (order.payment_attempt_id !== hash(token)) throw new Error('Bu ödeme denemesi artık geçerli değil.');
-          if (order.status !== 'new' || order.stock_reserved !== true) throw new Error('Sipariş ödeme için artık uygun durumda değil.');
           if (order.payment_status === 'paid') {
             transaction.set(attemptRef, {
               status: 'paid', provider_payment_id: String(result.paymentId),
@@ -344,6 +343,7 @@ export function registerIyzicoRoutes(app) {
             }, { merge: true });
             return;
           }
+          if (order.status !== 'new' || order.stock_reserved !== true) throw new Error('Sipariş ödeme için artık uygun durumda değil.');
           transaction.set(paymentRef, {
             customer_id: attempt.uid, user_id: attempt.uid, order_id: attempt.order_id,
             provider: 'iyzico', provider_reference: String(result.paymentId),
