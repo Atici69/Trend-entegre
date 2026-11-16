@@ -172,7 +172,37 @@ th{background:#f5f7fc}
   </div>
   <p class="section-note" id="marketplaceUpdated"></p>
 </section>
-<section class="page" id="xml"><div class="head"><div><h1>XML İşlemleri</h1><p>Kaynak XML, pazaryerine göre dönüştürme ve Excel aktarımı.</p></div></div><div class="two"><div class="card"><h2>XML içe aktarma</h2><div class="field"><label>XML kaynak adresi</label><input placeholder="https://tedarikci.com/urunler.xml" disabled></div><button class="btn" disabled>Kaynağı kontrol et</button><p class="section-note">Standart paketlerin mevcut XML ve ürün limitleri korunur.</p></div><div class="card"><h2>Dışa aktarma</h2><div class="field"><label>Çıktı biçimi</label><select disabled><option>Excel / XLSX</option><option>CSV</option><option>Pazaryeri XML</option></select></div><button class="btn" disabled>Dosya oluştur</button></div></div><div class="card" style="margin-top:14px"><h2>Ücretli ek hizmet · URL ile büyük XML aktarımı</h2><p class="section-note">Müşteri XML bağlantısını girer. Sunucu XML kaynağını güvenli şekilde indirir, akış halinde işler ve seçilen ürünleri Excel (XLSX) olarak dışa aktarır.</p><div class="two"><div><div class="field"><label>Hedef dosya boyutu üst sınırı</label><input value="100 MB (önerilen başlangıç limiti)" disabled></div><div class="field"><label>Ürün / kayıt limiti</label><input value="Yönetici tarafından paket bazında belirlenir" disabled></div></div><div><div class="field"><label>Ücretlendirme</label><input value="Ayrı ücretli ek hizmet · fiyat yönetici tarafından belirlenir" disabled></div><div class="field"><label>Erişim kontrolü</label><input value="Aktif ücretli hak / abonelik doğrulaması gerekir" disabled></div></div></div><span class="tag">Backend, ödeme doğrulaması ve yetkilendirme gerekli</span></div><p class="section-note">Bu panel şu an arayüz taslağıdır. XML indirme, güvenli URL kontrolü, akış işleme, XLSX üretimi ve ücretli erişim denetimi henüz çalışır durumda değildir.</p></section>
+<section class="page" id="xml">
+<div class="head"><div><h1>XML İşlemleri</h1><p>Tedarikçi XML kaynaklarını ekleyin, ürünleri kontrol edin ve Excel'e aktarın.</p></div><button class="btn light" type="button" onclick="loadXmlFeeds()">Kaynakları yenile</button></div>
+<div class="notice"><b>Güvenli aktarım:</b> XML kaynakları yalnızca HTTPS üzerinden okunur. Yerel / özel ağ adresleri engellenir; dosya boyutu 25 MB, dışa aktarma üst sınırı 5.000 üründür. Bu yönetim ekranı yalnızca yetkili yöneticilere açıktır.</div>
+<div class="card" style="margin-bottom:15px">
+<h2>Yeni tedarikçi XML kaynağı</h2>
+<div class="two">
+<div class="field"><label for="xmlFeedName">Kaynak adı</label><input id="xmlFeedName" maxlength="100" placeholder="Örn. ABC Tedarikçi"></div>
+<div class="field"><label for="xmlFeedUrl">XML kaynak adresi (HTTPS)</label><input id="xmlFeedUrl" type="url" maxlength="2048" placeholder="https://tedarikci.com/urunler.xml"></div>
+</div>
+<div class="toolbar"><button class="btn" id="xmlPreviewButton" type="button" onclick="previewXmlFeed()">Bağlantıyı test et ve ürünleri oku</button><button class="btn light" id="xmlSaveButton" type="button" onclick="saveXmlFeed()" disabled>Kaynağı kaydet</button></div>
+<p class="section-note" id="xmlMessage" role="status">Önce XML adresini test edin. Başarılı olursa kaydedebilir ve Excel'e aktarabilirsiniz.</p>
+</div>
+<div class="card" style="margin-bottom:15px">
+<div class="head"><div><h2 style="margin:0">Kayıtlı XML kaynakları</h2><p>Eklediğiniz tedarikçi adresleri.</p></div></div>
+<div class="tablebox"><table><thead><tr><th>Kaynak</th><th>Ürün sayısı</th><th>Son kontrol</th><th>İşlem</th></tr></thead><tbody id="xmlFeedRows"><tr><td colspan="4">Kaynaklar yükleniyor…</td></tr></tbody></table></div>
+</div>
+<div class="card" id="xmlPreviewCard" style="display:none;margin-bottom:15px">
+<h2>Ürün önizlemesi <span class="tag green" id="xmlProductCount"></span></h2>
+<div class="tablebox"><table><thead id="xmlPreviewHead"></thead><tbody id="xmlPreviewRows"></tbody></table></div>
+<p class="section-note">Önizleme ilk 10 ürünü gösterir. Excel aktarımında ürün adedini seçebilirsiniz.</p>
+</div>
+<div class="card">
+<h2>Excel (XLSX) dışa aktarma</h2>
+<div class="two">
+<div class="field"><label for="xmlExportSource">Kaynak</label><select id="xmlExportSource"><option value="">Önce bir kaynak ekleyin</option></select></div>
+<div class="field"><label for="xmlExportLimit">Aktarılacak ürün sayısı</label><select id="xmlExportLimit"><option value="10">İlk 10 ürün</option><option value="30">İlk 30 ürün</option><option value="100">İlk 100 ürün</option><option value="1000">İlk 1.000 ürün</option><option value="5000">İlk 5.000 ürün</option><option value="all" selected>Tüm ürünler (en fazla 5.000)</option></select></div>
+</div>
+<button class="btn" id="xmlExportButton" type="button" onclick="exportXmlFeed()">Excel dosyasını oluştur ve indir</button>
+<p class="section-note">Dışa aktarma sırasında kaynak yeniden okunur; ürünler XLSX dosyası olarak indirilir.</p>
+</div>
+</section>
 <section class="page" id="buybox"><div class="head"><div><h1>BuyBox Yönetimi</h1><p>Rakip fiyat izleme ve BuyBox hizmetlerinin operasyon alanı.</p></div></div><div class="empty-state"><b>BuyBox servisi henüz bağlı değil.</b><br>Ürün eşleştirme, fiyat izleme sıklığı, bildirim ve raporlama modülleri servis altyapısıyla birlikte geliştirilecek.</div></section>
 <section class="page" id="payments"><div class="head"><div><h1>Ödeme Yönetimi</h1><p>Abonelik tahsilat kayıtları ve ödeme bildirimleri.</p></div><button class="btn light" onclick="loadResource('payments')">Yenile</button></div><div class="notice">Ödeme kayıtları burada salt okunur gösterilir. Gerçek tahsilat veya iade işlemi ödeme kuruluşunun doğrulanmış API/webhook akışı kurulmadan yapılamaz.</div><div class="toolbar"><input id="paymentsSearch" placeholder="Sağlayıcı, referans veya durum ara" oninput="queueResourceSearch('payments')"></div><div id="paymentsMessage" class="section-note"></div><div class="tablebox"><table><thead><tr><th>Sağlayıcı / Referans</th><th>Müşteri ID</th><th>Tutar</th><th>Durum</th><th>Ödeme tarihi</th></tr></thead><tbody id="paymentsRows"><tr><td colspan="5">Kayıtlar yükleniyor…</td></tr></tbody></table></div><p class="section-note" id="paymentsPager"></p></section>
 <section class="page" id="accounting"><div class="head"><div><h1>Muhasebe</h1><p>Gelir-gider, bayi komisyonları, tahsilat ve finansal kayıtlar.</p></div><span class="tag gray">MODÜL PASİF</span></div><div class="notice"><b>Muhasebe modülü henüz aktif edilmemiştir.</b> Bu bölüm yönetim panelinde hazır tutulmaktadır. Aktifleştirme yapılana kadar kayıt oluşturma, düzenleme, silme ve finansal hesaplama işlemleri kapalıdır.</div><div class="grid"><div class="metric"><label>Muhasebe Genel Bakış</label><strong>—</strong><small class="state">Pasif</small></div><div class="metric"><label>Gelir – Gider Takibi</label><strong>—</strong><small class="state">Pasif</small></div><div class="metric"><label>Bayi Komisyonları</label><strong>—</strong><small class="state">Pasif</small></div><div class="metric"><label>Tahsilat Raporları</label><strong>—</strong><small class="state">Pasif</small></div></div><div class="card" style="margin-top:15px"><h2>Finansal kayıt alanları</h2><div class="tablebox"><table><thead><tr><th>Alt bölüm</th><th>Durum</th><th>Açıklama</th></tr></thead><tbody><tr><td>Gelir – Gider Takibi</td><td><span class="tag gray">Pasif</span></td><td>Gelir ve gider kayıtları</td></tr><tr><td>Bayi Komisyonları</td><td><span class="tag gray">Pasif</span></td><td>Bayi / alt bayi hakedişleri</td></tr><tr><td>Tahsilat Raporları</td><td><span class="tag gray">Pasif</span></td><td>Ödeme ve tahsilat dökümleri</td></tr><tr><td>Fatura ve Ödeme Kayıtları</td><td><span class="tag gray">Pasif</span></td><td>Fatura ve ödeme geçmişi</td></tr></tbody></table></div><p class="section-note">Modül, ileride güvenli veritabanı ve muhasebe iş kuralları bağlandığında yönetici tarafından etkinleştirilebilir.</p></div></section>
@@ -588,4 +618,77 @@ document.getElementById('adCampaignForm').addEventListener('submit',async event=
  }catch(error){message.textContent=error.message;}
  finally{button.disabled=false;}
 });
-</script></body></html>
+
+let xmlPreviewReady=false;
+let xmlPreviewUrl='';
+let xmlFeedCache=[];
+function xmlMessage(message,isError=false){
+ const box=document.getElementById('xmlMessage');if(!box)return;
+ box.textContent=message;box.style.color=isError?'#a52d20':'#13845c';
+}
+async function loadXmlFeeds(){
+ const rows=document.getElementById('xmlFeedRows');if(!rows)return;
+ rows.innerHTML='<tr><td colspan="4">Kaynaklar yükleniyor…</td></tr>';
+ try{
+  const data=await adminApi('/api/v1/admin/xml/feeds');xmlFeedCache=data.feeds||[];
+  rows.innerHTML=xmlFeedCache.length?xmlFeedCache.map(feed=>'<tr><td><strong>'+escapeHtml(feed.name)+'</strong><br><small>'+escapeHtml(feed.url)+'</small></td><td>'+Number(feed.products_count||0).toLocaleString('tr-TR')+'</td><td>'+formatDate(feed.last_tested_at)+'</td><td><button class="logout-btn" onclick="selectXmlFeed(\''+escapeHtml(feed.id)+'\')">Seç</button> <button class="logout-btn" onclick="deleteXmlFeed(\''+escapeHtml(feed.id)+'\')">Sil</button></td></tr>').join(''):'<tr><td colspan="4">Henüz XML kaynağı eklenmedi.</td></tr>';
+  const select=document.getElementById('xmlExportSource'),selected=select.value;
+  select.innerHTML='<option value="">Kaynak seçin</option>'+xmlFeedCache.map(feed=>'<option value="'+escapeHtml(feed.id)+'">'+escapeHtml(feed.name)+'</option>').join('');
+  if(selected)select.value=selected;
+ }catch(error){rows.innerHTML='<tr><td colspan="4">XML kaynakları alınamadı.</td></tr>';xmlMessage(error.message,true);}
+}
+function selectXmlFeed(id){
+ const select=document.getElementById('xmlExportSource');select.value=id;
+ const feed=xmlFeedCache.find(item=>item.id===id);
+ if(feed){document.getElementById('xmlFeedName').value=feed.name;document.getElementById('xmlFeedUrl').value=feed.url;}
+}
+async function previewXmlFeed(){
+ const button=document.getElementById('xmlPreviewButton'),url=document.getElementById('xmlFeedUrl').value.trim();
+ if(!url){xmlMessage('Önce XML kaynak adresini girin.',true);return;}
+ button.disabled=true;button.textContent='Bağlantı kontrol ediliyor…';
+ document.getElementById('xmlSaveButton').disabled=true;xmlPreviewReady=false;
+ try{
+  const data=await adminApi('/api/v1/admin/xml/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+  xmlPreviewUrl=url;xmlPreviewReady=true;
+  document.getElementById('xmlSaveButton').disabled=false;
+  document.getElementById('xmlPreviewCard').style.display='block';
+  document.getElementById('xmlProductCount').textContent=Number(data.totalProducts).toLocaleString('tr-TR')+' ürün';
+  const items=data.preview||[],keys=items.length?Object.keys(items[0]):[];
+  document.getElementById('xmlPreviewHead').innerHTML='<tr>'+keys.map(key=>'<th>'+escapeHtml(key)+'</th>').join('')+'</tr>';
+  document.getElementById('xmlPreviewRows').innerHTML=items.map(item=>'<tr>'+keys.map(key=>'<td>'+escapeHtml(item[key]||'—')+'</td>').join('')+'</tr>').join('');
+  xmlMessage('Bağlantı başarılı. '+Number(data.totalProducts).toLocaleString('tr-TR')+' ürün bulundu. Kaynağı kaydedebilir veya dışa aktarabilirsiniz.');
+ }catch(error){document.getElementById('xmlPreviewCard').style.display='none';xmlMessage(error.message,true);}
+ finally{button.disabled=false;button.textContent='Bağlantıyı test et ve ürünleri oku';}
+}
+async function saveXmlFeed(){
+ const name=document.getElementById('xmlFeedName').value.trim(),url=document.getElementById('xmlFeedUrl').value.trim();
+ if(!xmlPreviewReady||url!==xmlPreviewUrl){xmlMessage('Kaydetmeden önce bu adresin bağlantı testini yapın.',true);return;}
+ if(name.length<2){xmlMessage('Kaynak adına en az 2 karakter girin.',true);return;}
+ const button=document.getElementById('xmlSaveButton');button.disabled=true;
+ try{
+  const data=await adminApi('/api/v1/admin/xml/feeds',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,url})});
+  xmlMessage('XML kaynağı kaydedildi. '+Number(data.feed.products_count).toLocaleString('tr-TR')+' ürün bulundu.');
+  await loadXmlFeeds();document.getElementById('xmlExportSource').value=data.feed.id;
+ }catch(error){xmlMessage(error.message,true);}
+ finally{button.disabled=false;}
+}
+async function deleteXmlFeed(id){
+ if(!confirm('Bu XML kaynağını kayıtlı kaynaklardan silmek istiyor musunuz?'))return;
+ try{await adminApi('/api/v1/admin/xml/feeds/'+encodeURIComponent(id),{method:'DELETE'});await loadXmlFeeds();xmlMessage('XML kaynağı silindi.');}
+ catch(error){xmlMessage(error.message,true);}
+}
+async function exportXmlFeed(){
+ const source=document.getElementById('xmlExportSource').value;
+ if(!source){xmlMessage('Excel aktarımı için kayıtlı bir kaynak seçin.',true);return;}
+ const button=document.getElementById('xmlExportButton');button.disabled=true;button.textContent='Excel hazırlanıyor…';
+ try{
+  const response=await fetch(API_BASE_URL+'/api/v1/admin/xml/export',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+adminToken()},body:JSON.stringify({feed_id:source,limit:document.getElementById('xmlExportLimit').value})});
+  if(response.status===401||response.status===403){adminLogout('Yönetici oturumu doğrulanamadı. Yeniden giriş yapın.');throw new Error('Yönetici oturumu doğrulanamadı.');}
+  if(!response.ok){const error=await response.json().catch(()=>({}));throw new Error(error.error||'Excel dosyası oluşturulamadı.');}
+  const blob=await response.blob(),url=URL.createObjectURL(blob),anchor=document.createElement('a');
+  anchor.href=url;anchor.download='trend-entegre-urunler.xlsx';document.body.appendChild(anchor);anchor.click();anchor.remove();URL.revokeObjectURL(url);
+  xmlMessage('Excel dosyası oluşturuldu ve indirme başlatıldı.');
+ }catch(error){xmlMessage(error.message,true);}
+ finally{button.disabled=false;button.textContent='Excel dosyasını oluştur ve indir';}
+}
+\n</script></body></html>
