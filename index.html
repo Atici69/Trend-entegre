@@ -875,7 +875,8 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
 #katalog .catalog-product h3{font-size:15px;line-height:1.4;color:var(--n);margin:7px 0}
 #katalog .catalog-product p{font-size:12px;color:var(--m);line-height:1.5;flex:1;margin:0 0 12px}
 #katalog .catalog-product .catalog-price{font-size:22px;font-weight:900;color:var(--n)}
-#katalog .catalog-product .catalog-stock{font-size:11px;color:#13845c;margin-top:5px}\n#katalog .catalog-product .catalog-order{display:block;text-align:center;margin-top:12px;padding:10px 12px;border-radius:10px;background:#f4772b;color:#fff;font-size:12px;font-weight:850}
+#katalog .catalog-product .catalog-stock{font-size:11px;color:#13845c;margin-top:5px}
+#katalog .catalog-product .catalog-order{display:block;text-align:center;margin-top:12px;padding:10px 12px;border-radius:10px;background:#f4772b;color:#fff;font-size:12px;font-weight:850}
 @media(max-width:800px){#katalog .commerce-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){#katalog .commerce-grid{grid-template-columns:1fr 1fr}#katalog .catalog-product img,#katalog .catalog-product .catalog-no-image{height:140px}#katalog .catalog-product .catalog-info{padding:11px}#katalog .catalog-product h3{font-size:13px}#katalog .catalog-product .catalog-price{font-size:18px}}
 
@@ -937,7 +938,8 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
    message.textContent=products.length+" ürün listeleniyor.";
    grid.innerHTML=products.map(p=>{
     const image=p.image_url?'<img src="'+esc(p.image_url)+'" alt="'+esc(p.name)+'" loading="lazy">':'<div class="catalog-no-image">Görsel eklenmemiş</div>';
-    const orderText='Merhaba, şu ürünü sipariş etmek istiyorum: '+p.name+' | SKU: '+(p.sku||'Belirtilmemiş')+' | Fiyat: '+money(p.sale_price);\n     const orderUrl='https://wa.me/905458959469?text='+encodeURIComponent(orderText);\n     return '<article class="catalog-product">'+image+'<div class="catalog-info"><span class="catalog-category">'+esc(p.category||"Ürün")+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(p.description||"")+'</p><strong class="catalog-price">'+money(p.sale_price)+'</strong><span class="catalog-stock">'+(Number(p.stock)>0?"Stokta":"Stok bilgisi için iletişime geçin")+'</span><a class="catalog-order" href="'+orderUrl+'" target="_blank" rel="noopener noreferrer">WhatsApp ile sipariş ver</a></div></article>';
+    const orderText='Merhaba, şu ürünü sipariş etmek istiyorum: '+p.name+' | SKU: '+(p.sku||'Belirtilmemiş')+' | Fiyat: '+money(p.sale_price);
+     const orderUrl='https://wa.me/905458959469?text='+encodeURIComponent(orderText);\n     return '<article class="catalog-product">'+image+'<div class="catalog-info"><span class="catalog-category">'+esc(p.category||"Ürün")+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(p.description||"")+'</p><strong class="catalog-price">'+money(p.sale_price)+'</strong><span class="catalog-stock">'+(Number(p.stock)>0?"Stokta":"Stok bilgisi için iletişime geçin")+'</span><a class="catalog-order" href="'+orderUrl+'" target="_blank" rel="noopener noreferrer">WhatsApp ile sipariş ver</a></div></article>';
    }).join("");
   }catch(error){message.textContent=error.message||"Katalog yüklenemedi.";}
  }
