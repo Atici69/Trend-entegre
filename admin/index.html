@@ -196,13 +196,14 @@ th{background:#f5f7fc}
 <p class="section-note">Önizlemede alış fiyatı, seçtiğiniz kâr oranı ve hesaplanan satış fiyatı görünür. Excel aktarımında da bu üç bilgi yer alır.</p>
 </div>
 <div class="card">
-<h2>Excel (XLSX) dışa aktarma</h2>
+<h2>Dosya dışa aktarma</h2>
 <div class="two">
 <div class="field"><label for="xmlExportSource">Kaynak</label><select id="xmlExportSource"><option value="">Önce bir kaynak ekleyin</option></select></div>
+<div class="field"><label for="xmlExportFormat">Çıktı biçimi</label><select id="xmlExportFormat"><option value="xlsx">Excel / XLSX</option><option value="csv">CSV</option><option value="xml">Pazaryeri XML (standart ürün şeması)</option></select></div>
 <div class="field"><label for="xmlExportLimit">Aktarılacak ürün sayısı</label><select id="xmlExportLimit"><option value="10">İlk 10 ürün</option><option value="30">İlk 30 ürün</option><option value="100">İlk 100 ürün</option><option value="1000">İlk 1.000 ürün</option><option value="5000">İlk 5.000 ürün</option><option value="all" selected>Tüm ürünler (en fazla 5.000)</option></select></div>
 </div>
-<button class="btn" id="xmlExportButton" type="button" onclick="exportXmlFeed()">Excel dosyasını oluştur ve indir</button>
-<p class="section-note">Dışa aktarma sırasında kaynak yeniden okunur; ürünler XLSX dosyası olarak indirilir.</p>
+<button class="btn" id="xmlExportButton" type="button" onclick="exportXmlFeed()">Dosyayı oluştur ve indir</button>
+<p class="section-note">Dışa aktarma sırasında kaynak yeniden okunur. XLSX, CSV veya standart ürün XML biçiminde dosya oluşturulur.</p>
 </div>
 </section>
 <section class="page" id="catalog">
@@ -658,6 +659,8 @@ async function loadXmlFeeds(){
   const select=document.getElementById('xmlExportSource'),selected=select.value;
   select.innerHTML='<option value="">Kaynak seçin</option>'+xmlFeedCache.map(feed=>'<option value="'+escapeHtml(feed.id)+'">'+escapeHtml(feed.name)+'</option>').join('');
   if(selected)select.value=selected;
+  const catalogSelect=document.getElementById('catalogXmlFeed'),catalogSelected=catalogSelect?.value||'';
+  if(catalogSelect){catalogSelect.innerHTML='<option value="">Kaynak seçin</option>'+xmlFeedCache.map(feed=>'<option value="'+escapeHtml(feed.id)+'">'+escapeHtml(feed.name)+'</option>').join('');if(catalogSelected)catalogSelect.value=catalogSelected;}
  }catch(error){rows.innerHTML='<tr><td colspan="5">XML kaynakları alınamadı.</td></tr>';xmlMessage(error.message,true);}
 }
 function selectXmlFeed(id){
@@ -716,14 +719,14 @@ async function exportXmlFeed(){
  if(!source){xmlMessage('Excel aktarımı için kayıtlı bir kaynak seçin.',true);return;}
  const button=document.getElementById('xmlExportButton');button.disabled=true;button.textContent='Excel hazırlanıyor…';
  try{
-  const response=await fetch(API_BASE_URL+'/api/v1/admin/xml/export',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+adminToken()},body:JSON.stringify({feed_id:source,limit:document.getElementById('xmlExportLimit').value})});
+  const response=await fetch(API_BASE_URL+'/api/v1/admin/xml/export',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+adminToken()},body:JSON.stringify({feed_id:source,limit:document.getElementById('xmlExportLimit').value,format:document.getElementById('xmlExportFormat').value})});
   if(response.status===401||response.status===403){adminLogout('Yönetici oturumu doğrulanamadı. Yeniden giriş yapın.');throw new Error('Yönetici oturumu doğrulanamadı.');}
   if(!response.ok){const error=await response.json().catch(()=>({}));throw new Error(error.error||'Excel dosyası oluşturulamadı.');}
   const blob=await response.blob(),url=URL.createObjectURL(blob),anchor=document.createElement('a');
-  anchor.href=url;anchor.download='trend-entegre-urunler.xlsx';document.body.appendChild(anchor);anchor.click();anchor.remove();URL.revokeObjectURL(url);
-  xmlMessage('Excel dosyası oluşturuldu ve indirme başlatıldı.');
+  anchor.href=url;anchor.download='trend-entegre-urunler.'+document.getElementById('xmlExportFormat').value;document.body.appendChild(anchor);anchor.click();anchor.remove();URL.revokeObjectURL(url);
+  xmlMessage('Dosya oluşturuldu ve indirme başlatıldı.');
  }catch(error){xmlMessage(error.message,true);}
- finally{button.disabled=false;button.textContent='Excel dosyasını oluştur ve indir';}
+ finally{button.disabled=false;button.textContent='Dosyayı oluştur ve indir';}
 }
 
 
