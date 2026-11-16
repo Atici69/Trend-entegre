@@ -284,7 +284,7 @@ th{background:#f5f7fc}
 </section>
 <section class="page" id="orders">
 <div class="head"><div><h1>Mağaza Siparişleri</h1><p>Katalog üzerinden gelen müşteri sipariş taleplerini inceleyin ve durumlarını güncelleyin.</p></div><button class="btn light" type="button" onclick="loadCatalogOrders()">Yenile</button></div>
-<div class="notice"><b>Ödeme durumu:</b> Bu siparişler şu an ödeme alınmadan talep olarak kaydedilir. Müşteriyle stok, teslimat ve ödeme yöntemi için iletişime geçin.</div>
+<div class="notice"><b>Sipariş akışı:</b> Ödeme iyzico tarafından doğrulandıktan sonra siparişi hazırlamaya alabilir, kargoya verebilir ve teslim edildi olarak işaretleyebilirsiniz. Kargoya verirken takip numarası girilmesi zorunludur.</div>
 <p class="section-note" id="catalogOrdersMessage" role="status"></p>
 <div class="tablebox"><table><thead><tr><th>Sipariş</th><th>Müşteri</th><th>Ürünler</th><th>Tutar</th><th>Durum</th><th>Tarih</th><th>İşlem</th></tr></thead><tbody id="catalogOrdersRows"><tr><td colspan="7">Siparişler yükleniyor…</td></tr></tbody></table></div>
 </section>
@@ -902,19 +902,29 @@ async function loadCatalogOrders(){
   const data=await adminApi('/api/v1/admin/catalog/orders'),orders=data.orders||[];
   rows.innerHTML=orders.length?orders.map(order=>{
    const buyer=order.buyer||{},items=(order.items||[]).map(item=>escapeHtml(item.name)+' × '+Number(item.quantity||0)).join('<br>');
-   const statusLabels={new:'Yeni',confirmed:'Onaylandı',cancelled:'İptal',fulfilled:'Tamamlandı'};
-   const actions=order.status==='new'
-    ?'<button class="logout-btn" onclick="setCatalogOrderStatus(\''+escapeHtml(order.id)+'\',\'confirmed\')">Onayla</button> <button class="logout-btn" onclick="setCatalogOrderStatus(\''+escapeHtml(order.id)+'\',\'cancelled\')">İptal</button>'
-    :order.status==='confirmed'?'<button class="logout-btn" onclick="setCatalogOrderStatus(\''+escapeHtml(order.id)+'\',\'fulfilled\')">Tamamlandı</button>':'—';
-   return '<tr><td><strong>#'+escapeHtml(order.order_number)+'</strong><br><small>'+Number(order.item_count||0)+' adet</small></td><td><strong>'+escapeHtml(buyer.name)+'</strong><br>'+escapeHtml(buyer.phone)+'<br><small>'+escapeHtml(buyer.email||'')+'</small><br><small>'+escapeHtml(buyer.address)+'</small></td><td>'+items+'</td><td><strong>'+(Number(order.total_minor||0)/100).toLocaleString('tr-TR',{minimumFractionDigits:2})+' TL</strong></td><td><span class="tag '+(order.status==='new'?'':'green')+'">'+(statusLabels[order.status]||escapeHtml(order.status))+'</span><br><small>Ödeme alınmadı</small></td><td>'+formatDate(order.created_at)+'</td><td>'+actions+'</td></tr>';
+   const statusLabels={pending_payment:'Ödeme bekleniyor',paid:'Ödeme alındı',processing:'Hazırlanıyor',shipped:'Kargoya verildi',delivered:'Teslim edildi',cancelled:'İptal'};
+   let actions='—';
+   if(order.status==='paid')actions='<button class="logout-btn" onclick="setCatalogOrderStatus(\''+escapeHtml(order.id)+'\',\'processing\')">Hazırlamaya al</button>';
+   else if(order.status==='processing')actions='<button class="logout-btn" onclick="setCatalogOrderStatus(\''+escapeHtml(order.id)+'\',\'shipped\')">Kargoya ver</button>';
+   else if(order.status==='shipped')actions='<button class="logout-btn" onclick="setCatalogOrderStatus(\''+escapeHtml(order.id)+'\',\'delivered\')">Teslim edildi</button>';
+   const paymentLabel=order.payment_status==='paid'?'Ödeme alındı':order.payment_status==='failed'?'Ödeme başarısız':'Ödeme bekleniyor';
+   const shipment=order.tracking_number?'<br><small>'+escapeHtml(order.shipping_company||'Kargo')+' · '+escapeHtml(order.tracking_number)+'</small>':'';
+   return '<tr><td><strong>#'+escapeHtml(order.order_number)+'</strong><br><small>'+Number((order.items||[]).reduce((sum,item)=>sum+Number(item.quantity||0),0))+' adet</small></td><td><strong>'+escapeHtml(buyer.name)+'</strong><br>'+escapeHtml(buyer.phone)+'<br><small>'+escapeHtml(buyer.email||'')+'</small><br><small>'+escapeHtml(buyer.address)+'</small></td><td>'+items+'</td><td><strong>'+(Number(order.total_minor||0)/100).toLocaleString('tr-TR',{minimumFractionDigits:2})+' TL</strong></td><td><span class="tag '+(order.payment_status==='paid'?'green':'')+'">'+(statusLabels[order.status]||escapeHtml(order.status))+'</span><br><small>'+paymentLabel+'</small>'+shipment+'</td><td>'+formatDate(order.created_at)+'</td><td>'+actions+'</td></tr>';
   }).join(''):'<tr><td colspan="7">Henüz sipariş bulunmuyor.</td></tr>';
  }catch(error){rows.innerHTML='<tr><td colspan="7">Siparişler alınamadı.</td></tr>';if(message)message.textContent=error.message;}
 }
 async function setCatalogOrderStatus(id,status){
- const labels={confirmed:'onaylamak',cancelled:'iptal etmek',fulfilled:'tamamlandı olarak işaretlemek'};
+ const labels={processing:'hazırlamaya almak',shipped:'kargoya vermek',delivered:'teslim edildi olarak işaretlemek'};
+ if(!labels[status])return;
  if(!confirm('Bu siparişi '+labels[status]+' istiyor musunuz?'))return;
+ const payload={status};
+ if(status==='shipped'){
+  payload.shipping_company=prompt('Kargo firması (ör. Yurtiçi Kargo):','')||'';
+  payload.tracking_number=prompt('Kargo takip numarasını girin:','')||'';
+  if(!payload.tracking_number.trim()){alert('Kargo takip numarası olmadan kargoya verilemez.');return;}
+ }
  try{
-  await adminApi('/api/v1/admin/catalog/orders/'+encodeURIComponent(id),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});
+  await adminApi('/api/v1/admin/catalog/orders/'+encodeURIComponent(id),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   await loadCatalogOrders();
  }catch(error){const message=document.getElementById('catalogOrdersMessage');if(message)message.textContent=error.message;}
 }
