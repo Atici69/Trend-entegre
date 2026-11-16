@@ -170,7 +170,7 @@ export function parseProducts(xml) {
     'Ürün ID': findField(item, ['id', 'product_id', 'productid']),
     'Ürün Adı': findField(item, ['name', 'title', 'product_name', 'productname', 'urunadi', 'ürünadı', 'baslik']),
     'SKU': findField(item, ['sku', 'stock_code', 'stockcode', 'model', 'stok_kodu']),
-    'Barkod': findField(item, ['barcode', 'gtin', 'ean', 'barcode_number']),
+    'Barkod': findField(item, ['barcode', 'gtin', 'ean', 'barcode_number', 'barkod']),
     'Marka': findField(item, ['brand', 'manufacturer', 'marka', 'marka_baslik']),
     'Kategori': findField(item, ['category', 'category_name', 'kategori', 'kategori_baslik']) || 'Katalog',
     'Fiyat': findField(item, ['price', 'sale_price', 'selling_price', 'fiyat']),
