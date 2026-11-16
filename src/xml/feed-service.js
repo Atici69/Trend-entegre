@@ -182,7 +182,9 @@ export function parseProducts(xml) {
     'Web Color': findField(item, ['web_color', 'webcolor', 'web renk', 'web renk kodu']),
     'Beden': findField(item, ['size', 'sized', 'beden', 'olcu', 'ölçü', 'ebat']),
     'Materyal': findField(item, ['material', 'materyal', 'malzeme']),
-    'Cinsiyet': findField(item, ['gender', 'cinsiyet']),
+    'Cinsiyet': findField(item, ['gender', 'cinsiyet', 'target_gender']),
+    'Menşei': findField(item, ['origin', 'country_of_origin', 'made_in', 'menşei', 'mensei', 'uretim_yeri', 'üretim_yeri']),
+    'Kutu Durumu': findField(item, ['box_condition', 'package_condition', 'kutu_durumu', 'kutu durumu']),
     'KDV': findField(item, ['vat', 'vat_rate', 'tax', 'kdv', 'kdv_orani']),
   }));
   return products;
