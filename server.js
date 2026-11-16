@@ -454,7 +454,7 @@ app.get('/api/v1/admin/overview', requireAdmin, async (req, res) => {
           status: configuredMarketplaces === 0 ? 'pending' : configuredMarketplaces === marketplaceItems.length ? 'configured' : 'partial',
           detail: configuredMarketplaces + '/' + marketplaceItems.length + ' pazaryeri için kimlik bilgileri tanımlı; canlı bağlantı ayrıca test edilmelidir.',
         },
-        xml: { status: 'configured', detail: 'XML dosyası ve HTTPS kaynak okuma, ürün alanlarını standartlaştırma, önizleme, kâr marjı, Katalog aktarımı ve XLSX/CSV/XML dışa aktarma uçları hazır.' },
+        xml: { status: 'partial', detail: 'XML dosyası ve HTTPS kaynak okuma, ürün önizleme, kâr marjı, Katalog aktarımı ve standart XLSX/CSV/XML dışa aktarma hazır. Trendyol ve Hepsiburada özel ürün şemaları kategori/özellik eşleştirmesi gerektirir.' },
       },
     });
   } catch (error) {
