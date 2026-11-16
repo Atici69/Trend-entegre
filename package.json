@@ -26,7 +26,8 @@
     "xlsx": "^0.18.5",
     "firebase-admin": "^13.5.0",
     "iyzipay": "^2.0.71",
-    "fast-xml-parser": "^5.3.3"
+    "fast-xml-parser": "^5.3.3",
+    "@libsql/client": "^0.15.15"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.4.3",
