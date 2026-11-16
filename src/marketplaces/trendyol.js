@@ -145,15 +145,15 @@ async function makeAttributes(product, categoryId, mapping, cache) {
     const attributeId = String(attribute.id ?? definition.attributeId ?? '');
     if (!attributeId) continue;
     const saved = configured.find(item => String(item.attributeId) === attributeId);
+    if (saved?.attributeValueId) {
+      result.push({ attributeId: Number(attributeId), attributeValueId: Number(saved.attributeValueId) });
+      continue;
+    }
     let raw = saved?.customAttributeValue || saved?.attributeValue || '';
     if (!raw && saved?.sourceField) raw = text(product[saved.sourceField]);
     if (!raw) raw = sourceValue(product, attribute.name || '');
     if (!raw) {
       if (definition.required) errors.push('Zorunlu özellik eksik: ' + (attribute.name || attributeId));
-      continue;
-    }
-    if (saved?.attributeValueId) {
-      result.push({ attributeId: Number(attributeId), attributeValueId: Number(saved.attributeValueId) });
       continue;
     }
     if (definition.allowCustom === true || definition.allowCustomValue === true) {
