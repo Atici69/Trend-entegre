@@ -1051,12 +1051,12 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
     const supplied=String(product.category||"").trim();
     if(supplied&& !["katalog","ürün","urun","genel","diğer","diger"].includes(supplied.toLocaleLowerCase("tr-TR")))return supplied;
     const name=(String(product.name||"")+" "+String(product.description||"")).toLocaleLowerCase("tr-TR");
-    if(/\\b(yüzük|yuzuk|alyans)\\b/.test(name))return "Yüzükler";
-    if(/\\b(bileklik|bilezik|şahmeran|sahmeran)\\b/.test(name))return "Bileklik ve Bilezikler";
-    if(/\\b(kolye|madalyon|kolye ucu|zincir)\\b/.test(name))return "Kolye ve Madalyonlar";
-    if(/\\b(küpe|kupe|halka küpe)\\b/.test(name))return "Küpeler";
-    if(/\\b(halhal)\\b/.test(name))return "Halhallar";
-    if(/\\b(takı seti|taki seti|set halinde)\\b/.test(name))return "Takı Setleri";
+    if(/\b(yüzük|yuzuk|alyans)\b/.test(name))return "Yüzükler";
+    if(/\b(bileklik|bilezik|şahmeran|sahmeran)\b/.test(name))return "Bileklik ve Bilezikler";
+    if(/\b(kolye|madalyon|kolye ucu|zincir)\b/.test(name))return "Kolye ve Madalyonlar";
+    if(/\b(küpe|kupe|halka küpe)\b/.test(name))return "Küpeler";
+    if(/\b(halhal)\b/.test(name))return "Halhallar";
+    if(/\b(takı seti|taki seti|set halinde)\b/.test(name))return "Takı Setleri";
     return "Diğer Ürünler";
    }
    products=products.map(product=>({...product,display_category:categoryOf(product)}));
