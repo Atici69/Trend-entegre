@@ -172,7 +172,7 @@ export function parseProducts(xml) {
     'SKU': findField(item, ['sku', 'stock_code', 'stockcode', 'model', 'stok_kodu']),
     'Barkod': findField(item, ['barcode', 'gtin', 'ean', 'barcode_number']),
     'Marka': findField(item, ['brand', 'manufacturer', 'marka', 'marka_baslik']),
-    'Kategori': findField(item, ['category', 'category_name', 'kategori']),
+    'Kategori': findField(item, ['category', 'category_name', 'kategori', 'kategori_baslik']) || 'Katalog',
     'Fiyat': findField(item, ['price', 'sale_price', 'selling_price', 'fiyat']),
     'Para Birimi': findField(item, ['currency', 'currency_code', 'parabirimi', 'kur_tipi']),
     'Stok': findField(item, ['quantity', 'stock', 'stock_quantity', 'qty', 'stok']),
