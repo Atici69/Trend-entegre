@@ -135,3 +135,41 @@ export async function getTrendyolCategoryAttributes(categoryId) {
   if (!result.ok) return result;
   return { ok: true, attributes: result.data?.categoryAttributes || [], category: { id: result.data?.id || Number(id), name: result.data?.name || result.data?.displayName || '' } };
 }
+
+
+export async function createTrendyolProducts(items) {
+  const credentials = getCredentials();
+  if (!credentials) return { ok: false, status: 'not_configured', message: 'Trendyol API kimlik bilgileri Render ortamında eksik.' };
+  if (!Array.isArray(items) || !items.length || items.length > 1000) {
+    return { ok: false, status: 'invalid_items', message: 'Tek istekte 1 ile 1000 arasında ürün gönderilebilir.' };
+  }
+  const url = new URL(`/integration/product/sellers/${encodeURIComponent(credentials.supplierId)}/v2/products`, API_BASE_URL);
+  let response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: authHeaders(credentials),
+      body: JSON.stringify({ items }),
+      signal: AbortSignal.timeout(30000),
+    });
+  } catch (error) {
+    return { ok: false, status: 'network_error', message: error?.name === 'TimeoutError' ? 'Trendyol ürün aktarımı zaman aşımına uğradı.' : 'Trendyol ürün aktarım servisine ulaşılamadı.' };
+  }
+  const bodyText = await response.text();
+  let data = null;
+  try { data = bodyText ? JSON.parse(bodyText) : {}; } catch { data = { message: 'Trendyol API geçerli JSON yanıtı döndürmedi.' }; }
+  if (!response.ok) {
+    return { ok: false, status: response.status === 401 || response.status === 403 ? 'authentication_failed' : 'request_failed', httpStatus: response.status, message: data?.message || data?.errors?.[0]?.message || 'Trendyol ürün aktarım isteğini reddetti.' };
+  }
+  return { ok: true, httpStatus: response.status, data };
+}
+
+export async function getTrendyolBatchRequestResult(batchRequestId) {
+  const id = String(batchRequestId || '').trim();
+  if (!id || id.length > 120 || !/^[a-zA-Z0-9-]+$/.test(id)) {
+    return { ok: false, status: 'invalid_batch_id', message: 'Geçerli bir Trendyol batchRequestId gerekli.' };
+  }
+  const result = await trendyolRequest(`/integration/product/sellers/:sellerId/products/batch-requests/${encodeURIComponent(id)}`);
+  if (!result.ok) return result;
+  return { ok: true, data: result.data };
+}
