@@ -656,7 +656,7 @@ app.post('/api/v1/admin/xml/export', requireAdmin, async (req, res) => {
     await audit(req, 'export', 'xml_feed', req.body?.feed_id || null, { exported_products: selected.length, format });
     const downloadName = fileName + '.' + extension;
     res.setHeader('Content-Type', contentType);
-    res.setHeader('Content-Disposition', 'attachment; filename="' + extension + '"; filename*=UTF-8\'\'' + encodeURIComponent(downloadName));
+    res.setHeader('Content-Disposition', 'attachment; filename="download.' + extension + '"; filename*=UTF-8\'\'' + encodeURIComponent(downloadName));
     res.setHeader('Content-Length', buffer.length);
     res.send(buffer);
   } catch (error) {
