@@ -191,7 +191,7 @@ th{background:#f5f7fc}
 <p class="section-note">Tedarikçiden indirdiğiniz XML dosyasını doğrudan yükleyin. En fazla 25 MB ve 5.000 ürün desteklenir.</p>
 <div class="two">
 <div class="field"><label for="xmlUploadName">Kaynak adı</label><input id="xmlUploadName" maxlength="100" placeholder="Örn. ABC Tedarikçi XML dosyası"></div>
-<div class="field"><label for="xmlUploadFile">XML dosyası</label><input id="xmlUploadFile" type="file" accept=".xml,.rss,.atom,application/xml,text/xml"></div>
+<div class="field"><label for="xmlUploadFile">XML dosyası</label><input id="xmlUploadFile" type="file" accept=".xml,.rss,.atom,.txt,application/xml,text/xml,text/plain"></div>
 <div class="field"><label for="xmlUploadMargin">Kâr oranı (%)</label><input id="xmlUploadMargin" type="number" min="0" max="1000" step="0.01" value="0"></div>
 </div>
 <div class="toolbar"><button class="btn" id="xmlUploadButton" type="button" onclick="uploadXmlFile()">XML dosyasını yükle ve kaydet</button></div>
@@ -747,13 +747,14 @@ async function uploadXmlFile(){
  const message=document.getElementById('xmlUploadMessage'),button=document.getElementById('xmlUploadButton');
  const say=(text,error=false)=>{message.textContent=text;message.style.color=error?'#a52d20':'#13845c';};
  if(!file){say('Lütfen önce bilgisayarınızdan bir XML dosyası seçin.',true);return;}
- if(!/\\.(xml|rss|atom)$/i.test(file.name)){say('Yalnızca XML, RSS veya Atom dosyaları yüklenebilir.',true);return;}
+
  if(file.size>25*1024*1024){say('Dosya 25 MB sınırını aşıyor.',true);return;}
  if(!Number.isFinite(marginPercent)||marginPercent<0||marginPercent>1000){say('Kâr oranı 0 ile 1000 arasında olmalıdır.',true);return;}
  button.disabled=true;button.textContent='Dosya yükleniyor…';say('Dosya okunuyor ve güvenli şekilde sunucuya gönderiliyor…');
  try{
-  const xml=await file.text();
-  if(!xml.trim())throw new Error('Seçilen XML dosyası boş.');
+  const xml=(await file.text()).replace(/^\uFEFF/,'').trim();
+  if(!xml)throw new Error('Seçilen dosya boş.');
+  if(!xml.startsWith('<'))throw new Error('Seçilen dosya XML biçiminde görünmüyor. Lütfen geçerli bir XML, RSS veya Atom dosyası seçin.');
   const response=await fetch(API_BASE_URL+'/api/v1/admin/xml/upload',{method:'POST',headers:{Authorization:'Bearer '+adminToken(),'Content-Type':'application/xml','X-XML-Filename':encodeURIComponent(file.name),'X-XML-Name':encodeURIComponent(name),'X-XML-Margin':String(marginPercent)},body:xml});
   const responseText=await response.text();let data={};try{data=responseText?JSON.parse(responseText):{};}catch{throw new Error('Sunucu geçerli JSON yanıtı vermedi (HTTP '+response.status+').');}
   if(response.status===401||response.status===403){adminLogout('Yönetici oturumu doğrulanamadı. Yeniden giriş yapın.');throw new Error('Yönetici oturumu doğrulanamadı.');}
