@@ -974,7 +974,7 @@ async function saveTrendyolFeedMappings(){
  const brandId=brandSelect.value,brandName=brandOpt?.dataset.name||document.getElementById('trendyolBrandSearch').value.trim();
  if(!feedId){message.textContent='Önce XML kaynağı seçin.';return;}
  if(!brandId){message.textContent='Trendyol marka listesinden Gönder Bana markasını seçin.';return;}
- const mappings=trendyolMappingState.map((item,index)=>({sourceCategory:item.sourceCategory,categoryId:document.getElementById('trendyolCategorySelect'+index)?.value||item.categoryId,brandId,brandName,attributes:item.attributes||[],requiredAttributes:item.requiredAttributes||[]}));
+ const mappings=trendyolMappingState.map((item,index)=>({sourceCategory:item.sourceCategory,categoryId:document.getElementById('trendyolCategorySelect'+index)?.value||item.categoryId,brandId,brandName,attributes:(item.requiredAttributes||[]).map(a=>({attributeId:a.attributeId,sourceField:document.getElementById('trendyolAttrSource'+index+'_'+a.attributeId)?.value||'',attributeValueId:document.getElementById('trendyolAttrValue'+index+'_'+a.attributeId)?.value||'',customAttributeValue:document.getElementById('trendyolAttrCustom'+index+'_'+a.attributeId)?.value.trim()||''}))}));
  if(!mappings.length||mappings.some(m=>!m.categoryId)){message.textContent='Her kaynak kategori için Trendyol kategori eşleştirmesi seçilmelidir.';return;}
  try{
   const result=await adminApi('/api/v1/marketplaces/trendyol/feed-mappings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({feed_id:feedId,mappings})});
