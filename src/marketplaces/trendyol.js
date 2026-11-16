@@ -130,7 +130,7 @@ export async function searchTrendyolCategories(name) {
 
 export async function getTrendyolCategoryAttributes(categoryId) {
   const id = String(categoryId || '').trim();
-  if (!/^\\d+$/.test(id)) return { ok: false, status: 'invalid_category', message: 'Geçerli Trendyol kategori ID gerekli.' };
+  if (!/^\d+$/.test(id)) return { ok: false, status: 'invalid_category', message: 'Geçerli Trendyol kategori ID gerekli.' };
   const result = await trendyolRequest(`/integration/product/categories/${encodeURIComponent(id)}/attributes`);
   if (!result.ok) return result;
   return { ok: true, attributes: result.data?.categoryAttributes || [], category: { id: result.data?.id || Number(id), name: result.data?.name || result.data?.displayName || '' } };
