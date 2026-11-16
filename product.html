@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#172044">
+<title>Ürün Detayı | Trend-Entegre</title>
+<style>
+:root{--navy:#172044;--teal:#0b9f9d;--orange:#f4772b;--ink:#202638;--muted:#727b8d;--line:#e4e7ed}
+*{box-sizing:border-box}body{margin:0;background:#fff;color:var(--ink);font:14px/1.55 Inter,Arial,sans-serif}
+a{color:inherit;text-decoration:none}.top{height:68px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 max(24px,calc((100% - 1450px)/2));position:sticky;top:0;background:#fffffff2;z-index:3}
+.logo{font-size:22px;font-weight:900;color:var(--navy);letter-spacing:-.7px}.logo span{color:var(--teal)}.back{font-weight:750;color:#45516b}
+main{width:min(1450px,calc(100% - 40px));margin:22px auto 70px}
+.crumb{font-size:12px;color:#68738d;margin:0 0 20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.layout{display:grid;grid-template-columns:minmax(320px,430px) minmax(0,1fr);gap:28px;align-items:start}
+.gallery{min-width:0}.stage{height:600px;border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff}
+.stage img{width:100%;height:100%;object-fit:contain;padding:12px}.no-image{color:#81899a}
+.thumbs{display:flex;gap:9px;overflow:auto;padding:12px 0}.thumb{width:62px;height:68px;flex:0 0 62px;object-fit:contain;border:1px solid var(--line);border-radius:8px;padding:3px;cursor:pointer}.thumb.active{border:2px solid var(--orange)}
+.info{min-width:0;padding:4px 0}.flag{display:inline-block;background:#fff5e9;color:#d65d16;padding:5px 9px;border-radius:5px;font-size:11px;font-weight:800;margin-bottom:12px}
+.brand{font-size:14px;font-weight:800;color:#333e59}.title{font-size:25px;line-height:1.4;font-weight:550;margin:5px 0 12px;letter-spacing:-.3px}
+.meta{font-size:12px;color:var(--muted);margin-bottom:20px}.price-label{color:#13845c;font-size:14px;font-weight:800;margin:12px 0 3px}.price{display:block;color:#14845c;font-size:30px;font-weight:850;line-height:1.25}.stock{font-size:13px;color:#14845c;font-weight:750;margin:12px 0}
+.quantity{display:flex;align-items:center;gap:12px;margin:18px 0}.quantity input{width:76px;padding:10px;border:1px solid #dfe3eb;border-radius:8px;font:inherit}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0 22px}.actions button{min-height:52px;border-radius:9px;font-size:16px;font-weight:800;cursor:pointer}
+.buy{background:#fff;border:1px solid var(--orange);color:var(--orange)}.add{background:var(--orange);border:1px solid var(--orange);color:#fff}.actions button:disabled{opacity:.45;cursor:not-allowed}
+.delivery{border:1px solid var(--line);border-radius:10px;padding:15px;color:#566176;line-height:1.9}
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:28px}.panel{border:1px solid var(--line);border-radius:12px;padding:22px;min-width:0}.panel h2{font-size:18px;color:#26314a;margin:0 0 14px}.description{white-space:pre-line;color:#4e5870;font-size:14px;line-height:1.85}
+.specs{width:100%;border-collapse:collapse;font-size:13px}.specs td{padding:10px 8px;border-bottom:1px solid #edf0f5;overflow-wrap:anywhere}.specs td:first-child{color:#778198;width:42%}
+.toast{display:none;position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#172044;color:white;border-radius:10px;padding:13px 18px;box-shadow:0 8px 28px #101b3f30;z-index:5}.toast.show{display:block}
+@media(max-width:850px){.layout{grid-template-columns:minmax(260px,.9fr) minmax(0,1.1fr);gap:18px}.stage{height:480px}}
+@media(max-width:650px){.top{height:60px;padding:0 16px}main{width:calc(100% - 24px);margin-top:14px}.layout{grid-template-columns:1fr;gap:14px}.stage{height:min(105vw,480px)}.title{font-size:20px}.price{font-size:26px}.panels{grid-template-columns:1fr}.panel{padding:17px}.crumb{font-size:11px}.actions button{font-size:14px}}
+</style>
+</head>
+<body>
+<header class="top"><a class="logo" href="index.html#katalog">TREND<span>·</span>ENTEGRE</a><a class="back" href="index.html#katalog">← Ürünlere dön</a></header>
+<main id="productPage"><p>Ürün bilgileri yükleniyor…</p></main><div class="toast" id="toast" role="status"></div>
+<script>
+(function(){
+ const API="https://trend-entegre.onrender.com/api/v1";
+ const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+ const money=v=>Number(v||0).toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2})+" TL";
+ const id=new URLSearchParams(location.search).get("urun");
+ const root=document.getElementById("productPage"),toast=document.getElementById("toast");
+ function notify(message){toast.textContent=message;toast.classList.add("show");setTimeout(()=>toast.classList.remove("show"),3500);}
+ async function init(){
+  if(!id){root.innerHTML="<p>Ürün bulunamadı. <a href='index.html#katalog'>Kataloğa dön</a></p>";return;}
+  try{
+   const response=await fetch(API+"/catalog/products");if(!response.ok)throw new Error("Ürün bilgileri şu anda alınamıyor.");
+   const data=await response.json(),products=Array.isArray(data.products)?data.products:[];
+   const p=products.find(x=>String(x.id)===String(id));
+   if(!p){root.innerHTML="<p>Aradığınız ürün bulunamadı veya satıştan kaldırılmış. <a href='index.html#katalog'>Kataloğa dön</a></p>";return;}
+   const gallery=[p.image_url,...(Array.isArray(p.gallery_images)?p.gallery_images:[])].filter(Boolean).filter((u,i,a)=>a.indexOf(u)===i).slice(0,8);
+   const stock=Math.max(0,Number(p.stock)||0),max=Math.max(1,Math.min(stock||1,10));
+   const specs=[["Marka",p.brand],["Kategori",p.category],["Stok kodu",p.sku],["Barkod",p.barcode],["Stok",stock?stock+" adet":"Stokta yok"],...(Array.isArray(p.features)?p.features.filter(x=>x&&x.name&&x.value).map(x=>[x.name,x.value]):[])].filter(x=>x[1]);
+   const first=gallery[0]?'<img id="mainImage" src="'+esc(gallery[0])+'" alt="'+esc(p.name)+'">':'<div class="no-image">Ürün görseli eklenmemiş</div>';
+   root.innerHTML='<div class="crumb"><a href="index.html">Trend-Entegre</a> › <a href="index.html#katalog">Katalog</a> › '+esc(p.category||"Ürün")+' › '+esc(p.name)+'</div><div class="layout"><div class="gallery"><div class="stage" id="imageStage">'+first+'</div><div class="thumbs">'+gallery.map((u,i)=>'<img class="thumb '+(!i?'active':'')+'" src="'+esc(u)+'" alt="'+esc(p.name)+' görsel '+(i+1)+'" data-image="'+esc(u)+'">').join("")+'</div></div><div class="info"><span class="flag">✦ Trend-Entegre Katalog Ürünü</span><div class="brand">'+esc(p.brand||"Trend-Entegre")+'</div><h1 class="title">'+esc(p.name)+'</h1><div class="meta">Ürün kodu: '+esc(p.sku||"Belirtilmemiş")+'</div><div class="price-label">Satış fiyatı</div><strong class="price">'+money(p.sale_price)+'</strong><div class="stock">'+(stock?'✓ Stokta · '+stock+' adet mevcut':'Bu ürün şu anda stokta bulunmuyor')+'</div><label class="quantity">Adet <input id="quantity" type="number" min="1" max="'+max+'" value="1" '+(!stock?'disabled':'')+'></label><div class="actions"><button class="buy" id="buy" '+(!stock?'disabled':'')+'>Şimdi Al</button><button class="add" id="add" '+(!stock?'disabled':'')+'>Sepete Ekle</button></div><div class="delivery">🚚 Kargo ve teslimat bilgisi sipariş aşamasında gösterilir<br>🔒 Güvenli ödeme ve sipariş takibi</div></div></div><div class="panels"><section class="panel"><h2>Ürün açıklaması</h2><div class="description">'+esc(p.description||"Bu ürün için henüz açıklama eklenmemiş.")+'</div></section><section class="panel"><h2>Ürün özellikleri</h2>'+(specs.length?'<table class="specs">'+specs.map(x=>'<tr><td>'+esc(x[0])+'</td><td><strong>'+esc(x[1])+'</strong></td></tr>').join("")+'</table>':'<div class="description">Bu ürün için henüz özellik bilgisi eklenmemiş.</div>')+'</section></div>';
+   root.querySelectorAll("[data-image]").forEach(el=>el.addEventListener("click",()=>{const main=document.getElementById("mainImage");if(main)main.src=el.dataset.image;root.querySelectorAll(".thumb").forEach(t=>t.classList.toggle("active",t===el));}));
+   function addCart(){const quantity=Math.max(1,Math.min(max,parseInt(document.getElementById("quantity").value,10)||1));let cart=[];try{cart=JSON.parse(localStorage.getItem("trendCatalogCart")||"[]");}catch(e){}const old=cart.find(x=>String(x.product.id)===String(p.id));if(old)old.quantity=Math.min(10,old.quantity+quantity);else cart.push({product:p,quantity});localStorage.setItem("trendCatalogCart",JSON.stringify(cart));notify(p.name+" sepete eklendi · "+quantity+" adet");}
+   document.getElementById("add").addEventListener("click",addCart);
+   document.getElementById("buy").addEventListener("click",()=>{addCart();setTimeout(()=>location.href="index.html#katalog",500);});
+  }catch(e){root.innerHTML="<p>"+esc(e.message||"Ürün yüklenemedi.")+" <a href='index.html#katalog'>Kataloğa dön</a></p>";}
+ }
+ init();
+})();
+</script>
+</body></html>
