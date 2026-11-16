@@ -454,7 +454,7 @@ app.get('/api/v1/admin/overview', requireAdmin, async (req, res) => {
           status: configuredMarketplaces === 0 ? 'pending' : configuredMarketplaces === marketplaceItems.length ? 'configured' : 'partial',
           detail: configuredMarketplaces + '/' + marketplaceItems.length + ' pazaryeri için kimlik bilgileri tanımlı; canlı bağlantı ayrıca test edilmelidir.',
         },
-        xml: { status: 'development', detail: 'XML dönüştürme ve aktarım motoru henüz tamamlanmadı.' },
+        xml: { status: 'configured', detail: 'XML dosyası ve HTTPS kaynak okuma, ürün alanlarını standartlaştırma, önizleme, kâr marjı, Katalog aktarımı ve XLSX/CSV/XML dışa aktarma uçları hazır.' },
       },
     });
   } catch (error) {
