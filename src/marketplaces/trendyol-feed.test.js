@@ -27,6 +27,7 @@ test('Trendyol validation accepts a product with explicit marketplace mappings',
   const result = validateTrendyolProduct(validSource, {
     categoryId: '123',
     brandId: '456',
+    requiredAttributes: [],
     attributes: [{ attributeId: 1, attributeValueId: 2 }],
   });
   assert.equal(result.ready, true);
@@ -36,7 +37,7 @@ test('Trendyol validation accepts a product with explicit marketplace mappings',
 
 test('Trendyol feed validation flags duplicate barcodes', () => {
   const report = validateTrendyolFeed([validSource, { ...validSource, SKU: 'SKU-2' }], {
-    Bileklik: { categoryId: '123', brandId: '456', attributes: [{ attributeId: 1, attributeValueId: 2 }] },
+    Bileklik: { categoryId: '123', brandId: '456', requiredAttributes: [], attributes: [{ attributeId: 1, attributeValueId: 2 }] },
   });
   assert.equal(report.total, 2);
   assert.equal(report.ready, 1);
@@ -47,7 +48,7 @@ test('Trendyol feed validation flags duplicate barcodes', () => {
 
 test('Trendyol Product V2 accepts supplier barcodes containing letters and hyphens', () => {
   const result = validateTrendyolProduct({ ...validSource, Barkod: 'MRR-356' }, {
-    categoryId: '123', brandId: '456', attributes: [{ attributeId: 1, attributeValueId: 2 }],
+    categoryId: '123', brandId: '456', requiredAttributes: [], attributes: [{ attributeId: 1, attributeValueId: 2 }],
   });
   assert.equal(result.ready, true);
   assert.equal(result.warnings.some(item => item.includes('GTIN')), false);
