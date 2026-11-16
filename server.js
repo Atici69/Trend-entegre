@@ -399,7 +399,8 @@ function catalogProduct(body, previous = {}) {
   const cost = Number(body.cost_price ?? previous.cost_price ?? 0);
   const margin = Number(body.margin_percent ?? previous.margin_percent ?? 0);
   const status = catalogText(body.status ?? previous.status ?? 'draft', 20);
-  let price = body.sale_price !== undefined ? Number(body.sale_price) : (previous.sale_price !== undefined ? Number(previous.sale_price) : null);
+  const marginChanged = body.margin_percent !== undefined && Number(body.margin_percent) !== Number(previous.margin_percent ?? 0);
+  let price = body.sale_price !== undefined ? Number(body.sale_price) : (marginChanged || previous.sale_price === undefined ? null : Number(previous.sale_price));
   if (price === null) price = Math.round((cost * (1 + margin / 100) + Number.EPSILON) * 100) / 100;
   if (!name || !Number.isFinite(stock) || stock < 0 || !Number.isFinite(cost) || cost < 0 ||
       !Number.isFinite(margin) || margin < 0 || margin > 1000 ||
@@ -490,18 +491,18 @@ app.post('/api/v1/admin/catalog/import-xml', requireAdmin, async (req, res) => {
     const feed = feedSnap.data();
     const sourceProducts = parseProducts(await downloadXml(feed.url));
     const margin = normalizeProfitMargin(feed.margin_percent ?? 0);
-    const batch = req.firestore.batch();
+    const existingSnapshot = await req.firestore.collection('catalog_products').where('source_feed_id', '==', feedId).get();
+    const existingByExternalId = new Map(existingSnapshot.docs.map(doc => [String(doc.data().external_id || ''), doc.data()]));
+    const writer = req.firestore.bulkWriter();
     let imported = 0;
-    for (let index = 0; index < sourceProducts.length && imported < 450; index += 1) {
+    for (let index = 0; index < sourceProducts.length; index += 1) {
       const source = sourceProducts[index];
       const name = catalogText(source['Ürün Adı'], 180);
       if (!name) continue;
       const externalId = catalogText(source['Ürün ID'] || source.SKU || (name + '-' + index), 180);
       const key = encodeURIComponent(externalId).replace(/%/g, '_').slice(0, 500);
       const id = feedId + '_' + key;
-      const productRef = req.firestore.collection('catalog_products').doc(id);
-      const previous = await productRef.get();
-      const old = previous.exists ? previous.data() : {};
+      const old = existingByExternalId.get(externalId) || {};
       const cost = priceNumber(source['Fiyat']);
       const sale = cost === null ? Number(old.sale_price || 0) : Math.round((cost * (1 + margin / 100) + Number.EPSILON) * 100) / 100;
       const data = {
@@ -516,13 +517,13 @@ app.post('/api/v1/admin/catalog/import-xml', requireAdmin, async (req, res) => {
         external_id: externalId, status: old.status || 'draft',
         updated_at: new Date().toISOString(), created_at: old.created_at || new Date().toISOString(),
       };
-      batch.set(productRef, data, { merge: true });
+      writer.set(req.firestore.collection('catalog_products').doc(id), data, { merge: true });
       imported += 1;
     }
-    await batch.commit();
+    await writer.close();
     await audit(req, 'import_xml', 'catalog', feedId, { imported, parsed: sourceProducts.length });
     res.json({ imported, parsed: sourceProducts.length, margin_percent: margin,
-      message: imported >= 450 ? 'İlk 450 ürün içe aktarıldı. Daha büyük XML katalogları için toplu aktarım bölümlere ayrılmalıdır.' : 'XML ürünleri kataloğa taslak olarak aktarıldı.' });
+      message: 'XML ürünleri kataloğa taslak olarak aktarıldı. Yayına almak için ürün durumunu Satışta yapın.' });
   } catch (error) { res.status(400).json({ error: error.message || 'XML ürünleri kataloğa aktarılamadı.' }); }
 });
 
