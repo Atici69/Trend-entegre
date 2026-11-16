@@ -204,6 +204,19 @@ th{background:#f5f7fc}
 <div class="tablebox"><table><thead><tr><th>Kaynak</th><th>Ürün sayısı</th><th>Kâr oranı</th><th>Son kontrol</th><th>İşlem</th></tr></thead><tbody id="xmlFeedRows"><tr><td colspan="5">Kaynaklar yükleniyor…</td></tr></tbody></table></div>
 <div class="toolbar" style="margin-top:12px"><button class="btn light" type="button" onclick="saveXmlMargin()">Seçili kaynağın kâr oranını kaydet</button></div>
 </div>
+<div class="card" style="margin-bottom:15px">
+<h2>Trendyol'a aktarım ön kontrolü</h2>
+<p class="section-note">Seçtiğiniz XML kaynağındaki ürünleri Trendyol zorunlu alanları açısından kontrol eder. Bu işlem mağazanıza ürün göndermez.</p>
+<div class="toolbar">
+<div class="field" style="min-width:260px;flex:1"><label for="trendyolValidateFeed">XML kaynağı</label><select id="trendyolValidateFeed"><option value="">Kaynak seçin</option></select></div>
+<button class="btn" id="trendyolValidateButton" type="button" onclick="validateTrendyolXmlFeed()">Trendyol uyumluluğunu kontrol et</button>
+</div>
+<div id="trendyolValidationSummary" class="notice" style="display:none;margin-top:12px"></div>
+<div class="tablebox" id="trendyolValidationTableWrap" style="display:none;margin-top:12px">
+<table><thead><tr><th>Ürün</th><th>SKU / Barkod</th><th>Durum</th><th>Eksikler / Uyarılar</th></tr></thead><tbody id="trendyolValidationRows"></tbody></table>
+</div>
+<p class="section-note">Not: Trendyol kategori, marka ve kategoriye özel zorunlu özellik eşleştirmeleri yapılmadan ürünler aktarılmaya hazır sayılmaz.</p>
+</div>
 <div class="card" id="xmlPreviewCard" style="display:none;margin-bottom:15px">
 <h2>Ürün önizlemesi <span class="tag green" id="xmlProductCount"></span></h2>
 <div class="tablebox"><table><thead id="xmlPreviewHead"></thead><tbody id="xmlPreviewRows"></tbody></table></div>
@@ -755,6 +768,8 @@ async function loadXmlFeeds(){
   if(selected)select.value=selected;
   const catalogSelect=document.getElementById('catalogXmlFeed'),catalogSelected=catalogSelect?.value||'';
   if(catalogSelect){catalogSelect.innerHTML='<option value="">Kaynak seçin</option>'+xmlFeedCache.map(feed=>'<option value="'+escapeHtml(feed.id)+'">'+escapeHtml(feed.name)+'</option>').join('');if(catalogSelected)catalogSelect.value=catalogSelected;}
+  const trendyolSelect=document.getElementById('trendyolValidateFeed'),trendyolSelected=trendyolSelect?.value||'';
+  if(trendyolSelect){trendyolSelect.innerHTML='<option value="">Kaynak seçin</option>'+xmlFeedCache.map(feed=>'<option value="'+escapeHtml(feed.id)+'">'+escapeHtml(feed.name)+'</option>').join('');if(trendyolSelected)trendyolSelect.value=trendyolSelected;}
  }catch(error){rows.innerHTML='<tr><td colspan="5">XML kaynakları alınamadı.</td></tr>';xmlMessage(error.message,true);}
 }
 function selectXmlFeed(id){
@@ -838,6 +853,27 @@ async function deleteXmlFeed(id){
  try{await adminApi('/api/v1/admin/xml/feeds/'+encodeURIComponent(id),{method:'DELETE'});await loadXmlFeeds();xmlMessage('XML kaynağı silindi.');}
  catch(error){xmlMessage(error.message,true);}
 }
+async function validateTrendyolXmlFeed(){
+ const feedId=document.getElementById('trendyolValidateFeed').value;
+ const button=document.getElementById('trendyolValidateButton');
+ const summary=document.getElementById('trendyolValidationSummary');
+ const wrap=document.getElementById('trendyolValidationTableWrap');
+ if(!feedId){xmlMessage('Önce doğrulamak istediğiniz XML kaynağını seçin.',true);return;}
+ button.disabled=true;button.textContent='Ürünler kontrol ediliyor…';summary.style.display='none';wrap.style.display='none';
+ try{
+  const report=await adminApi('/api/v1/marketplaces/trendyol/validate-feed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({feed_id:feedId})});
+  summary.style.display='block';
+  summary.innerHTML='<b>Toplam:</b> '+Number(report.total).toLocaleString('tr-TR')+' · <b>Hazır:</b> '+Number(report.ready).toLocaleString('tr-TR')+' · <b>Eksik nedeniyle bekleyen:</b> '+Number(report.blocked).toLocaleString('tr-TR')+' · <b>Uyarı:</b> '+Number(report.warnings).toLocaleString('tr-TR')+'<br><small>'+escapeHtml(report.note||'')+'</small>';
+  wrap.style.display='block';
+  document.getElementById('trendyolValidationRows').innerHTML=(report.rows||[]).slice(0,250).map(row=>{
+   const problems=[...(row.errors||[]),...(row.warnings||[])];
+   return '<tr><td><strong>'+escapeHtml(row.title||'Ürün adı yok')+'</strong></td><td>'+escapeHtml(row.sku||'—')+'<br><small>'+escapeHtml(row.barcode||'Barkod yok')+'</small></td><td><span class="tag '+(row.ready?'green':'')+'">'+(row.ready?'Hazır':'Eksik var')+'</span></td><td>'+escapeHtml(problems.join(' · ')||'Kontrol tamamlandı')+'</td></tr>';
+  }).join('');
+  xmlMessage('Trendyol ön kontrolü tamamlandı. Ürün gönderimi yapılmadı.');
+ }catch(error){xmlMessage(error.message||'Trendyol ön kontrolü yapılamadı.',true);}
+ finally{button.disabled=false;button.textContent='Trendyol uyumluluğunu kontrol et';}
+}
+
 async function exportXmlFeed(){
  const source=document.getElementById('xmlExportSource').value;
  if(!source){xmlMessage('Excel aktarımı için kayıtlı bir kaynak seçin.',true);return;}
