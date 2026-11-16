@@ -142,6 +142,7 @@ main{min-width:0}.topbar{height:70px;background:#fff;border-bottom:1px solid var
 <script>
 const API_BASE_URL = "https://trend-entegre.onrender.com";
 let hepsiburadaTestedThisSession = false;
+let trendyolTestedThisSession = false;
 
 const titles={home:"Genel Bakış",customers:"Müşteri Yönetimi",subscriptions:"Entegrasyon Paketleri ve Abonelikler","store-packages":"E-Ticaret Mağazası Paketleri",dealers:"Bayi Ağı",marketplaces:"Pazaryeri Entegrasyonları",xml:"XML İşlemleri",buybox:"BuyBox Yönetimi",payments:"Ödeme Yönetimi",accounting:"Muhasebe",ads:"Reklam Alanları",settings:"Sistem Ayarları"};
 
@@ -177,10 +178,12 @@ async function loadMarketplaceStatus(){
     if(!Array.isArray(data.marketplaces)) throw new Error("API beklenen pazaryeri listesini döndürmedi.");
     rows.innerHTML=data.marketplaces.map(item=>{
       const configured=Boolean(item.configured);
-      const tested=item.id==="hepsiburada" && hepsiburadaTestedThisSession;
+      const tested=(item.id==="hepsiburada" && hepsiburadaTestedThisSession) || (item.id==="trendyol" && trendyolTestedThisSession);
       const action=item.id==="hepsiburada"
         ? '<button class="btn" '+(!configured?'disabled title="Önce sunucu kimlik bilgileri tanımlanmalı"':'')+' onclick="testHepsiburada(this)">SIT Bağlantısını Test Et</button>'
-        : '<span class="section-note">Test henüz etkin değil</span>';
+        : item.id==="trendyol"
+          ? '<button class="btn" '+(!configured?'disabled title="Önce Render ortam değişkenlerini tanımlayın"':'')+' onclick="testTrendyol(this)">Bağlantıyı Test Et</button>'
+          : '<span class="section-note">Test henüz etkin değil</span>';
       return '<tr><td><strong>'+escapeHtml(item.name)+'</strong></td>'+
         '<td><span class="tag '+(configured?'green':'gray')+'">'+
         (configured?'Bilgiler tanımlı ('+Number(item.configuredCredentials)+'/'+Number(item.requiredCredentials)+')':'Eksik ('+Number(item.configuredCredentials)+'/'+Number(item.requiredCredentials)+')')+
@@ -193,6 +196,24 @@ async function loadMarketplaceStatus(){
   }catch(error){
     rows.innerHTML='<tr><td colspan="4">API sunucusuna ulaşılamadı. Sunucu ve CORS ayarlarını kontrol edin.</td></tr>';
     showMarketplaceMessage("Pazaryeri durumları alınamadı: "+error.message,true);
+  }
+}
+async function testTrendyol(button){
+  if(button.disabled) return;
+  button.disabled=true;
+  button.textContent="Test ediliyor...";
+  try{
+    const response=await fetch(API_BASE_URL+"/api/v1/marketplaces/trendyol/test",{method:"POST"});
+    const result=await response.json().catch(()=>({message:"Sunucudan geçerli JSON yanıtı alınamadı."}));
+    if(!response.ok || !result.ok || result.status!=="connected")
+      throw new Error(result.message||("Sunucu HTTP "+response.status));
+    trendyolTestedThisSession=true;
+    showMarketplaceMessage("Trendyol API bağlantısı başarılı. HTTP "+result.httpStatus+". Mağaza ürün sayısı: "+Number(result.productCount||0)+".");
+    await loadMarketplaceStatus();
+  }catch(error){
+    showMarketplaceMessage("Trendyol API bağlantı testi başarısız: "+error.message,true);
+    button.disabled=false;
+    button.textContent="Tekrar Dene";
   }
 }
 async function testHepsiburada(button){
