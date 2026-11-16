@@ -1,8 +1,9 @@
 import { defineConfig } from "vite";
 
-// Capacitor paketine web uygulamasının tüm kullanıcı sayfalarını dahil et.
-// Ödeme kurtarma aracı yalnızca web tarafında kalır; mobil uygulamaya eklenmez.
+// Relative asset paths support both the GitHub Pages project URL
+// (/Trend-entegre/) and Capacitor's local WebView filesystem.
 export default defineConfig({
+  base: "./",
   build: {
     rollupOptions: {
       input: {
