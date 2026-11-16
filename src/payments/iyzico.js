@@ -94,7 +94,7 @@ export function registerIyzicoRoutes(app) {
       if (!/^\d{10,11}$/.test(identityNumber)) return res.status(400).json({ error: 'T.C. kimlik veya vergi numarası 10 ya da 11 rakam olmalıdır.' });
       const normalizedPhone = phone.replace(/[\s()-]/g, '');
       const iyziPhone = normalizedPhone.startsWith('+90') ? normalizedPhone : '+90' + normalizedPhone.replace(/^0/, '');
-      if (!/^\\+90\d{10}$/.test(iyziPhone)) return res.status(400).json({ error: 'Telefonu 05XXXXXXXXX biçiminde girin.' });
+      if (!/^\+90\d{10}$/.test(iyziPhone)) return res.status(400).json({ error: 'Telefonu 05XXXXXXXXX biçiminde girin.' });
       if (!items.length || items.length > 100) return res.status(400).json({ error: 'Sepetinizde geçerli ürün bulunamadı.' });
       const unique = new Map();
       for (const item of items) {
