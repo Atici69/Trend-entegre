@@ -1021,34 +1021,63 @@ async function saveTrendyolFeedMappings(){
 }
 
 
+const TRENDYOL_BATCH_STORAGE_KEY='trendEntegre.trendyol.lastBatchId';
+const TRENDYOL_PENDING_STORAGE_KEY='trendEntegre.trendyol.publishPending';
+function restoreTrendyolBatchState(){
+ const id=localStorage.getItem(TRENDYOL_BATCH_STORAGE_KEY)||'';
+ const pending=localStorage.getItem(TRENDYOL_PENDING_STORAGE_KEY)==='1';
+ const input=document.getElementById('trendyolBatchId');
+ const message=document.getElementById('trendyolBatchMessage');
+ const button=document.getElementById('trendyolPublishButton');
+ if(id&&input)input.value=id;
+ if(pending&&!id){
+  if(message)message.textContent='Önceki gönderim isteğinin sonucu belirsiz. Çift gönderimi önlemek için yeniden gönderim kilitlendi; Trendyol mağaza panelinden kontrol edin.';
+  if(button){button.disabled=true;button.textContent='Önceki gönderimi kontrol edin';}
+ }else if(id&&message){
+  message.textContent='Son Batch ID bu tarayıcıda saklandı. Aktarım sonucunu kontrol edebilirsiniz.';
+ }
+}
+window.addEventListener('DOMContentLoaded',restoreTrendyolBatchState);
 async function publishTrendyolXmlFeed(){
  const feedId=document.getElementById('trendyolValidateFeed').value;
  const button=document.getElementById('trendyolPublishButton');
  const summary=document.getElementById('trendyolValidationSummary').textContent;
  const ready=(summary.match(/Hazır:\s*(\d+)/)||[])[1]||'0';
  const skipped=(summary.match(/Eksik nedeniyle bekleyen:\s*(\d+)/)||[])[1]||'0';
+ const pending=localStorage.getItem(TRENDYOL_PENDING_STORAGE_KEY)==='1';
+ if(pending){xmlMessage('Önceki gönderimin sonucu belirsiz. Çift gönderimi önlemek için yeniden gönderim kapalı; mağaza panelinden kontrol edin.',true);return;}
  if(!feedId){xmlMessage('Önce XML kaynağı seçin.',true);return;}
  if(button.disabled){xmlMessage('Önce ön kontrol tamamlanmalı ve en az bir hazır ürün bulunmalı.',true);return;}
  if(Number(ready)<1){xmlMessage('Gönderime hazır ürün bulunamadı.',true);return;}
  if(!confirm('DİKKAT: '+ready+' hazır ürün Trendyol mağazanıza gönderilecek. '+skipped+' hatalı ürün gönderilmeyecek. Onaylıyor musunuz?'))return;
  button.disabled=true;button.textContent='Trendyol’a gönderiliyor…';
+ localStorage.setItem(TRENDYOL_PENDING_STORAGE_KEY,'1');
+ document.getElementById('trendyolBatchMessage').textContent='Gönderim isteği iletildi; Batch ID yanıtı bekleniyor. Sonuç kesinleşmeden tekrar göndermeyin.';
  try{
   const result=await adminApi('/api/v1/marketplaces/trendyol/publish-feed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({feed_id:feedId,confirm_publish:true})});
-  document.getElementById('trendyolBatchId').value=result.batchRequestId||'';
-  document.getElementById('trendyolBatchMessage').textContent='Trendyol kuyruğuna '+result.itemCount+' hazır ürün iletildi; '+Number(result.skippedCount||0)+' hatalı ürün gönderilmedi. Batch ID: '+(result.batchRequestId||'yanıtta dönmedi')+'. Ürünler henüz onaylanmış/yayına çıkmış sayılmaz.';
-  xmlMessage('Ürün gönderim isteği Trendyol’a iletildi. Batch sonucunu kontrol edin.');
- }catch(error){xmlMessage(error.message||'Trendyol aktarımı başlatılamadı.',true);}
- finally{button.disabled=true;button.textContent='Gönderim tamamlandı; yeniden kontrol edin';}
+  if(!result.batchRequestId)throw new Error('Sunucu Batch ID döndürmedi. Gönderim sonucu belirsiz; tekrar göndermeyin ve Trendyol mağaza panelinden kontrol edin.');
+  document.getElementById('trendyolBatchId').value=result.batchRequestId;
+  localStorage.setItem(TRENDYOL_BATCH_STORAGE_KEY,result.batchRequestId);
+  document.getElementById('trendyolBatchMessage').textContent='Trendyol kuyruğuna '+result.itemCount+' hazır ürün iletildi; '+Number(result.skippedCount||0)+' hatalı ürün gönderilmedi. Batch ID: '+result.batchRequestId+'. Ürünler henüz onaylanmış/yayına çıkmış sayılmaz.';
+  xmlMessage('Gönderim isteği Trendyol kuyruğuna iletildi. Yayın durumu Batch ID ile kontrol edilmelidir.');
+  button.textContent='Gönderim yapıldı; sonucu kontrol edin';
+ }catch(error){
+  document.getElementById('trendyolBatchMessage').textContent=(error.message||'Gönderim sonucu alınamadı.')+' Çift gönderimi önlemek için yeniden gönderim kilitli tutuldu.';
+  xmlMessage(error.message||'Trendyol aktarım sonucu alınamadı.',true);
+  button.textContent='Önceki gönderimi kontrol edin';
+ }
+ button.disabled=true;
 }
 async function checkTrendyolBatch(){
  const id=document.getElementById('trendyolBatchId').value.trim(),message=document.getElementById('trendyolBatchMessage');
- if(!id){message.textContent='Kontrol edilecek Batch ID bulunmuyor.';return;}
+ if(!id){message.textContent='Kontrol edilecek Batch ID bulunmuyor. Yeni gönderim yapmayın; Trendyol mağaza panelinden son aktarımı kontrol edin.';return;}
  message.textContent='Trendyol aktarım sonucu sorgulanıyor…';
  try{
   const data=await adminApi('/api/v1/marketplaces/trendyol/batches/'+encodeURIComponent(id));
   const failed=Number(data.failedItemCount||0),total=Number(data.itemCount||0);
   const failures=(data.items||[]).filter(item=>item.status==='FAILED').slice(0,10).map(item=>(item.requestItem?.barcode||'Barkod')+': '+(item.failureReasons||[]).join(', '));
   message.textContent='Durum: '+(data.status||'Bilinmiyor')+' · Ürün: '+total+' · Hatalı: '+failed+(failures.length?' · '+failures.join(' | '):'');
+  if(data.status&&['COMPLETED','SUCCESS','FAILED'].includes(String(data.status).toUpperCase()))localStorage.removeItem(TRENDYOL_PENDING_STORAGE_KEY);
  }catch(error){message.textContent=error.message;}
 }
 
