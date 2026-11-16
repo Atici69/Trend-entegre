@@ -239,8 +239,13 @@ th{background:#f5f7fc}
 <h2>Trendyol'a aktarım ön kontrolü</h2>
 <p class="section-note">Seçtiğiniz XML kaynağındaki ürünleri Trendyol zorunlu alanları açısından kontrol eder. Bu işlem mağazanıza ürün göndermez.</p>
 <div class="toolbar">
-<div class="field" style="min-width:260px;flex:1"><label for="trendyolValidateFeed">XML kaynağı</label><select id="trendyolValidateFeed"><option value="">Kaynak seçin</option></select></div>
+<div class="field" style="min-width:260px;flex:1"><label for="trendyolValidateFeed">XML kaynağı</label><select id="trendyolValidateFeed" onchange="loadTrendyolFeedSettings()"><option value="">Kaynak seçin</option></select></div>
 <button class="btn" id="trendyolValidateButton" type="button" onclick="validateTrendyolXmlFeed()">Trendyol uyumluluğunu kontrol et</button><button class="btn" id="trendyolPublishButton" type="button" onclick="publishTrendyolXmlFeed()" disabled>Trendyol’a gönder (önce kontrol edin)</button>
+</div>
+<div class="toolbar" style="margin-top:12px;align-items:end">
+<div class="field" style="width:220px"><label for="trendyolMarginPercent">Kâr marjı (%)</label><input id="trendyolMarginPercent" type="number" min="0" max="500" step="0.1" value="0"></div>
+<button class="btn light" id="trendyolMarginSaveButton" type="button" onclick="saveTrendyolMargin()">Kâr marjını kaydet</button>
+<p class="section-note" id="trendyolMarginMessage">Seçilen XML kaynağının marjı ürün fiyatına uygulanır.</p>
 </div>
 <div id="trendyolValidationSummary" class="notice" style="display:none;margin-top:12px"></div>
 <div class="tablebox" id="trendyolValidationTableWrap" style="display:none;margin-top:12px">
@@ -874,6 +879,26 @@ async function deleteXmlFeed(id){
  if(!confirm('Bu XML kaynağını kayıtlı kaynaklardan silmek istiyor musunuz?'))return;
  try{await adminApi('/api/v1/admin/xml/feeds/'+encodeURIComponent(id),{method:'DELETE'});await loadXmlFeeds();xmlMessage('XML kaynağı silindi.');}
  catch(error){xmlMessage(error.message,true);}
+}
+function loadTrendyolFeedSettings(){
+ const feedId=document.getElementById("trendyolValidateFeed").value;
+ const feed=xmlFeedCache.find(item=>item.id===feedId);
+ document.getElementById("trendyolMarginPercent").value=feed?.margin_percent??0;
+ document.getElementById("trendyolMarginMessage").textContent=feed?"Kayıtlı marj: %"+Number(feed.margin_percent||0).toLocaleString("tr-TR"):"Önce bir XML kaynağı seçin.";
+}
+async function saveTrendyolMargin(){
+ const feedId=document.getElementById("trendyolValidateFeed").value;
+ const value=Number(document.getElementById("trendyolMarginPercent").value);
+ const button=document.getElementById("trendyolMarginSaveButton"),message=document.getElementById("trendyolMarginMessage");
+ if(!feedId){message.textContent="Önce XML kaynağı seçin.";return;}
+ if(!Number.isFinite(value)||value<0||value>500){message.textContent="Kâr marjı 0 ile 500 arasında olmalıdır.";return;}
+ button.disabled=true;
+ try{
+  await adminApi("/api/v1/admin/xml/feeds/"+encodeURIComponent(feedId),{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({marginPercent:value})});
+  const feed=xmlFeedCache.find(item=>item.id===feedId);if(feed)feed.margin_percent=value;
+  message.textContent="Kâr marjı %"+value.toLocaleString("tr-TR")+" olarak kaydedildi. Yeni ön kontrollerde uygulanacak.";
+ }catch(error){message.textContent="Kaydedilemedi: "+error.message;}
+ finally{button.disabled=false;}
 }
 async function validateTrendyolXmlFeed(){
  const feedId=document.getElementById('trendyolValidateFeed').value;
