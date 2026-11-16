@@ -7,6 +7,7 @@ import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { marketplaceStatus } from './src/marketplaces/index.js';
+import { registerTrendyolRoutes } from './src/marketplaces/trendyol.js';
 import { testHepsiburadaConnection } from './src/marketplaces/hepsiburada.js';
 import { registerIyzicoRoutes } from './src/payments/iyzico.js';
 import * as XLSX from 'xlsx';
@@ -354,6 +355,7 @@ for (const [resource, config] of Object.entries(resourceConfig)) {
 app.get('/api/v1/marketplaces/status', requireAdmin, (_req, res) => {
   res.json({ marketplaces: marketplaceStatus() });
 });
+registerTrendyolRoutes(app, requireAdmin);
 app.post('/api/v1/marketplaces/hepsiburada/test', requireAdmin, async (_req, res) => {
   const result = await testHepsiburadaConnection();
   res.status(result.ok ? 200 : result.status === 'not_configured' ? 424 : 502).json(result);
