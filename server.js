@@ -706,7 +706,7 @@ app.post('/api/v1/admin/catalog/import-xml', requireAdmin, async (req, res) => {
         margin_percent: margin, sale_price: sale,
         currency: catalogText(source['Para Birimi'] || 'TRY',8),
         source: 'xml', source_feed_id: feedId, source_feed_name: catalogText(feed.name,100),
-        external_id: externalId, status: old.status || 'draft',
+        external_id: externalId, status: old.status === 'archived' ? 'archived' : 'active',
         updated_at: new Date().toISOString(), created_at: old.created_at || new Date().toISOString(),
       };
       writer.set(req.firestore.collection('catalog_products').doc(id), data, { merge: true });
