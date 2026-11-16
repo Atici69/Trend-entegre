@@ -162,6 +162,32 @@ function findField(product, aliases) {
   return '';
 }
 
+function inferProductCategory(name) {
+  const value = normalizeXmlKey(name);
+  const rules = [
+    ['Bileklik', ['bileklik', 'kunye']],
+    ['Kolye', ['kolye', 'kolyeucu']],
+    ['Küpe', ['kupe']],
+    ['Yüzük', ['yuzuk']],
+    ['Halhal', ['halhal']],
+    ['Broş', ['bros']],
+    ['Takı Seti', ['tak seti', 'takim seti', 'set tak']],
+    ['Saat', ['saat']],
+  ];
+  for (const [category, keywords] of rules) {
+    if (keywords.some(keyword => value.includes(normalizeXmlKey(keyword)))) return category;
+  }
+  return '';
+}
+
+function resolveProductCategory(item) {
+  const sourceCategory = findField(item, ['category', 'category_name', 'product_type', 'kategori', 'kategori_baslik']);
+  const genericCategories = new Set(['', 'katalog', 'genel', 'urunler', 'urun', 'products', 'product']);
+  if (!genericCategories.has(normalizeXmlKey(sourceCategory))) return sourceCategory;
+  const productName = findField(item, ['name', 'title', 'product_name', 'productname', 'urunadi', 'ürünadı', 'baslik', 'product_title']);
+  return inferProductCategory(productName) || sourceCategory || 'Katalog';
+}
+
 function collectProducts(node, found = []) {
   if (!node || typeof node !== 'object' || found.length >= MAX_PRODUCTS) return found;
   for (const [key, value] of Object.entries(node)) {
@@ -191,7 +217,7 @@ export function parseProducts(xml) {
     'SKU': findField(item, ['sku', 'stock_code', 'stockcode', 'model', 'stok_kodu', 'merchant_sku', 'seller_sku']),
     'Barkod': findField(item, ['barcode', 'gtin', 'ean', 'ean13', 'upc', 'barcode_number', 'barkod']),
     'Marka': findField(item, ['brand', 'manufacturer', 'marka', 'marka_baslik']),
-    'Kategori': findField(item, ['category', 'category_name', 'product_type', 'kategori', 'kategori_baslik']) || 'Katalog',
+    'Kategori': resolveProductCategory(item),
     'Fiyat': findField(item, ['price', 'sale_price', 'selling_price', 'regular_price', 'list_price', 'fiyat']),
     'Para Birimi': findField(item, ['currency', 'currency_code', 'parabirimi', 'kur_tipi']),
     'Stok': findField(item, ['quantity', 'stock', 'stock_quantity', 'available_quantity', 'inventory', 'qty', 'stok', 'stok_adedi']),
