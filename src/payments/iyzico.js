@@ -91,10 +91,10 @@ export function registerIyzicoRoutes(app) {
       if (name.length < 3 || address.length < 8 || city.length < 2 || district.length < 2) {
         return res.status(400).json({ error: 'Ad soyad, il, ilçe ve teslimat adresi zorunludur.' });
       }
-      if (!/^\\d{10,11}$/.test(identityNumber)) return res.status(400).json({ error: 'T.C. kimlik veya vergi numarası 10 ya da 11 rakam olmalıdır.' });
-      const normalizedPhone = phone.replace(/[\\s()-]/g, '');
+      if (!/^\d{10,11}$/.test(identityNumber)) return res.status(400).json({ error: 'T.C. kimlik veya vergi numarası 10 ya da 11 rakam olmalıdır.' });
+      const normalizedPhone = phone.replace(/[\s()-]/g, '');
       const iyziPhone = normalizedPhone.startsWith('+90') ? normalizedPhone : '+90' + normalizedPhone.replace(/^0/, '');
-      if (!/^\\+90\\d{10}$/.test(iyziPhone)) return res.status(400).json({ error: 'Telefonu 05XXXXXXXXX biçiminde girin.' });
+      if (!/^\\+90\d{10}$/.test(iyziPhone)) return res.status(400).json({ error: 'Telefonu 05XXXXXXXXX biçiminde girin.' });
       if (!items.length || items.length > 100) return res.status(400).json({ error: 'Sepetinizde geçerli ürün bulunamadı.' });
       const unique = new Map();
       for (const item of items) {
@@ -152,7 +152,7 @@ export function registerIyzicoRoutes(app) {
       if (!Number.isSafeInteger(totalMinor) || totalMinor < 1) return res.status(400).json({ error: 'Sipariş tutarı geçersiz.' });
       const attemptId = randomUUID();
       const buyer = order.buyer;
-      const nameParts = String(buyer.name).trim().split(/\\s+/);
+      const nameParts = String(buyer.name).trim().split(/\s+/);
       const surname = nameParts.length > 1 ? nameParts.pop() : 'Musteri';
       const name = nameParts.join(' ') || surname;
       const address = { contactName: buyer.name, city: buyer.city, country: 'Turkey', address: buyer.address, zipCode: buyer.zip_code || '00000' };
@@ -308,7 +308,7 @@ export function registerIyzicoRoutes(app) {
         && result.basketId === attempt.provider_conversation_id;
       if (!confirmed) {
         await attemptRef.set({ status: 'failed', provider_status: String(result.paymentStatus || result.status || 'unconfirmed'), updated_at: FieldValue.serverTimestamp() }, { merge: true });
-        const url = returnUrl('failed', attempt.plan_id);
+        const url = returnUrl('failed', attempt.plan_id, attempt.order_id);
         return url ? res.redirect(303, url) : res.status(200).send('Ödeme tamamlanmadı.');
       }
 
