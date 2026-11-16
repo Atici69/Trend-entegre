@@ -45,13 +45,14 @@ function call(resource, method, payload) {
   return new Promise((resolve, reject) => resource[method](payload, (error, result) => error ? reject(error) : resolve(result || {})));
 }
 
-function returnUrl(status, planId) {
+function returnUrl(status, planId, orderId) {
   const base = process.env.IYZIPAY_RETURN_URL?.trim();
   if (!base) return null;
   try {
     const url = new URL(base);
     url.searchParams.set('payment', status);
     if (planId) url.searchParams.set('plan', planId);
+    if (orderId) url.searchParams.set('order', orderId);
     return url.toString();
   } catch { return null; }
 }
@@ -74,6 +75,127 @@ export function registerIyzicoRoutes(app) {
       next();
     } catch { return res.status(401).json({ error: 'Oturum doğrulanamadı.' }); }
   }
+
+  // Store checkout: prices and stock are always read from Firestore, never trusted from the browser.
+  app.post('/api/v1/orders', requireVerifiedUser, async (req, res) => {
+    try {
+      const buyer = req.body?.buyer || {};
+      const name = String(buyer.name || '').trim().slice(0, 120);
+      const phone = String(buyer.phone || '').trim().slice(0, 30);
+      const address = String(buyer.address || '').trim().slice(0, 600);
+      const city = String(buyer.city || '').trim().slice(0, 60);
+      const district = String(buyer.district || '').trim().slice(0, 60);
+      const identityNumber = String(buyer.identityNumber || '').trim();
+      const zipCode = String(buyer.zipCode || '').trim().slice(0, 20);
+      const items = Array.isArray(req.body?.items) ? req.body.items : [];
+      if (name.length < 3 || address.length < 8 || city.length < 2 || district.length < 2) {
+        return res.status(400).json({ error: 'Ad soyad, il, ilçe ve teslimat adresi zorunludur.' });
+      }
+      if (!/^\\d{10,11}$/.test(identityNumber)) return res.status(400).json({ error: 'T.C. kimlik veya vergi numarası 10 ya da 11 rakam olmalıdır.' });
+      const normalizedPhone = phone.replace(/[\\s()-]/g, '');
+      const iyziPhone = normalizedPhone.startsWith('+90') ? normalizedPhone : '+90' + normalizedPhone.replace(/^0/, '');
+      if (!/^\\+90\\d{10}$/.test(iyziPhone)) return res.status(400).json({ error: 'Telefonu 05XXXXXXXXX biçiminde girin.' });
+      if (!items.length || items.length > 100) return res.status(400).json({ error: 'Sepetinizde geçerli ürün bulunamadı.' });
+      const unique = new Map();
+      for (const item of items) {
+        const id = String(item?.product_id || '').trim();
+        const quantity = Number(item?.quantity);
+        if (!id || !Number.isInteger(quantity) || quantity < 1 || quantity > 10) return res.status(400).json({ error: 'Sepet ürün veya adet bilgisi geçersiz.' });
+        unique.set(id, (unique.get(id) || 0) + quantity);
+      }
+      if ([...unique.values()].some(q => q > 10)) return res.status(400).json({ error: 'Bir üründen en fazla 10 adet sipariş verebilirsiniz.' });
+      const db = req.db;
+      const snapshots = await Promise.all([...unique.keys()].map(id => db.collection('catalog_products').doc(id).get()));
+      const orderItems = [];
+      let totalMinor = 0;
+      for (let i = 0; i < snapshots.length; i++) {
+        const snap = snapshots[i], quantity = unique.get([...unique.keys()][i]);
+        if (!snap.exists) return res.status(409).json({ error: 'Sepetinizde artık bulunmayan bir ürün var. Sayfayı yenileyin.' });
+        const product = snap.data();
+        const priceMinor = Math.round(Number(product.sale_price) * 100);
+        if (product.status !== 'active' || !Number.isFinite(priceMinor) || priceMinor < 1) return res.status(409).json({ error: 'Sepetinizde satışa kapalı veya fiyatı geçersiz bir ürün var.' });
+        if (Number(product.stock || 0) < quantity) return res.status(409).json({ error: (product.name || 'Ürün') + ' için yeterli stok bulunmuyor.' });
+        orderItems.push({ product_id: snap.id, name: String(product.name || '').slice(0, 200), sku: String(product.sku || '').slice(0, 80), quantity, unit_price_minor: priceMinor, line_total_minor: priceMinor * quantity });
+        totalMinor += priceMinor * quantity;
+      }
+      if (totalMinor < 1 || totalMinor > 500000000) return res.status(400).json({ error: 'Sipariş toplamı geçersiz.' });
+      const now = new Date().toISOString();
+      const orderRef = db.collection('orders').doc();
+      const email = String(buyer.email || req.user.email).trim().slice(0, 160);
+      await orderRef.create({
+        order_number: 'TE-' + Date.now().toString(36).toUpperCase(),
+        user_id: req.user.uid, email, provider: 'iyzico', status: 'pending_payment',
+        payment_status: 'pending', currency: 'TRY', total_minor: totalMinor, total: totalMinor / 100,
+        buyer: { name, phone: iyziPhone, email, address, city, district, identity_number: identityNumber, zip_code: zipCode },
+        items: orderItems, created_at: now, updated_at: now,
+      });
+      res.status(201).json({ order: { id: orderRef.id, order_number: 'TE-' + Date.now().toString(36).toUpperCase(), total: totalMinor / 100, currency: 'TRY' } });
+    } catch (error) {
+      console.error('Store order creation failed:', error?.message || 'Unknown error');
+      res.status(500).json({ error: 'Sipariş oluşturulamadı. Lütfen tekrar deneyin.' });
+    }
+  });
+
+  app.post('/api/v1/payments/iyzico/orders/:orderId/initialize', requireVerifiedUser, async (req, res) => {
+    const client = iyzicoClient();
+    if (!client) return res.status(503).json({ error: 'iyzico ödeme ayarları hazır değil.' });
+    if (!process.env.IYZIPAY_CALLBACK_URL?.trim()) return res.status(503).json({ error: 'Ödeme geri dönüş adresi ayarlı değil.' });
+    try {
+      const orderRef = req.db.collection('orders').doc(String(req.params.orderId));
+      const orderSnap = await orderRef.get();
+      if (!orderSnap.exists) return res.status(404).json({ error: 'Sipariş bulunamadı.' });
+      const order = orderSnap.data();
+      if (order.user_id !== req.user.uid) return res.status(403).json({ error: 'Bu sipariş size ait değil.' });
+      if (order.status !== 'pending_payment' || order.payment_status !== 'pending') return res.status(409).json({ error: 'Bu sipariş için ödeme başlatılamaz.' });
+      const totalMinor = Number(order.total_minor);
+      if (!Number.isSafeInteger(totalMinor) || totalMinor < 1) return res.status(400).json({ error: 'Sipariş tutarı geçersiz.' });
+      const attemptId = randomUUID();
+      const buyer = order.buyer;
+      const nameParts = String(buyer.name).trim().split(/\\s+/);
+      const surname = nameParts.length > 1 ? nameParts.pop() : 'Musteri';
+      const name = nameParts.join(' ') || surname;
+      const address = { contactName: buyer.name, city: buyer.city, country: 'Turkey', address: buyer.address, zipCode: buyer.zip_code || '00000' };
+      const basketItems = order.items.map(item => ({
+        id: String(item.product_id).slice(0, 64), name: String(item.name).slice(0, 100),
+        category1: 'Katalog Ürünü', category2: 'Fiziksel Ürün',
+        itemType: Iyzipay.BASKET_ITEM_TYPE.PHYSICAL,
+        price: money(item.line_total_minor),
+      }));
+      const request = {
+        locale: Iyzipay.LOCALE.TR, conversationId: attemptId,
+        price: money(totalMinor), paidPrice: money(totalMinor),
+        currency: Iyzipay.CURRENCY.TRY, basketId: orderRef.id,
+        paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT,
+        callbackUrl: process.env.IYZIPAY_CALLBACK_URL.trim(), enabledInstallments: [1],
+        buyer: {
+          id: req.user.uid.slice(0, 64), name: name.slice(0, 50), surname: surname.slice(0, 50),
+          gsmNumber: buyer.phone, email: order.email, identityNumber: buyer.identity_number,
+          registrationAddress: buyer.address, ip: String(req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim().slice(0, 45),
+          city: buyer.city, country: 'Turkey', zipCode: buyer.zip_code || '00000',
+        },
+        billingAddress: { ...address, district: buyer.district },
+        shippingAddress: { ...address, district: buyer.district },
+        basketItems,
+      };
+      const result = await call(client.checkoutFormInitialize, 'create', request);
+      if (result.status !== 'success' || !result.token || !result.paymentPageUrl) {
+        console.error('iyzico store checkout initialize failed:', result.errorCode || result.errorMessage || result.status);
+        return res.status(502).json({ error: 'iyzico güvenli ödeme sayfası oluşturulamadı.' });
+      }
+      await req.db.collection('payment_attempts').doc(hash(result.token)).create({
+        uid: req.user.uid, email: req.user.email, provider: 'iyzico', type: 'store_order',
+        order_id: orderRef.id, order_number: order.order_number,
+        net_amount_minor: totalMinor, vat_amount_minor: 0, gross_amount_minor: totalMinor,
+        amount: totalMinor / 100, currency: 'TRY', checkout_token_hash: hash(result.token),
+        provider_conversation_id: attemptId, status: 'pending',
+        created_at: FieldValue.serverTimestamp(), updated_at: FieldValue.serverTimestamp(),
+      });
+      res.json({ provider: 'iyzico', paymentPageUrl: result.paymentPageUrl, totals: { total: money(totalMinor), currency: 'TRY' } });
+    } catch (error) {
+      console.error('iyzico store checkout error:', error?.message || 'Unknown error');
+      res.status(502).json({ error: 'Ödeme başlatılamadı. Lütfen tekrar deneyin.' });
+    }
+  });
 
   app.post('/api/v1/payments/iyzico/initialize', requireVerifiedUser, async (req, res) => {
     const client = iyzicoClient();
@@ -173,7 +295,7 @@ export function registerIyzicoRoutes(app) {
       if (!snap.exists) return res.status(404).send('Ödeme kaydı bulunamadı.');
       const attempt = snap.data();
       if (attempt.status === 'paid') {
-        const url = returnUrl('success', attempt.plan_id);
+        const url = returnUrl('success', attempt.plan_id, attempt.order_id);
         return url ? res.redirect(303, url) : res.status(200).send('Ödeme zaten doğrulandı.');
       }
       const result = await call(client.checkoutForm, 'retrieve', { locale: Iyzipay.LOCALE.TR, conversationId: attempt.provider_conversation_id, token });
@@ -187,6 +309,53 @@ export function registerIyzicoRoutes(app) {
         await attemptRef.set({ status: 'failed', provider_status: String(result.paymentStatus || result.status || 'unconfirmed'), updated_at: FieldValue.serverTimestamp() }, { merge: true });
         const url = returnUrl('failed', attempt.plan_id);
         return url ? res.redirect(303, url) : res.status(200).send('Ödeme tamamlanmadı.');
+      }
+
+      if (attempt.type === 'store_order') {
+        const orderRef = firebase.db.collection('orders').doc(String(attempt.order_id || ''));
+        const orderSnap = await orderRef.get();
+        if (!orderSnap.exists || orderSnap.data().user_id !== attempt.uid) return res.status(404).send('Sipariş kaydı bulunamadı.');
+        if (orderSnap.data().payment_status === 'paid') {
+          const url = returnUrl('success', null, attempt.order_id);
+          return url ? res.redirect(303, url) : res.status(200).send('Sipariş ödemesi zaten doğrulandı.');
+        }
+        if (Number(orderSnap.data().total_minor) !== attempt.gross_amount_minor) return res.status(409).send('Ödeme tutarı siparişle eşleşmedi.');
+        const paymentRef = firebase.db.collection('payments').doc(String(result.paymentId));
+        await firebase.db.runTransaction(async transaction => {
+          const freshOrder = await transaction.get(orderRef);
+          if (!freshOrder.exists || freshOrder.data().payment_status === 'paid') return;
+          const order = freshOrder.data();
+          if (order.status !== 'pending_payment' || order.user_id !== attempt.uid || Number(order.total_minor) !== paidMinor) throw new Error('Sipariş ödeme doğrulaması başarısız.');
+          const productRefs = order.items.map(item => firebase.db.collection('catalog_products').doc(String(item.product_id)));
+          const productSnaps = [];
+          for (const ref of productRefs) productSnaps.push(await transaction.get(ref));
+          for (let i = 0; i < productSnaps.length; i++) {
+            const snap = productSnaps[i], item = order.items[i];
+            if (!snap.exists || snap.data().status !== 'active' || Number(snap.data().stock || 0) < Number(item.quantity)) throw new Error('Ödeme alındı ancak stok doğrulaması başarısız; yönetici incelemesi gerekli.');
+          }
+          productSnaps.forEach((snap, i) => transaction.update(productRefs[i], {
+            stock: Number(snap.data().stock || 0) - Number(order.items[i].quantity),
+            updated_at: new Date().toISOString(),
+          }));
+          transaction.set(paymentRef, {
+            customer_id: attempt.uid, user_id: attempt.uid, provider: 'iyzico',
+            provider_reference: String(result.paymentId), provider_conversation_id: attempt.provider_conversation_id,
+            status: 'paid', payment_type: 'store_order', order_id: attempt.order_id,
+            amount: attempt.gross_amount_minor / 100, currency: 'TRY',
+            created_at: FieldValue.serverTimestamp(), paid_at: FieldValue.serverTimestamp(),
+          });
+          transaction.update(orderRef, {
+            status: 'paid', payment_status: 'paid', provider_payment_id: String(result.paymentId),
+            paid_at: FieldValue.serverTimestamp(), updated_at: FieldValue.serverTimestamp(),
+          });
+          transaction.set(attemptRef, {
+            status: 'paid', provider_payment_id: String(result.paymentId),
+            provider_status: result.paymentStatus, paid_at: FieldValue.serverTimestamp(),
+            updated_at: FieldValue.serverTimestamp(),
+          }, { merge: true });
+        });
+        const url = returnUrl('success', null, attempt.order_id);
+        return url ? res.redirect(303, url) : res.status(200).send('Sipariş ödemesi doğrulandı.');
       }
 
       if (attempt.is_test_payment === true) {
