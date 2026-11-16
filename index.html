@@ -1124,7 +1124,11 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
   const user=window.trendAuth?.currentUser;
   if(!user||!user.emailVerified){message.textContent="Sipariş verebilmek için hesap oluşturun veya giriş yapıp e-posta adresinizi doğrulayın.";byId("authOpenBtn")?.click();return;}
   if(!cart.size){message.textContent="Önce sepetinize ürün ekleyin.";return;}
-  if(!window.confirm("Sepet toplamınız "+byId("storeCartTotal").textContent+". Siparişinizi onaylayıp iyzico güvenli ödeme sayfasına geçmek istiyor musunuz?"))return;
+  if(!window.confirm("Sepet toplamınız "+byId("storeCartTotal").textContent+". Siparişinizi onaylayıp iyzico güvenli ödeme sayfasını yeni sekmede açmak istiyor musunuz?"))return;
+  const paymentWindow=window.open("about:blank","_blank");
+  if(!paymentWindow){message.textContent="Ödeme sekmesi açılamadı. Lütfen tarayıcınızda bu site için açılır pencerelere izin verip yeniden deneyin.";return;}
+  paymentWindow.document.title="Trend-Entegre · Güvenli ödeme";
+  paymentWindow.document.body.innerHTML='<main style="font-family:Arial,sans-serif;max-width:560px;margin:12vh auto;padding:28px;color:#15213b;text-align:center"><h2>Güvenli ödeme hazırlanıyor…</h2><p>iyzico ödeme sayfasına güvenli bağlantı kuruluyor. Lütfen bu sekmeyi kapatmayın.</p></main>';
   const formData=new FormData(form);
   const buyer={name:formData.get("name"),phone:formData.get("phone"),email:formData.get("email"),address:formData.get("address"),city:formData.get("city"),district:formData.get("district"),identityNumber:formData.get("identityNumber"),zipCode:formData.get("zipCode")};
   button.disabled=true;button.textContent="Sipariş gönderiliyor…";message.textContent="";
@@ -1139,8 +1143,8 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
    if(!paymentResponse.ok)throw new Error("Siparişiniz kaydedildi ancak ödeme başlatılamadı: "+(payment.error||"Lütfen Hesabım > Siparişlerim bölümünden tekrar deneyin."));
    const paymentUrl=new URL(payment.paymentPageUrl);
    if(paymentUrl.protocol!=="https:")throw new Error("Siparişiniz kaydedildi ancak güvenli ödeme adresi doğrulanamadı. Hesabım > Siparişlerim bölümünden tekrar deneyin.");
-   window.location.assign(paymentUrl.toString());
-  }catch(error){message.textContent=error.message||"Sipariş gönderilemedi.";}
+   paymentWindow.location.replace(paymentUrl.toString());
+  }catch(error){try{paymentWindow.close();}catch{}message.textContent=error.message||"Sipariş gönderilemedi.";}
   finally{button.disabled=false;button.textContent="Siparişi oluştur ve ödemeye geç";}
  });
  const paymentStatus=new URLSearchParams(window.location.search).get("payment");
