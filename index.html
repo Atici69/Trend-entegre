@@ -1079,7 +1079,7 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
      const inStock=Number(p.stock)>0;
      return '<article class="catalog-product">'+image+'<div class="catalog-info"><span class="catalog-category">'+esc(p.display_category)+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(p.description||"")+'</p><strong class="catalog-price">'+money(p.sale_price)+'</strong><span class="catalog-stock">'+(inStock?"Stokta · "+Number(p.stock)+" adet":"Stokta yok")+'</span><button class="catalog-add" type="button" data-add-to-cart="'+esc(p.id)+'" '+(!inStock?'disabled':'')+'>Sepete ekle</button></div></article>';
     }).join(""):'<p class="muted">Bu kategoride ürün bulunamadı.</p>';
-    if(pagination)pagination.innerHTML='<button type="button" data-catalog-page="'+(currentPage-1)+'" '+(currentPage<=1?'disabled':'')+'>Önceki</button><span>Sayfa '+currentPage+' / '+pageCount+'</span><button type="button" data-catalog-page="'+(currentPage+1)+'" '+(currentPage>=pageCount?'disabled':'')+'>Sonraki</button>';
+    if(pagination)pagination.innerHTML='<button type="button" data-catalog-page="1" '+(currentPage<=1?'disabled':'')+' aria-label="İlk sayfaya git">« Başa git</button><button type="button" data-catalog-page="'+(currentPage-1)+'" '+(currentPage<=1?'disabled':'')+'>‹ Önceki</button><span>Sayfa '+currentPage+' / '+pageCount+'</span><button type="button" data-catalog-page="'+(currentPage+1)+'" '+(currentPage>=pageCount?'disabled':'')+'>Sonraki ›</button><button type="button" data-catalog-page="'+pageCount+'" '+(currentPage>=pageCount?'disabled':'')+' aria-label="Son sayfaya git">Sona git »</button>';
     if(categoryBar)categoryBar.value=selectedCategory;
    }
    search?.addEventListener("input",()=>{currentPage=1;renderProducts();});
