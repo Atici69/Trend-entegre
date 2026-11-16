@@ -919,7 +919,7 @@ async function loadTrendyolFeedMappings(){
   const data=await adminApi('/api/v1/marketplaces/trendyol/feed-mappings?feed_id='+encodeURIComponent(feedId));
   trendyolMappingState=(data.categories||[]).map(item=>({sourceCategory:item.sourceCategory,categoryId:item.mapping?.categoryId||'',attributes:item.mapping?.attributes||[],categoryResults:[]}));
   wrap.innerHTML=trendyolMappingState.length?trendyolMappingState.map((item,index)=>'<div class="card" style="margin-bottom:10px;padding:13px" data-map-index="'+index+'"><b>XML kategorisi: '+escapeHtml(item.sourceCategory)+'</b><div class="field" style="margin-top:8px"><label>Trendyol kategori araması</label><div class="toolbar"><input id="trendyolCategoryQuery'+index+'" value="'+escapeHtml(item.sourceCategory)+'" style="flex:1;min-width:180px"><button class="btn light" type="button" onclick="searchTrendyolCategory('+index+')">Kategori ara</button></div></div><div class="field"><label>Trendyol kategori (en alt kategori seçilmeli)</label><select id="trendyolCategorySelect'+index+'"><option value="">Kategori araması yapın</option></select></div><div id="trendyolAttributes'+index+'" class="section-note">Kategori özellikleri henüz alınmadı.</div></div>').join(''):'<div class="empty-state">XML kaynağında kategori bulunamadı.</div>';
-  trendyolMappingState.forEach((item,index)=>{if(item.categoryId){const select=document.getElementById('trendyolCategorySelect'+index);select.innerHTML='<option value="'+escapeHtml(item.categoryId)+'">Kaydedilmiş kategori ID '+escapeHtml(item.categoryId)+'</option>';select.value=item.categoryId;}});
+  trendyolMappingState.forEach((item,index)=>{if(item.categoryId){const select=document.getElementById('trendyolCategorySelect'+index);select.innerHTML='<option value="'+escapeHtml(item.categoryId)+'">Kaydedilmiş kategori ID '+escapeHtml(item.categoryId)+'</option>';select.value=item.categoryId;loadTrendyolCategoryAttributes(index);}});
   message.textContent=trendyolMappingState.length+' kaynak kategori bulundu. Her biri için Trendyol'un en alt kategorisini seçin.';
  }catch(error){message.textContent=error.message;}
 }
@@ -943,7 +943,7 @@ async function loadTrendyolCategoryAttributes(index){
  try{
   const data=await adminApi('/api/v1/marketplaces/trendyol/categories/'+encodeURIComponent(item.categoryId)+'/attributes');
   const required=(data.attributes||[]).filter(a=>a.required);
-  item.requiredAttributes=required;
+  item.requiredAttributes=required.map(a=>({attributeId:String(a.attribute?.id||''),name:a.attribute?.name||''}));
   note.innerHTML='<b>'+escapeHtml(data.category?.name||'Kategori')+'</b> · '+required.length+' zorunlu özellik<br>'+ (required.length?required.map(a=>escapeHtml(a.attribute?.name||'Özellik')+(a.allowCustom?' (serbest değer)':' (Trendyol değer ID gerekli)')).join(' · '):'Zorunlu özellik bulunamadı.');
  }catch(error){note.textContent=error.message;}
 }
@@ -953,7 +953,7 @@ async function saveTrendyolFeedMappings(){
  const brandId=brandSelect.value,brandName=brandOpt?.dataset.name||document.getElementById('trendyolBrandSearch').value.trim();
  if(!feedId){message.textContent='Önce XML kaynağı seçin.';return;}
  if(!brandId){message.textContent='Trendyol marka listesinden Gönder Bana markasını seçin.';return;}
- const mappings=trendyolMappingState.map((item,index)=>({sourceCategory:item.sourceCategory,categoryId:document.getElementById('trendyolCategorySelect'+index)?.value||item.categoryId,brandId,brandName,attributes:item.attributes||[]}));
+ const mappings=trendyolMappingState.map((item,index)=>({sourceCategory:item.sourceCategory,categoryId:document.getElementById('trendyolCategorySelect'+index)?.value||item.categoryId,brandId,brandName,attributes:item.attributes||[],requiredAttributes:item.requiredAttributes||[]}));
  if(!mappings.length||mappings.some(m=>!m.categoryId)){message.textContent='Her kaynak kategori için Trendyol kategori eşleştirmesi seçilmelidir.';return;}
  try{
   const result=await adminApi('/api/v1/marketplaces/trendyol/feed-mappings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({feed_id:feedId,mappings})});
