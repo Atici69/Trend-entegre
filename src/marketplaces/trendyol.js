@@ -350,8 +350,8 @@ export function registerTrendyolRoutes(app, requireAdmin) {
     try {
       if (req.body?.confirm_publish !== true) return res.status(400).json({ error: 'Gönderim onayı gerekli.' });
       const report = await buildValidation(req.firestore, req.body?.feed_id);
-      if (!report.total || report.blocked > 0) {
-        return res.status(409).json({ error: 'Ürünler gönderilemez. Ön kontrolde ' + report.blocked + ' eksik ürün var.' });
+      if (!report.total || report.ready < 1 || !report.payloads.length) {
+        return res.status(409).json({ error: 'Gönderime hazır ürün bulunamadı. Ön kontrolde ' + report.blocked + ' ürün bekliyor.' });
       }
       const cfg = config();
       const data = await trendyolRequest('/integration/product/sellers/' + encodeURIComponent(cfg.supplierId) + '/v2/products', {
@@ -359,7 +359,7 @@ export function registerTrendyolRoutes(app, requireAdmin) {
       });
       const batchRequestId = data.batchRequestId || data.batch_request_id || '';
       if (!batchRequestId) return res.status(502).json({ error: 'Trendyol gönderim isteğini aldı ancak Batch ID dönmedi. Mağaza panelinden kontrol edin.' });
-      res.json({ ok: true, batchRequestId, itemCount: report.payloads.length, message: 'Ürünler Trendyol kuyruğuna iletildi. Yayına çıkma durumu Batch ID ile takip edilmelidir.' });
+      res.json({ ok: true, batchRequestId, itemCount: report.payloads.length, skippedCount: report.blocked, totalCount: report.total, message: report.payloads.length + ' hazır ürün Trendyol kuyruğuna iletildi; ' + report.blocked + ' hatalı ürün gönderim dışında bırakıldı. Yayına çıkma durumu Batch ID ile takip edilmelidir.' });
     } catch (error) { res.status(502).json({ error: error.message || 'Trendyol aktarımı başlatılamadı.' }); }
   });
   app.get('/api/v1/marketplaces/trendyol/batches/:id', requireAdmin, async (req, res) => {
