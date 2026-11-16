@@ -714,7 +714,7 @@ async function uploadXmlFile(){
  if(!Number.isFinite(marginPercent)||marginPercent<0||marginPercent>1000){xmlMessage('Kâr oranı 0 ile 1000 arasında olmalıdır.',true);return;}
  button.disabled=true;button.textContent='Dosya yükleniyor ve ürünler okunuyor…';
  try{
-  const response=await fetch(API_BASE_URL+'/api/v1/admin/xml/upload',{method:'POST',headers:{'Content-Type':'text/plain; charset=utf-8','Authorization':'Bearer '+adminToken(),'X-XML-Filename':encodeURIComponent(file.name)},body:await file.text()});
+  const response=await fetch(API_BASE_URL+'/api/v1/admin/xml/upload',{method:'POST',headers:{'Content-Type':'text/plain; charset=utf-8','Authorization':'Bearer '+adminToken(),'X-XML-Filename':encodeURIComponent(file.name),'X-XML-Name':encodeURIComponent(name),'X-XML-Margin':String(marginPercent)},body:await file.text()});
   const data=await response.json().catch(()=>({}));
   if(response.status===401||response.status===403){adminLogout('Yönetici oturumu doğrulanamadı. Yeniden giriş yapın.');throw new Error('Yönetici oturumu doğrulanamadı.');}
   if(!response.ok)throw new Error(data.error||'XML dosyası yüklenemedi.');
