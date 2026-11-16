@@ -186,6 +186,17 @@ th{background:#f5f7fc}
 <div class="toolbar"><button class="btn" id="xmlPreviewButton" type="button" onclick="previewXmlFeed()">Bağlantıyı test et ve ürünleri oku</button><button class="btn light" id="xmlSaveButton" type="button" onclick="saveXmlFeed()" disabled>Kaynağı kaydet</button></div>
 <p class="section-note" id="xmlMessage" role="status">Önce XML adresini test edin. Başarılı olursa kaydedebilir ve Excel'e aktarabilirsiniz.</p>
 </div>
+<div class="card" style="margin-bottom:15px" id="xmlUploadCard">
+<h2>XML dosyasını bilgisayardan yükle</h2>
+<p class="section-note">Tedarikçiden indirdiğiniz XML dosyasını doğrudan yükleyin. En fazla 25 MB ve 5.000 ürün desteklenir.</p>
+<div class="two">
+<div class="field"><label for="xmlUploadName">Kaynak adı</label><input id="xmlUploadName" maxlength="100" placeholder="Örn. ABC Tedarikçi XML dosyası"></div>
+<div class="field"><label for="xmlUploadFile">XML dosyası</label><input id="xmlUploadFile" type="file" accept=".xml,.rss,.atom,application/xml,text/xml"></div>
+<div class="field"><label for="xmlUploadMargin">Kâr oranı (%)</label><input id="xmlUploadMargin" type="number" min="0" max="1000" step="0.01" value="0"></div>
+</div>
+<div class="toolbar"><button class="btn" id="xmlUploadButton" type="button" onclick="uploadXmlFile()">XML dosyasını yükle ve kaydet</button></div>
+<p class="section-note" id="xmlUploadMessage" role="status">Dosya seçtikten sonra yükleme düğmesine basın.</p>
+</div>
 <div class="card" style="margin-bottom:15px">
 <div class="head"><div><h2 style="margin:0">Kayıtlı XML kaynakları</h2><p>Eklediğiniz tedarikçi adresleri.</p></div></div>
 <div class="tablebox"><table><thead><tr><th>Kaynak</th><th>Ürün sayısı</th><th>Kâr oranı</th><th>Son kontrol</th><th>İşlem</th></tr></thead><tbody id="xmlFeedRows"><tr><td colspan="5">Kaynaklar yükleniyor…</td></tr></tbody></table></div>
@@ -715,13 +726,42 @@ async function saveXmlFeed(){
  const name=document.getElementById('xmlFeedName').value.trim(),url=document.getElementById('xmlFeedUrl').value.trim();
  if(!xmlPreviewReady||url!==xmlPreviewUrl){xmlMessage('Kaydetmeden önce bu adresin bağlantı testini yapın.',true);return;}
  if(name.length<2){xmlMessage('Kaynak adına en az 2 karakter girin.',true);return;}
- const button=document.getElementById('xmlSaveButton');button.disabled=true;
+ const marginPercent=Number(document.getElementById('xmlMarginPercent').value||0);
+ if(!Number.isFinite(marginPercent)||marginPercent<0||marginPercent>1000){xmlMessage('Kâr oranı 0 ile 1000 arasında olmalıdır.',true);return;}
+ const button=document.getElementById('xmlSaveButton');button.disabled=true;button.textContent='Kaydediliyor…';
+ xmlMessage('XML kaynağı sunucuya kaydediliyor…');
  try{
-  const data=await adminApi('/api/v1/admin/xml/feeds',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,url,marginPercent:Number(document.getElementById('xmlMarginPercent').value||0)})});
-  xmlMessage('XML kaynağı kaydedildi. '+Number(data.feed.products_count).toLocaleString('tr-TR')+' ürün bulundu.');
+  const data=await adminApi('/api/v1/admin/xml/feeds',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,url,marginPercent})});
+  if(!data.feed?.id)throw new Error('Sunucu kayıt yanıtı verdi ancak kaynak kimliği dönmedi. Kaynak listesini yenileyin.');
+  await loadXmlFeeds();
+  document.getElementById('xmlExportSource').value=data.feed.id;
+  xmlMessage('Kaynak kaydedildi: '+data.feed.name+' · '+Number(data.feed.products_count).toLocaleString('tr-TR')+' ürün.');
+ }catch(error){xmlMessage('Kaydetme başarısız: '+error.message,true);}
+ finally{button.disabled=false;button.textContent='Kaynağı kaydet';}
+}
+async function uploadXmlFile(){
+ const file=document.getElementById('xmlUploadFile').files?.[0];
+ const name=document.getElementById('xmlUploadName').value.trim()||file?.name.replace(/\\.xml$/i,'')||'XML dosyası';
+ const marginPercent=Number(document.getElementById('xmlUploadMargin').value||0);
+ const message=document.getElementById('xmlUploadMessage'),button=document.getElementById('xmlUploadButton');
+ const say=(text,error=false)=>{message.textContent=text;message.style.color=error?'#a52d20':'#13845c';};
+ if(!file){say('Lütfen önce bilgisayarınızdan bir XML dosyası seçin.',true);return;}
+ if(!/\\.(xml|rss|atom)$/i.test(file.name)){say('Yalnızca XML, RSS veya Atom dosyaları yüklenebilir.',true);return;}
+ if(file.size>25*1024*1024){say('Dosya 25 MB sınırını aşıyor.',true);return;}
+ if(!Number.isFinite(marginPercent)||marginPercent<0||marginPercent>1000){say('Kâr oranı 0 ile 1000 arasında olmalıdır.',true);return;}
+ button.disabled=true;button.textContent='Dosya yükleniyor…';say('Dosya okunuyor ve güvenli şekilde sunucuya gönderiliyor…');
+ try{
+  const xml=await file.text();
+  if(!xml.trim())throw new Error('Seçilen XML dosyası boş.');
+  const response=await fetch(API_BASE_URL+'/api/v1/admin/xml/upload',{method:'POST',headers:{Authorization:'Bearer '+adminToken(),'Content-Type':'application/xml','X-XML-Filename':encodeURIComponent(file.name),'X-XML-Name':encodeURIComponent(name),'X-XML-Margin':String(marginPercent)},body:xml});
+  const responseText=await response.text();let data={};try{data=responseText?JSON.parse(responseText):{};}catch{throw new Error('Sunucu geçerli JSON yanıtı vermedi (HTTP '+response.status+').');}
+  if(response.status===401||response.status===403){adminLogout('Yönetici oturumu doğrulanamadı. Yeniden giriş yapın.');throw new Error('Yönetici oturumu doğrulanamadı.');}
+  if(!response.ok)throw new Error(data.error||'Dosya yüklenemedi (HTTP '+response.status+').');
+  if(!data.feed?.id)throw new Error('Yükleme yanıtında kaynak kimliği bulunamadı.');
   await loadXmlFeeds();document.getElementById('xmlExportSource').value=data.feed.id;
- }catch(error){xmlMessage(error.message,true);}
- finally{button.disabled=false;}
+  say('Dosya yüklendi ve kaydedildi: '+data.feed.name+' · '+Number(data.feed.products_count).toLocaleString('tr-TR')+' ürün.');
+ }catch(error){say('Yükleme başarısız: '+error.message,true);}
+ finally{button.disabled=false;button.textContent='XML dosyasını yükle ve kaydet';}
 }
 async function saveXmlMargin(){
  const source=document.getElementById('xmlExportSource').value;
