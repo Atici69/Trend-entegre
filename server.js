@@ -490,6 +490,7 @@ app.post('/api/v1/orders', async (req, res) => {
         const lineMinor = unitMinor * quantity;
         if (!Number.isSafeInteger(lineMinor) || !Number.isSafeInteger(totalMinor + lineMinor)) throw new Error('Sipariş tutarı hesaplanamadı.');
         totalMinor += lineMinor;
+        transaction.update(productRefs[index], { stock: stock - quantity, updated_at: new Date().toISOString() });
         orderItems.push({
           product_id: snapshot.id, name: catalogText(product.name, 180),
           sku: catalogText(product.sku, 100), quantity,
@@ -499,7 +500,7 @@ app.post('/api/v1/orders', async (req, res) => {
       });
       const order = {
         order_number: orderRef.id.slice(-10).toUpperCase(),
-        status: 'new', payment_status: 'not_started',
+        status: 'new', payment_status: 'not_started', stock_reserved: true,
         payment_method: 'pending_manual_confirmation',
         buyer: { name, phone, email, address },
         items: orderItems, item_count: orderItems.reduce((sum, item) => sum + item.quantity, 0),
@@ -544,13 +545,37 @@ app.patch('/api/v1/admin/catalog/orders/:id', requireAdmin, async (req, res) => 
       return res.status(400).json({ error: 'Geçersiz sipariş durumu.' });
     }
     const ref = req.firestore.collection('catalog_orders').doc(req.params.id);
-    const snapshot = await ref.get();
-    if (!snapshot.exists) return res.status(404).json({ error: 'Sipariş bulunamadı.' });
-    await ref.update({ status, updated_at: FieldValue.serverTimestamp() });
+    const result = await req.firestore.runTransaction(async (transaction) => {
+      const snapshot = await transaction.get(ref);
+      if (!snapshot.exists) throw new Error('Sipariş bulunamadı.');
+      const order = snapshot.data();
+      if (order.status === 'fulfilled' && status !== 'fulfilled') throw new Error('Tamamlanan siparişin durumu değiştirilemez.');
+      if (order.status === 'cancelled' && status !== 'cancelled') throw new Error('İptal edilen sipariş yeniden açılamaz.');
+      if (status === 'fulfilled' && order.status !== 'confirmed') throw new Error('Önce siparişi onaylamalısınız.');
+      if (status === 'cancelled' && order.stock_reserved) {
+        const items = Array.isArray(order.items) ? order.items : [];
+        const productRefs = items.map(item => req.firestore.collection('catalog_products').doc(item.product_id));
+        const productSnapshots = await Promise.all(productRefs.map(productRef => transaction.get(productRef)));
+        productSnapshots.forEach((productSnapshot, index) => {
+          if (!productSnapshot.exists) return;
+          const currentStock = Math.max(0, Number(productSnapshot.data().stock || 0));
+          transaction.update(productRefs[index], {
+            stock: currentStock + Number(items[index].quantity || 0),
+            updated_at: new Date().toISOString(),
+          });
+        });
+      }
+      transaction.update(ref, {
+        status, stock_reserved: status === 'cancelled' ? false : Boolean(order.stock_reserved),
+        updated_at: FieldValue.serverTimestamp(),
+      });
+      return { id: ref.id, status };
+    });
     await audit(req, 'update', 'catalog_order', ref.id, { status });
-    res.json({ ok: true, id: ref.id, status });
-  } catch {
-    res.status(503).json({ error: 'Sipariş durumu güncellenemedi.' });
+    res.json({ ok: true, ...result });
+  } catch (error) {
+    const message = error.message || 'Sipariş durumu güncellenemedi.';
+    res.status(message === 'Sipariş bulunamadı.' ? 404 : 400).json({ error: message });
   }
 });
 
