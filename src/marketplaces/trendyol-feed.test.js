@@ -12,6 +12,7 @@ const validSource = {
   Stok: '5',
   Desi: '1',
   'KDV Oranı': '20',
+  'Menşei': 'TR',
   'Görsel URL': 'https://example.com/product.webp',
   Açıklama: 'Ürün açıklaması',
 };
