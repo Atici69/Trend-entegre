@@ -1002,13 +1002,13 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
   total.textContent=money(sum);
  }
  function addToCart(id){
-  const product=products.find(item=>item.id===id);
-  if(!product)return;
+  const product=products.find(item=>String(item.id)===String(id));
+  if(!product){const note=byId("storeOrderMessage");if(note)note.textContent="Ürün sepet listesinde bulunamadı. Sayfayı Ctrl + F5 ile yenileyip tekrar deneyin.";return;}
   const current=cart.get(id)?.quantity||0;
   if(current>=10){byId("storeOrderMessage").textContent="Bir üründen en fazla 10 adet ekleyebilirsiniz.";return;}
   if(Number(product.stock)>0&&current>=Number(product.stock)){byId("storeOrderMessage").textContent="Mevcut stok adedine ulaştınız.";return;}
   cart.set(id,{product,quantity:current+1});renderCart();
-  byId("storeOrderMessage").textContent=product.name+" sepete eklendi.";
+  const note=byId("storeOrderMessage");if(note)note.textContent=product.name+" sepete eklendi.";
  }
  async function loadCatalog(){
   const grid=byId("publicCatalogGrid"),message=byId("publicCatalogMessage");
@@ -1037,13 +1037,21 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
    search?.addEventListener("input",renderProducts);
    category?.addEventListener("change",renderProducts);
    renderProducts();
+   if(!grid.dataset.cartClickBound){
+    grid.dataset.cartClickBound="1";
+    grid.addEventListener("click",event=>{
+     const add=event.target instanceof Element?event.target.closest("[data-add-to-cart]"):null;
+     if(!add||!grid.contains(add))return;
+     event.preventDefault();
+     addToCart(String(add.getAttribute("data-add-to-cart")||""));
+    });
+   }
   }catch(error){message.textContent=error.message||"Katalog yüklenemedi.";}
  }
  document.addEventListener("click",event=>{
-  const add=event.target.closest("[data-add-to-cart]");
-  if(add){addToCart(add.dataset.addToCart);return;}
-  const remove=event.target.closest("[data-cart-remove]");
-  if(remove){cart.delete(remove.dataset.cartRemove);renderCart();}
+  const target=event.target instanceof Element?event.target:null;
+  const remove=target?.closest("[data-cart-remove]");
+  if(remove){cart.delete(String(remove.dataset.cartRemove));renderCart();}
  });
  document.addEventListener("change",event=>{
   const input=event.target.closest("[data-cart-quantity]");
@@ -1062,7 +1070,7 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
   if(!cart.size){message.textContent="Önce sepetinize ürün ekleyin.";return;}
   if(!window.confirm("Sepet toplamınız "+byId("storeCartTotal").textContent+". Siparişinizi onaylayıp iyzico güvenli ödeme sayfasına geçmek istiyor musunuz?"))return;
   const formData=new FormData(form);
-  const buyer={name:formData.get("name"),phone:formData.get("phone"),email:formData.get("email"),address:formData.get("address")};
+  const buyer={name:formData.get("name"),phone:formData.get("phone"),email:formData.get("email"),address:formData.get("address"),city:formData.get("city"),district:formData.get("district"),identityNumber:formData.get("identityNumber"),zipCode:formData.get("zipCode")};
   button.disabled=true;button.textContent="Sipariş gönderiliyor…";message.textContent="";
   try{
    const idToken=await user.getIdToken();
