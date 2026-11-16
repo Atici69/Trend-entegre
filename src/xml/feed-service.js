@@ -178,6 +178,12 @@ export function parseProducts(xml) {
     'Stok': findField(item, ['quantity', 'stock', 'stock_quantity', 'qty', 'stok']),
     'Görsel URL': findField(item, ['image', 'image_url', 'picture', 'picture_url', 'gorsel']),
     'Açıklama': findField(item, ['description', 'short_description', 'aciklama', 'açıklama']),
+    'Renk': findField(item, ['color', 'colour', 'renk', 'web_color', 'webcolor']),
+    'Web Color': findField(item, ['web_color', 'webcolor', 'web renk', 'web renk kodu']),
+    'Beden': findField(item, ['size', 'sized', 'beden', 'olcu', 'ölçü', 'ebat']),
+    'Materyal': findField(item, ['material', 'materyal', 'malzeme']),
+    'Cinsiyet': findField(item, ['gender', 'cinsiyet']),
+    'KDV': findField(item, ['vat', 'vat_rate', 'tax', 'kdv', 'kdv_orani']),
   }));
   return products;
 }
