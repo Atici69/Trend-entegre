@@ -181,7 +181,21 @@ export function registerIyzicoRoutes(app) {
       const order = orderSnap.data();
       if (order.uid !== req.user.uid) return res.status(403).json({ error: 'Bu sipariş için ödeme başlatamazsınız.' });
       if (order.payment_status === 'paid') return res.status(409).json({ error: 'Bu siparişin ödemesi zaten tamamlanmış.' });
-      if (order.payment_status === 'pending') return res.status(409).json({ error: 'Bu sipariş için bir ödeme işlemi zaten başlatılmış. Sonucu bekleyin; ödeme ekranı kapanmışsa destek ekibiyle iletişime geçin.' });
+      if (order.payment_status === 'pending') {
+        const existingAttemptId = String(order.payment_attempt_id || '');
+        if (existingAttemptId) {
+          const existingAttemptSnap = await req.db.collection('payment_attempts').doc(existingAttemptId).get();
+          const existingAttempt = existingAttemptSnap.exists ? existingAttemptSnap.data() : {};
+          const existingUrl = String(existingAttempt.payment_page_url || '');
+          if (existingAttempt.status === 'pending' && existingUrl.startsWith('https://')) {
+            return res.json({
+              provider: 'iyzico', paymentPageUrl: existingUrl,
+              order: { order_number: order.order_number, total: money(Number(order.total_minor)), currency: 'TRY' },
+            });
+          }
+        }
+        return res.status(409).json({ error: 'Bu sipariş için ödeme işlemi zaten başlatılmış. Lütfen biraz sonra tekrar deneyin.' });
+      }
       if (order.status !== 'new') return res.status(409).json({ error: 'Yalnızca yeni durumdaki siparişler ödenebilir.' });
       const items = Array.isArray(order.items) ? order.items : [];
       const totalMinor = Number(order.total_minor);
@@ -264,6 +278,7 @@ export function registerIyzicoRoutes(app) {
           order_id: orderId, order_number: order.order_number,
           provider: 'iyzico', gross_amount_minor: totalMinor, currency: 'TRY',
           checkout_token_hash: hash(result.token), provider_conversation_id: attemptId,
+          payment_page_url: result.paymentPageUrl,
           status: 'pending', created_at: FieldValue.serverTimestamp(), updated_at: FieldValue.serverTimestamp(),
         });
         transaction.update(orderRef, {
