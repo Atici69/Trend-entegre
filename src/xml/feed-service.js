@@ -116,24 +116,43 @@ export async function downloadXml(source) {
   throw new Error('XML kaynağı indirilemedi.');
 }
 
+function normalizeXmlKey(value) {
+  return String(value ?? '')
+    .split(':').pop()
+    .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')
+    .toLocaleLowerCase('tr-TR')
+    .replace(/[^a-z0-9]/g, '');
+}
+
 function textValue(value) {
   if (value === null || value === undefined) return '';
-  if (Array.isArray(value)) return textValue(value[0]);
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = textValue(item);
+      if (found) return found;
+    }
+    return '';
+  }
   if (typeof value === 'object') {
-    for (const key of ['#text', 'value', 'Value']) if (value[key] !== undefined) return textValue(value[key]);
+    for (const key of ['#text', 'value', 'Value', 'url', 'href', 'src']) {
+      if (value[key] !== undefined) {
+        const found = textValue(value[key]);
+        if (found) return found;
+      }
+    }
     return '';
   }
   return String(value).trim();
 }
 
 function findField(product, aliases) {
-  const wanted = new Set(aliases.map(x => x.toLocaleLowerCase('tr-TR')));
+  const wanted = new Set(aliases.map(normalizeXmlKey));
   const stack = [product];
   while (stack.length) {
     const current = stack.pop();
     if (!current || typeof current !== 'object') continue;
     for (const [key, value] of Object.entries(current)) {
-      if (wanted.has(key.toLocaleLowerCase('tr-TR'))) {
+      if (wanted.has(normalizeXmlKey(key))) {
         const found = textValue(value);
         if (found) return found;
       }
@@ -146,7 +165,7 @@ function findField(product, aliases) {
 function collectProducts(node, found = []) {
   if (!node || typeof node !== 'object' || found.length >= MAX_PRODUCTS) return found;
   for (const [key, value] of Object.entries(node)) {
-    if (PRODUCT_TAGS.has(key.toLocaleLowerCase('tr-TR'))) {
+    if (PRODUCT_TAGS.has(normalizeXmlKey(key))) {
       const items = Array.isArray(value) ? value : [value];
       for (const item of items) {
         if (item && typeof item === 'object' && found.length < MAX_PRODUCTS) found.push(item);
@@ -167,17 +186,17 @@ export function parseProducts(xml) {
   const raw = collectProducts(parsed);
   if (!raw.length) throw new Error('Ürün kayıtları bulunamadı. Ürün etiketleri product, item, urun veya offer olmalıdır.');
   const products = raw.map((item, index) => ({
-    'Ürün ID': findField(item, ['id', 'product_id', 'productid']),
-    'Ürün Adı': findField(item, ['name', 'title', 'product_name', 'productname', 'urunadi', 'ürünadı', 'baslik']),
-    'SKU': findField(item, ['sku', 'stock_code', 'stockcode', 'model', 'stok_kodu']),
-    'Barkod': findField(item, ['barcode', 'gtin', 'ean', 'barcode_number', 'barkod']),
+    'Ürün ID': findField(item, ['id', 'product_id', 'productid', 'item_id']),
+    'Ürün Adı': findField(item, ['name', 'title', 'product_name', 'productname', 'urunadi', 'ürünadı', 'baslik', 'product_title']),
+    'SKU': findField(item, ['sku', 'stock_code', 'stockcode', 'model', 'stok_kodu', 'merchant_sku', 'seller_sku']),
+    'Barkod': findField(item, ['barcode', 'gtin', 'ean', 'ean13', 'upc', 'barcode_number', 'barkod']),
     'Marka': findField(item, ['brand', 'manufacturer', 'marka', 'marka_baslik']),
-    'Kategori': findField(item, ['category', 'category_name', 'kategori', 'kategori_baslik']) || 'Katalog',
-    'Fiyat': findField(item, ['price', 'sale_price', 'selling_price', 'fiyat']),
+    'Kategori': findField(item, ['category', 'category_name', 'product_type', 'kategori', 'kategori_baslik']) || 'Katalog',
+    'Fiyat': findField(item, ['price', 'sale_price', 'selling_price', 'regular_price', 'list_price', 'fiyat']),
     'Para Birimi': findField(item, ['currency', 'currency_code', 'parabirimi', 'kur_tipi']),
-    'Stok': findField(item, ['quantity', 'stock', 'stock_quantity', 'qty', 'stok']),
-    'Görsel URL': findField(item, ['image', 'image_url', 'picture', 'picture_url', 'gorsel', 'urun_resim_1']),
-    'Açıklama': findField(item, ['description', 'short_description', 'aciklama', 'açıklama', 'kisa_aciklama']),
+    'Stok': findField(item, ['quantity', 'stock', 'stock_quantity', 'available_quantity', 'inventory', 'qty', 'stok', 'stok_adedi']),
+    'Görsel URL': findField(item, ['image', 'image_url', 'image_link', 'main_image', 'picture', 'picture_url', 'gorsel', 'urun_resim_1']),
+    'Açıklama': findField(item, ['description', 'short_description', 'long_description', 'aciklama', 'açıklama', 'kisa_aciklama']),
   }));
   return products;
 }
