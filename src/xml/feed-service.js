@@ -186,7 +186,7 @@ export function parseProducts(xml) {
   const raw = collectProducts(parsed);
   if (!raw.length) throw new Error('Ürün kayıtları bulunamadı. Ürün etiketleri product, item, urun veya offer olmalıdır.');
   const products = raw.map((item, index) => ({
-    'Ürün ID': findField(item, ['id', 'product_id', 'productid', 'item_id']),
+    'Ürün ID': findField(item, ['id', 'product_id', 'productid', 'item_id', 'urun_kodu', 'urunkodu', 'product_code']),
     'Ürün Adı': findField(item, ['name', 'title', 'product_name', 'productname', 'urunadi', 'ürünadı', 'baslik', 'product_title']),
     'SKU': findField(item, ['sku', 'stock_code', 'stockcode', 'model', 'stok_kodu', 'merchant_sku', 'seller_sku']),
     'Barkod': findField(item, ['barcode', 'gtin', 'ean', 'ean13', 'upc', 'barcode_number', 'barkod']),
