@@ -26,7 +26,7 @@ export function validateTrendyolProduct(source, mapping = {}) {
   if (title.length > 100) errors.push('Ürün adı Trendyol için 100 karakteri aşamaz.');
   if (!barcode) errors.push('Barkod eksik.');
   if (!sku) errors.push('Stok kodu (SKU) eksik.');
-  if (!brand) errors.push('Marka eksik.');
+  if (sku.length > 40) errors.push('Model kodu / productMainId 40 karakteri aşamaz.');
   if (!brandId) errors.push('Trendyol marka eşleştirmesi yapılmamış.');
   if (!category) errors.push('Trendyol kategori eşleştirmesi yapılmamış.');
   if (salePrice === null || salePrice <= 0) errors.push('Geçerli satış fiyatı bulunamadı.');
@@ -40,6 +40,7 @@ export function validateTrendyolProduct(source, mapping = {}) {
     catch { errors.push('Ürün görsel adresi geçersiz.'); }
   }
   if (!description) errors.push('Ürün açıklaması eksik.');
+  if (description.length > 30000) errors.push('Ürün açıklaması 30.000 karakteri aşamaz.');
   if (barcode.length > 40) errors.push('Barkod 40 karakterden uzun olamaz.');
   if (barcode && !/^[\p{L}\p{N}._-]+$/u.test(barcode.replace(/\s+/g, ''))) errors.push('Barkod yalnızca harf, rakam, nokta, tire ve alt çizgi içerebilir.');
   const requiredAttributes = Array.isArray(mapping.requiredAttributes) ? mapping.requiredAttributes : null;
