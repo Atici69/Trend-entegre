@@ -33,6 +33,7 @@ app.use(express.urlencoded({ extended: false, limit: '64kb' }));
 app.use('/api', rateLimit({ windowMs: 60_000, limit: 120, standardHeaders: 'draft-7', legacyHeaders: false }));
 app.use('/api/v1/auth', rateLimit({ windowMs: 15 * 60_000, limit: 20, standardHeaders: 'draft-7', legacyHeaders: false }));
 app.use('/api/v1/admin', rateLimit({ windowMs: 15 * 60_000, limit: 30, standardHeaders: 'draft-7', legacyHeaders: false }));
+app.use('/api/v1/orders', rateLimit({ windowMs: 15 * 60_000, limit: 5, standardHeaders: 'draft-7', legacyHeaders: false }));
 
 function firebasePublicConfig() {
   return {
@@ -437,6 +438,119 @@ app.get('/api/v1/catalog/products', async (req, res) => {
   } catch (error) {
     console.error('Public catalog read failed:', error?.message || 'Unknown error');
     res.status(503).json({ error: 'Ürünler şu anda alınamıyor.' });
+  }
+});
+
+// Customer orders: prices and product availability are always re-read on the server.
+app.post('/api/v1/orders', async (req, res) => {
+  try {
+    const firebase = getFirebaseAdmin();
+    if (!firebase) return res.status(503).json({ error: 'Sipariş servisi şu anda kullanılamıyor.' });
+    const buyer = req.body?.buyer || {};
+    const name = catalogText(buyer.name, 120);
+    const phone = catalogText(buyer.phone, 30).replace(/[\s()-]/g, '');
+    const email = catalogText(buyer.email, 160).toLowerCase();
+    const address = catalogText(buyer.address, 600);
+    const items = Array.isArray(req.body?.items) ? req.body.items : [];
+    if (name.length < 2 || !/^\+?[0-9]{10,14}$/.test(phone) || address.length < 8) {
+      return res.status(400).json({ error: 'Ad soyad, geçerli telefon ve teslimat adresi zorunludur.' });
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'E-posta adresi geçerli değil.' });
+    }
+    if (!items.length || items.length > 20) return res.status(400).json({ error: 'Sepette 1 ile 20 arasında farklı ürün bulunmalıdır.' });
+    const normalized = new Map();
+    for (const item of items) {
+      const id = catalogText(item?.product_id, 180);
+      const quantity = Number(item?.quantity);
+      if (!id || !Number.isInteger(quantity) || quantity < 1 || quantity > 10) {
+        return res.status(400).json({ error: 'Ürün veya adet bilgisi geçersiz. Ürün başına en fazla 10 adet sipariş verilebilir.' });
+      }
+      normalized.set(id, (normalized.get(id) || 0) + quantity);
+    }
+    if ([...normalized.values()].some(quantity => quantity > 10)) {
+      return res.status(400).json({ error: 'Bir üründen en fazla 10 adet sipariş verebilirsiniz.' });
+    }
+
+    const orderRef = firebase.db.collection('catalog_orders').doc();
+    const result = await firebase.db.runTransaction(async (transaction) => {
+      const productRefs = [...normalized.keys()].map(id => firebase.db.collection('catalog_products').doc(id));
+      const snapshots = await Promise.all(productRefs.map(ref => transaction.get(ref)));
+      const orderItems = [];
+      let totalMinor = 0;
+      snapshots.forEach((snapshot, index) => {
+        const quantity = [...normalized.values()][index];
+        if (!snapshot.exists) throw new Error('Sepetinizdeki bir ürün artık bulunamıyor. Kataloğu yenileyin.');
+        const product = snapshot.data();
+        if (product.status !== 'active') throw new Error('Sepetinizdeki bir ürün artık satışta değil.');
+        const stock = Math.max(0, Number(product.stock || 0));
+        if (stock < quantity) throw new Error((product.name || 'Ürün') + ' için yeterli stok bulunmuyor.');
+        const unitMinor = Math.round(Number(product.sale_price || 0) * 100);
+        if (!Number.isSafeInteger(unitMinor) || unitMinor <= 0) throw new Error((product.name || 'Ürün') + ' için satış fiyatı geçersiz.');
+        const lineMinor = unitMinor * quantity;
+        if (!Number.isSafeInteger(lineMinor) || !Number.isSafeInteger(totalMinor + lineMinor)) throw new Error('Sipariş tutarı hesaplanamadı.');
+        totalMinor += lineMinor;
+        orderItems.push({
+          product_id: snapshot.id, name: catalogText(product.name, 180),
+          sku: catalogText(product.sku, 100), quantity,
+          unit_price_minor: unitMinor, line_total_minor: lineMinor,
+          currency: catalogText(product.currency || 'TRY', 8),
+        });
+      });
+      const order = {
+        order_number: orderRef.id.slice(-10).toUpperCase(),
+        status: 'new', payment_status: 'not_started',
+        payment_method: 'pending_manual_confirmation',
+        buyer: { name, phone, email, address },
+        items: orderItems, item_count: orderItems.reduce((sum, item) => sum + item.quantity, 0),
+        total_minor: totalMinor, currency: 'TRY',
+        created_at: FieldValue.serverTimestamp(), updated_at: FieldValue.serverTimestamp(),
+      };
+      transaction.create(orderRef, order);
+      return { order_number: order.order_number, total: (totalMinor / 100).toFixed(2), currency: 'TRY' };
+    });
+    res.status(201).json({ ok: true, order: result, message: 'Sipariş talebiniz alındı. Ödeme ve teslimat için sizinle iletişime geçeceğiz.' });
+  } catch (error) {
+    const message = error.message || 'Sipariş kaydedilemedi.';
+    const clientError = /bulunamıyor|satışta değil|stok bulunmuyor|fiyatı geçersiz|tutarı hesaplanamadı/.test(message);
+    res.status(clientError ? 409 : 400).json({ error: message });
+  }
+});
+
+app.get('/api/v1/admin/catalog/orders', requireAdmin, async (req, res) => {
+  try {
+    const snapshot = await req.firestore.collection('catalog_orders').orderBy('created_at', 'desc').limit(100).get();
+    const orders = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id, order_number: data.order_number, status: data.status,
+        payment_status: data.payment_status, buyer: data.buyer,
+        items: data.items, item_count: data.item_count,
+        total_minor: data.total_minor, currency: data.currency,
+        created_at: data.created_at?.toDate?.()?.toISOString?.() || null,
+      };
+    });
+    res.json({ orders });
+  } catch (error) {
+    console.error('Catalog orders read failed:', error?.message || 'Unknown error');
+    res.status(503).json({ error: 'Siparişler alınamadı.' });
+  }
+});
+
+app.patch('/api/v1/admin/catalog/orders/:id', requireAdmin, async (req, res) => {
+  try {
+    const status = catalogText(req.body?.status, 20);
+    if (!['confirmed', 'cancelled', 'fulfilled'].includes(status)) {
+      return res.status(400).json({ error: 'Geçersiz sipariş durumu.' });
+    }
+    const ref = req.firestore.collection('catalog_orders').doc(req.params.id);
+    const snapshot = await ref.get();
+    if (!snapshot.exists) return res.status(404).json({ error: 'Sipariş bulunamadı.' });
+    await ref.update({ status, updated_at: FieldValue.serverTimestamp() });
+    await audit(req, 'update', 'catalog_order', ref.id, { status });
+    res.json({ ok: true, id: ref.id, status });
+  } catch {
+    res.status(503).json({ error: 'Sipariş durumu güncellenemedi.' });
   }
 });
 
