@@ -85,11 +85,32 @@ function flattenCategories(data) {
   visit(data?.categories || data);
   return result;
 }
+function titleColor(product) {
+  const title = normalize(product['Ürün Adı']);
+  const colors = [
+    ['rose gold', 'Rose Gold'], ['rosegold', 'Rose Gold'], ['gümüş', 'Gümüş'],
+    ['gumus', 'Gümüş'], ['altın', 'Altın'], ['altin', 'Altın'], ['gold', 'Altın'],
+    ['kırmızı', 'Kırmızı'], ['kirmizi', 'Kırmızı'], ['mavi', 'Mavi'],
+    ['siyah', 'Siyah'], ['beyaz', 'Beyaz'], ['pembe', 'Pembe'],
+    ['yeşil', 'Yeşil'], ['yesil', 'Yeşil'], ['mor', 'Mor'], ['sarı', 'Sarı'],
+    ['sari', 'Sarı'], ['lacivert', 'Lacivert'], ['turkuaz', 'Turkuaz'],
+    ['kahverengi', 'Kahverengi'],
+  ];
+  const found = colors.find(([key]) => (' ' + title + ' ').includes(' ' + normalize(key) + ' '));
+  return found?.[1] || '';
+}
+function titleSize(product) {
+  const title = text(product['Ürün Adı']).toLocaleUpperCase('tr-TR');
+  const match = title.match(/(?:^|[^A-Z])(XXXL|XXL|XXS|XL|XS|S|M|L)(?:$|[^A-Z])/);
+  if (match) return match[1];
+  if (/TEK EBAT|STANDART BEDEN|STANDART EBAT/i.test(title)) return 'Tek Ebat';
+  return '';
+}
 function sourceValue(product, attributeName) {
   const name = normalize(attributeName);
-  if (/web color|web rengi/.test(name)) return text(product['Web Color'] || product['Renk']);
-  if (/renk|color/.test(name)) return text(product['Renk'] || product['Web Color']);
-  if (/beden|size|olcu/.test(name)) return text(product['Beden']);
+  if (/web color|web rengi/.test(name)) return text(product['Web Color'] || product['Renk'] || titleColor(product));
+  if (/renk|color/.test(name)) return text(product['Renk'] || product['Web Color'] || titleColor(product));
+  if (/beden|size|olcu/.test(name)) return text(product['Beden'] || titleSize(product));
   if (/marka|brand/.test(name)) return text(product['Marka']);
   if (/materyal|malzeme|material/.test(name)) return text(product['Materyal']);
   if (/cinsiyet|gender/.test(name)) return text(product['Cinsiyet']);
