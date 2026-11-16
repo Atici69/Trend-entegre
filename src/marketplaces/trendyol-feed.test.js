@@ -43,3 +43,20 @@ test('Trendyol feed validation flags duplicate barcodes', () => {
   assert.equal(report.blocked, 1);
   assert.ok(report.rows[1].errors.some(item => item.includes('Aynı barkod')));
 });
+
+
+test('Trendyol Product V2 accepts supplier barcodes containing letters and hyphens', () => {
+  const result = validateTrendyolProduct({ ...validSource, Barkod: 'MRR-356' }, {
+    categoryId: '123', brandId: '456', attributes: [{ attributeId: 1, attributeValueId: 2 }],
+  });
+  assert.equal(result.ready, true);
+  assert.equal(result.warnings.some(item => item.includes('GTIN')), false);
+});
+
+test('Trendyol validation blocks barcodes longer than 40 characters', () => {
+  const result = validateTrendyolProduct({ ...validSource, Barkod: 'A'.repeat(41) }, {
+    categoryId: '123', brandId: '456', attributes: [{ attributeId: 1, attributeValueId: 2 }],
+  });
+  assert.equal(result.ready, false);
+  assert.ok(result.errors.some(item => item.includes('40 karakter')));
+});
