@@ -1,4 +1,4 @@
-const REQUIRED_FIELDS = ['barcode', 'title', 'productMainId', 'brandId', 'categoryId', 'quantity', 'stockCode', 'dimensionalWeight', 'description', 'currencyType', 'listPrice', 'salePrice', 'vatRate', 'images', 'attributes'];
+const REQUIRED_FIELDS = ['barcode', 'title', 'productMainId', 'brandId', 'categoryId', 'quantity', 'stockCode', 'dimensionalWeight', 'description', 'listPrice', 'salePrice', 'vatRate', 'images', 'attributes'];
 
 function numeric(value) {
   const parsed = Number(String(value ?? '').replace(',', '.'));
@@ -39,7 +39,7 @@ export function validateTrendyolProduct(source, mapping = {}) {
   }
   if (!description) errors.push('Ürün açıklaması eksik.');
   if (barcode.length > 40) errors.push('Barkod 40 karakterden uzun olamaz.');
-  if (barcode && !/^[\\p{L}\\p{N}._-]+$/u.test(barcode.replace(/\\s+/g, ''))) errors.push('Barkod yalnızca harf, rakam, nokta, tire ve alt çizgi içerebilir.');
+  if (barcode && !/^[\p{L}\p{N}._-]+$/u.test(barcode.replace(/\s+/g, ''))) errors.push('Barkod yalnızca harf, rakam, nokta, tire ve alt çizgi içerebilir.');
   const requiredAttributes = Array.isArray(mapping.requiredAttributes) ? mapping.requiredAttributes : null;
   if (category && requiredAttributes === null) errors.push('Seçilen Trendyol kategorisinin zorunlu özellikleri henüz kontrol edilmemiş.');
   else if (category && requiredAttributes.length && !mapping.attributes?.length) errors.push('Seçilen Trendyol kategorisinin zorunlu ürün özellikleri eşleştirilmemiş.');
