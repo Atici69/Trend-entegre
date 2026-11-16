@@ -722,11 +722,18 @@ app.post('/api/v1/admin/xml/upload', requireAdmin, express.text({ type: ['text/p
     if (!xml.trim()) return res.status(400).json({ error: 'Yüklenen XML dosyası boş.' });
     if (Buffer.byteLength(xml, 'utf8') > 25 * 1024 * 1024) return res.status(413).json({ error: 'XML dosyası 25 MB sınırını aşıyor.' });
     const products = parseProducts(xml);
-    const name = String(req.query.name || req.headers['x-xml-name'] || decodeURIComponent(String(req.headers['x-xml-filename'] || 'tedarikci.xml'))).replace(/\\.xml$/i, '').trim().slice(0, 100) || 'XML dosyası';
-    const marginPercent = normalizeProfitMargin(req.query.marginPercent ?? req.headers['x-xml-margin'] ?? 0);
+    const rawFileName = String(req.headers['x-xml-filename'] || 'tedarikci.xml');
+    const rawName = String(req.headers['x-xml-name'] || req.query.name || rawFileName.replace(/\\.xml$/i, ''));
+    let fileName = rawFileName;
+    let name = rawName;
+    try { fileName = decodeURIComponent(rawFileName); } catch {}
+    try { name = decodeURIComponent(rawName); } catch {}
+    name = name.replace(/\\.xml$/i, '').trim().slice(0, 100) || 'XML dosyası';
+    fileName = fileName.replace(/[\\\\/\\r\\n]/g, '_').slice(0, 180) || 'tedarikci.xml';
+    const marginPercent = normalizeProfitMargin(req.headers['x-xml-margin'] ?? req.query.marginPercent ?? 0);
     const now = new Date().toISOString();
     const feedRef = await req.firestore.collection('xml_feeds').add({
-      name, url: '', file_name: String(req.headers['x-xml-filename'] || 'tedarikci.xml').slice(0, 180),
+      name, url: '', file_name: fileName,
       source_type: 'upload', products_count: products.length, margin_percent: marginPercent,
       last_tested_at: now, created_at: now, updated_at: now, created_by: req.adminUser.id,
     });
@@ -737,7 +744,7 @@ app.post('/api/v1/admin/xml/upload', requireAdmin, express.text({ type: ['text/p
     await writer.close();
     await audit(req, 'upload', 'xml_feed', feedRef.id, { name, products_count: products.length });
     res.status(201).json({
-      feed: { id: feedRef.id, name, file_name: String(req.headers['x-xml-filename'] || 'tedarikci.xml'), source_type: 'upload', products_count: products.length, margin_percent: marginPercent, last_tested_at: now },
+      feed: { id: feedRef.id, name, file_name: fileName, source_type: 'upload', products_count: products.length, margin_percent: marginPercent, last_tested_at: now },
       preview: applyProfitMargin(products, marginPercent).slice(0, 10),
     });
   } catch (error) {
@@ -801,6 +808,12 @@ app.delete('/api/v1/admin/xml/feeds/:id', requireAdmin, async (req, res) => {
     const ref = req.firestore.collection('xml_feeds').doc(req.params.id);
     const existing = await ref.get();
     if (!existing.exists) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
+    if (existing.data().source_type === 'upload') {
+      const uploaded = await ref.collection('products').get();
+      const writer = req.firestore.bulkWriter();
+      uploaded.docs.forEach(doc => writer.delete(doc.ref));
+      await writer.close();
+    }
     await ref.delete();
     await audit(req, 'delete', 'xml_feed', req.params.id);
     res.json({ ok: true });
