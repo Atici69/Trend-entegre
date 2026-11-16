@@ -359,6 +359,33 @@ app.post('/api/v1/marketplaces/hepsiburada/test', requireAdmin, async (_req, res
 });
 
 
+function normalizeProfitMargin(value) {
+  const margin = Number(value);
+  if (!Number.isFinite(margin) || margin < 0 || margin > 1000) throw new Error('Kâr oranı 0 ile 1000 arasında bir yüzde olmalıdır.');
+  return Math.round(margin * 100) / 100;
+}
+function priceNumber(value) {
+  let raw = String(value ?? '').trim().replace(/[^0-9,.-]/g, '');
+  if (!raw || !/\d/.test(raw)) return null;
+  const comma = raw.lastIndexOf(','), dot = raw.lastIndexOf('.');
+  if (comma >= 0 && dot >= 0) {
+    raw = comma > dot ? raw.replace(/\./g, '').replace(',', '.') : raw.replace(/,/g, '');
+  } else if (comma >= 0) raw = raw.replace(',', '.');
+  else if (dot >= 0 && /^-?\d{1,3}(\.\d{3})+$/.test(raw)) raw = raw.replace(/\./g, '');
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+function applyProfitMargin(products, marginValue) {
+  const margin = normalizeProfitMargin(marginValue ?? 0);
+  return products.map(product => {
+    const costText = String(product['Fiyat'] ?? '').trim(), cost = priceNumber(costText);
+    const result = { ...product, 'Alış Fiyatı': costText, 'Kâr Oranı (%)': margin,
+      'Satış Fiyatı': cost === null ? '' : (Math.round((cost * (1 + margin / 100) + Number.EPSILON) * 100) / 100).toFixed(2) };
+    delete result['Fiyat'];
+    return result;
+  });
+}
+
 app.get('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
   try {
     const snapshot = await req.firestore.collection('xml_feeds').get();
@@ -380,7 +407,9 @@ app.post('/api/v1/admin/xml/preview', requireAdmin, async (req, res) => {
     }
     const xml = await downloadXml(url);
     const products = parseProducts(xml);
-    res.json({ totalProducts: products.length, preview: products.slice(0, 10) });
+    const margin = normalizeProfitMargin(req.body?.marginPercent ?? 0);
+    const pricedProducts = applyProfitMargin(products, margin);
+    res.json({ totalProducts: pricedProducts.length, marginPercent: margin, preview: pricedProducts.slice(0, 10) });
   } catch (error) {
     res.status(400).json({ error: error.message || 'XML kaynağı okunamadı.' });
   }
@@ -393,16 +422,29 @@ app.post('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
   try {
     const xml = await downloadXml(url);
     const products = parseProducts(xml);
+    const marginPercent = normalizeProfitMargin(req.body?.marginPercent ?? 0);
     const now = new Date().toISOString();
     const ref = await req.firestore.collection('xml_feeds').add({
-      name, url, products_count: products.length, last_tested_at: now,
+      name, url, products_count: products.length, margin_percent: marginPercent, last_tested_at: now,
       created_at: now, updated_at: now, created_by: req.adminUser.id,
     });
     await audit(req, 'create', 'xml_feed', ref.id, { name, products_count: products.length });
-    res.status(201).json({ feed: { id: ref.id, name, url, products_count: products.length, last_tested_at: now } });
+    res.status(201).json({ feed: { id: ref.id, name, url, products_count: products.length, margin_percent: marginPercent, last_tested_at: now } });
   } catch (error) {
     res.status(400).json({ error: error.message || 'XML kaynağı kaydedilemedi.' });
   }
+});
+
+app.patch('/api/v1/admin/xml/feeds/:id', requireAdmin, async (req, res) => {
+  try {
+    const marginPercent = normalizeProfitMargin(req.body?.marginPercent);
+    const ref = req.firestore.collection('xml_feeds').doc(req.params.id);
+    const existing = await ref.get();
+    if (!existing.exists) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
+    await ref.update({ margin_percent: marginPercent, updated_at: new Date().toISOString() });
+    await audit(req, 'update_margin', 'xml_feed', req.params.id, { margin_percent: marginPercent });
+    res.json({ ok: true, margin_percent: marginPercent });
+  } catch (error) { res.status(400).json({ error: error.message || 'Kâr oranı kaydedilemedi.' }); }
 });
 
 app.delete('/api/v1/admin/xml/feeds/:id', requireAdmin, async (req, res) => {
@@ -422,16 +464,19 @@ app.post('/api/v1/admin/xml/export', requireAdmin, async (req, res) => {
   try {
     let url = String(req.body?.url || '').trim();
     let fileName = 'urunler';
+    let savedMarginForExport = 0;
     if (req.body?.feed_id) {
       const saved = await req.firestore.collection('xml_feeds').doc(String(req.body.feed_id)).get();
       if (!saved.exists) return res.status(404).json({ error: 'Kayıtlı XML kaynağı bulunamadı.' });
       url = saved.data().url;
+      savedMarginForExport = saved.data().margin_percent ?? 0;
       fileName = String(saved.data().name || fileName).replace(/[^a-z0-9-_]+/gi, '-').slice(0, 50) || fileName;
     }
     const xml = await downloadXml(url);
     const products = parseProducts(xml);
-    const count = clampProductLimit(req.body?.limit ?? 'all', products.length);
-    const selected = products.slice(0, count);
+    const pricedProducts = applyProfitMargin(products, savedMarginForExport);
+    const count = clampProductLimit(req.body?.limit ?? 'all', pricedProducts.length);
+    const selected = pricedProducts.slice(0, count);
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(selected);
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Ürünler');
