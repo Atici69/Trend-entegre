@@ -359,8 +359,6 @@ app.post('/api/v1/marketplaces/hepsiburada/test', requireAdmin, async (_req, res
 });
 
 
-const xmlFeeds = () => req.firestore.collection('xml_feeds');
-
 app.get('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
   try {
     const snapshot = await req.firestore.collection('xml_feeds').get();
