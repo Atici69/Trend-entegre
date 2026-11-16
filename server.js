@@ -10,6 +10,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { marketplaceStatus } from './src/marketplaces/index.js';
 import { testHepsiburadaConnection } from './src/marketplaces/hepsiburada.js';
 import { testTrendyolConnection, getTrendyolProducts, getTrendyolOrders } from './src/marketplaces/trendyol.js';
+import { validateTrendyolFeed } from './src/marketplaces/trendyol-feed.js';
 import { registerIyzicoRoutes } from './src/payments/iyzico.js';
 import * as XLSX from 'xlsx';
 import { downloadXml, parseProducts, clampProductLimit } from './src/xml/feed-service.js';
@@ -576,6 +577,43 @@ app.get('/api/v1/marketplaces/trendyol/orders', requireAdmin, async (req, res) =
   const result = await getTrendyolOrders({ status: req.query.status, page: req.query.page, size: req.query.size });
   const statusCode = result.ok ? 200 : result.status === 'not_configured' ? 424 : result.status === 'authentication_failed' ? 502 : 503;
   res.status(statusCode).json(result);
+});
+
+app.post('/api/v1/marketplaces/trendyol/validate-feed', requireAdmin, async (req, res) => {
+  try {
+    const feedId = String(req.body?.feed_id || '').trim();
+    if (!feedId) return res.status(400).json({ error: 'Önce kayıtlı bir XML kaynağı seçin.' });
+    const feedRef = req.firestore.collection('xml_feeds').doc(feedId);
+    const feedSnap = await feedRef.get();
+    if (!feedSnap.exists) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
+    const feed = feedSnap.data();
+    const productSnap = await feedRef.collection('products').orderBy('index').get();
+    const sourceProducts = productSnap.docs.map(doc => doc.data().product).filter(Boolean);
+    if (!sourceProducts.length) return res.status(422).json({ error: 'XML kaynağında kontrol edilecek ürün bulunamadı.' });
+    const margin = normalizeProfitMargin(feed.margin_percent ?? 0);
+    const pricedProducts = sourceProducts.map(product => {
+      const cost = priceNumber(product['Fiyat']);
+      return { ...product, 'Satış Fiyatı': cost === null ? '' : (Math.round((cost * (1 + margin / 100) + Number.EPSILON) * 100) / 100).toFixed(2) };
+    });
+    const mappingsSnap = await req.firestore.collection('marketplace_category_mappings')
+      .where('marketplace', '==', 'trendyol').get();
+    const mappings = {};
+    mappingsSnap.docs.forEach(doc => {
+      const data = doc.data();
+      if (data.source_category) mappings[String(data.source_category)] = {
+        categoryId: data.category_id, brandId: data.brand_id, attributes: data.attributes || [],
+      };
+    });
+    const report = validateTrendyolFeed(pricedProducts, mappings);
+    await audit(req, 'validate_feed', 'xml_feed', feedId, {
+      marketplace: 'trendyol', total: report.total, ready: report.ready, blocked: report.blocked,
+    });
+    res.json({ marketplace: 'trendyol', feed: { id: feedId, name: feed.name }, margin_percent: margin, ...report,
+      note: 'Bu işlem yalnızca doğrulama yapar; Trendyol mağazanıza ürün göndermez.' });
+  } catch (error) {
+    console.error('Trendyol feed validation failed:', error?.message || 'Unknown error');
+    res.status(400).json({ error: error.message || 'Trendyol ürün doğrulaması yapılamadı.' });
+  }
 });
 
 
