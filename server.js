@@ -509,7 +509,7 @@ app.post('/api/v1/orders', requireCustomer, async (req, res) => {
         created_at: FieldValue.serverTimestamp(), updated_at: FieldValue.serverTimestamp(),
       };
       transaction.create(orderRef, order);
-      return { order_number: order.order_number, total: (totalMinor / 100).toFixed(2), currency: 'TRY' };
+      return { id: orderRef.id, order_number: order.order_number, total: (totalMinor / 100).toFixed(2), currency: 'TRY' };
     });
     res.status(201).json({ ok: true, order: result, message: 'Sipariş talebiniz alındı. Ödeme ve teslimat için sizinle iletişime geçeceğiz.' });
   } catch (error) {
