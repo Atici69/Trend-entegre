@@ -394,14 +394,15 @@ async function loadCustomerOrders(){
   if(!orders.length){list.textContent='Henüz siparişiniz bulunmuyor.';return;}
   const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const money=value=>(Number(value||0)/100).toLocaleString('tr-TR',{style:'currency',currency:'TRY'});
-  const statuses={new:'Alındı',confirmed:'Onaylandı',cancelled:'İptal edildi',fulfilled:'Tamamlandı'};
+  const statuses={pending_payment:'Ödeme bekleniyor',paid:'Ödeme alındı',processing:'Hazırlanıyor',shipped:'Kargoya verildi',delivered:'Teslim edildi',cancelled:'İptal edildi'};
   list.innerHTML=orders.map(order=>{
    const date=order.created_at?new Date(order.created_at).toLocaleString('tr-TR'):'Tarih bilgisi yok';
    const lines=(order.items||[]).map(item=>esc(item.name)+' × '+Number(item.quantity||0)).join(', ');
    const paymentLabel=order.payment_status==='paid'?'Ödeme alındı':order.payment_status==='failed'?'Ödeme başarısız':'Ödeme bekleniyor';
-   const canPay=order.status==='new'&&['not_started','failed','pending'].includes(order.payment_status);
+   const canPay=order.status==='pending_payment'&&['failed','pending'].includes(order.payment_status);
    const payButton=canPay?'<button type="button" data-pay-order="'+esc(order.id)+'" style="margin-top:10px;border:0;border-radius:8px;padding:9px 13px;background:#f4772b;color:#fff;font-weight:800;cursor:pointer">'+(order.payment_status==='pending'?'Ödemeye devam et':'iyzico ile öde')+'</button>':'';
-   return '<article style="border:1px solid #e5e9f1;border-radius:10px;padding:12px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><strong>Sipariş #'+esc(order.order_number)+'</strong><strong>'+money(order.total_minor)+'</strong></div><p style="margin:6px 0;color:#64708a;font-size:12px">'+esc(date)+' · '+esc(statuses[order.status]||'İşlemde')+' · '+paymentLabel+'</p><p style="margin:0;font-size:13px">'+lines+'</p>'+payButton+'</article>';
+   const shipment=order.status==='shipped'||order.status==='delivered'?'<p style="margin:8px 0 0;color:#34415c;font-size:13px"><strong>'+esc(order.shipping_company||'Kargo')+'</strong> · Takip no: '+esc(order.tracking_number||'Henüz girilmedi')+'</p>':'';
+   return '<article style="border:1px solid #e5e9f1;border-radius:10px;padding:12px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><strong>Sipariş #'+esc(order.order_number)+'</strong><strong>'+money(order.total_minor)+'</strong></div><p style="margin:6px 0;color:#64708a;font-size:12px">'+esc(date)+' · <strong>'+esc(statuses[order.status]||'İşlemde')+'</strong> · '+paymentLabel+'</p><p style="margin:0;font-size:13px">'+lines+'</p>'+shipment+payButton+'</article>';
   }).join('');
   if(!list.dataset.paymentHandlerBound){
    list.dataset.paymentHandlerBound='1';
@@ -416,7 +417,8 @@ async function loadCustomerOrders(){
      if(!response.ok)throw new Error(result.error||'Ödeme başlatılamadı.');
      const paymentUrl=new URL(result.paymentPageUrl);
      if(paymentUrl.protocol!=='https:')throw new Error('Güvenli olmayan ödeme adresi engellendi.');
-     window.location.assign(paymentUrl.toString());
+     const paymentTab=window.open(paymentUrl.toString(),'_blank','noopener');
+     if(!paymentTab)throw new Error('Ödeme sekmesi açılamadı. Açılır pencerelere izin verip tekrar deneyin.');
     }catch(error){button.disabled=false;button.textContent='Tekrar dene';const note=document.createElement('p');note.textContent=error.message||'Ödeme başlatılamadı.';note.style.color='#b42318';button.after(note);}
    });
   }
