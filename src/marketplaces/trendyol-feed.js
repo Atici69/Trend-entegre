@@ -69,7 +69,7 @@ export function validateTrendyolFeed(products, mappings = {}) {
   const seen = new Set();
   const rows = products.map((product, index) => {
     const result = validateTrendyolProduct(product, mappings[String(product['Kategori'] || '')] || {});
-    const barcode = String(product['Barkod'] || '').trim();
+    const barcode = String(product['Barkod'] || '').trim().replace(/\\s+/g, '');
     const duplicate = barcode && seen.has(barcode);
     if (barcode) seen.add(barcode);
     if (duplicate) {
