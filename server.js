@@ -593,7 +593,7 @@ app.post('/api/v1/marketplaces/trendyol/validate-feed', requireAdmin, async (req
     const margin = normalizeProfitMargin(feed.margin_percent ?? 0);
     const pricedProducts = sourceProducts.map(product => {
       const cost = priceNumber(product['Fiyat']);
-      return { ...product, 'Satış Fiyatı': cost === null ? '' : (Math.round((cost * (1 + margin / 100) + Number.EPSILON) * 100) / 100).toFixed(2) };
+      return { ...product, 'Desi': product['Desi'] || product.dimensionalWeight || '1', 'Satış Fiyatı': cost === null ? '' : (Math.round((cost * (1 + margin / 100) + Number.EPSILON) * 100) / 100).toFixed(2) };
     });
     const mappingsSnap = await req.firestore.collection('marketplace_category_mappings')
       .where('marketplace', '==', 'trendyol').get();
