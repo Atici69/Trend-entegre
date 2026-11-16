@@ -400,7 +400,10 @@ function catalogProduct(body, previous = {}) {
   const margin = Number(body.margin_percent ?? previous.margin_percent ?? 0);
   const status = catalogText(body.status ?? previous.status ?? 'draft', 20);
   const marginChanged = body.margin_percent !== undefined && Number(body.margin_percent) !== Number(previous.margin_percent ?? 0);
-  let price = body.sale_price !== undefined ? Number(body.sale_price) : (marginChanged || previous.sale_price === undefined ? null : Number(previous.sale_price));
+  const saleInput = body.sale_price;
+  let price = saleInput !== undefined && saleInput !== null && String(saleInput).trim() !== ''
+    ? Number(saleInput)
+    : (marginChanged || previous.sale_price === undefined ? null : Number(previous.sale_price));
   if (price === null) price = Math.round((cost * (1 + margin / 100) + Number.EPSILON) * 100) / 100;
   if (!name || !Number.isFinite(stock) || stock < 0 || !Number.isFinite(cost) || cost < 0 ||
       !Number.isFinite(margin) || margin < 0 || margin > 1000 ||
