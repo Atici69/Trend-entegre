@@ -1045,7 +1045,7 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
    if(paymentUrl.protocol!=="https:")throw new Error("Siparişiniz kaydedildi ancak güvenli ödeme adresi doğrulanamadı. Hesabım > Siparişlerim bölümünden tekrar deneyin.");
    window.location.assign(paymentUrl.toString());
   }catch(error){message.textContent=error.message||"Sipariş gönderilemedi.";}
-  finally{button.disabled=false;button.textContent="Sipariş talebi gönder";}
+  finally{button.disabled=false;button.textContent="Siparişi oluştur ve ödemeye geç";}
  });
  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{renderCart();loadCatalog();});else{renderCart();loadCatalog();}
 })();
