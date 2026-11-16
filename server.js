@@ -709,14 +709,14 @@ app.post('/api/v1/admin/catalog/import-xml', requireAdmin, async (req, res) => {
 
 app.post('/api/v1/admin/xml/upload', express.text({ type: ['application/xml', 'text/xml'], limit: '25mb' }), requireAdmin, async (req, res) => {
   try {
-    const xml = typeof req.body === 'string' ? req.body.replace(/^\\uFEFF/, '').trim() : '';
+    const xml = typeof req.body === 'string' ? req.body.replace(/^\uFEFF/, '').trim() : '';
     if (!xml) return res.status(400).json({ error: 'XML dosyası boş veya okunamadı.' });
     const products = parseProducts(xml);
     const decodeHeader = value => {
       try { return decodeURIComponent(String(value || '')); } catch { return ''; }
     };
     const suppliedName = decodeHeader(req.get('X-XML-Name')) || decodeHeader(req.get('X-XML-Filename'));
-    const name = (suppliedName || 'Yüklenen XML').replace(/\\.[^.]+$/, '').replace(/[<>:"/\\\\|?*\\x00-\\x1f]/g, ' ').trim().slice(0, 100) || 'Yüklenen XML';
+    const name = (suppliedName || 'Yüklenen XML').replace(/\.[^.]+$/, '').replace(/[<>:"/\\|?*\x00-\x1f]/g, ' ').trim().slice(0, 100) || 'Yüklenen XML';
     const marginPercent = normalizeProfitMargin(req.get('X-XML-Margin') ?? 0);
     const bucketName = process.env.FIREBASE_STORAGE_BUCKET?.trim();
     if (!bucketName) return res.status(503).json({ error: 'Dosya depolama alanı yapılandırılmamış (FIREBASE_STORAGE_BUCKET).' });
