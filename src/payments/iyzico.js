@@ -77,6 +77,88 @@ export function registerIyzicoRoutes(app) {
   }
 
   // Store checkout: prices and stock are always read from Firestore, never trusted from the browser.
+  app.get('/api/v1/customer/orders', requireVerifiedUser, async (req, res) => {
+    try {
+      const snapshot = await req.db.collection('orders').where('user_id', '==', req.user.uid).get();
+      const orders = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id, order_number: data.order_number, status: data.status,
+          payment_status: data.payment_status, currency: data.currency || 'TRY',
+          total_minor: data.total_minor, items: data.items || [],
+          created_at: data.created_at || null, updated_at: data.updated_at || null,
+          paid_at: data.paid_at || null, shipped_at: data.shipped_at || null,
+          delivered_at: data.delivered_at || null, tracking_number: data.tracking_number || '',
+          shipping_company: data.shipping_company || '',
+        };
+      }).sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+      res.json({ orders });
+    } catch (error) {
+      console.error('Customer order list failed:', error?.message || 'Unknown error');
+      res.status(503).json({ error: 'Siparişleriniz şu anda alınamadı.' });
+    }
+  });
+
+  async function requireStoreAdmin(req, res, next) {
+    try {
+      const token = req.headers.authorization?.match(/^Bearer\\s+(.+)$/i)?.[1];
+      const firebase = firebaseServices();
+      if (!firebase || !token) return res.status(401).json({ error: 'Yönetici oturumu doğrulanamadı.' });
+      const decoded = await firebase.auth.verifyIdToken(token);
+      const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(email => email.trim().toLowerCase()).filter(Boolean);
+      if (!decoded.email || !adminEmails.includes(decoded.email.toLowerCase())) return res.status(403).json({ error: 'Bu işlem yalnızca yöneticiler içindir.' });
+      req.db = firebase.db;
+      req.adminUser = { uid: decoded.uid, email: decoded.email };
+      next();
+    } catch { return res.status(401).json({ error: 'Yönetici oturumu doğrulanamadı.' }); }
+  }
+
+  app.get('/api/v1/admin/catalog/orders', requireStoreAdmin, async (req, res) => {
+    try {
+      const snapshot = await req.db.collection('orders').limit(300).get();
+      const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+      res.json({ orders });
+    } catch (error) {
+      console.error('Admin store order list failed:', error?.message || 'Unknown error');
+      res.status(503).json({ error: 'Mağaza siparişleri alınamadı.' });
+    }
+  });
+
+  app.patch('/api/v1/admin/catalog/orders/:orderId', requireStoreAdmin, async (req, res) => {
+    const status = String(req.body?.status || '');
+    const allowed = ['processing', 'shipped', 'delivered', 'cancelled'];
+    if (!allowed.includes(status)) return res.status(400).json({ error: 'Geçersiz sipariş durumu.' });
+    try {
+      const ref = req.db.collection('orders').doc(String(req.params.orderId));
+      const result = await req.db.runTransaction(async transaction => {
+        const snap = await transaction.get(ref);
+        if (!snap.exists) throw new Error('Sipariş bulunamadı.');
+        const order = snap.data();
+        if (status === 'cancelled' && order.payment_status === 'paid') {
+          throw new Error('Ödemesi alınmış sipariş buradan iptal edilemez. Önce iyzico iade süreci yönetilmelidir.');
+        }
+        const now = new Date().toISOString();
+        const update = { status, updated_at: now, status_updated_by: req.adminUser.email };
+        if (status === 'shipped') {
+          const tracking = String(req.body?.tracking_number || '').trim().slice(0, 100);
+          const carrier = String(req.body?.shipping_company || '').trim().slice(0, 100);
+          if (!tracking) throw new Error('Kargo takip numarası zorunludur.');
+          update.tracking_number = tracking;
+          update.shipping_company = carrier;
+          update.shipped_at = now;
+        }
+        if (status === 'delivered') update.delivered_at = now;
+        transaction.update(ref, update);
+        return { id: snap.id, ...order, ...update };
+      });
+      res.json({ order: result });
+    } catch (error) {
+      const message = error.message || 'Sipariş durumu güncellenemedi.';
+      res.status(message === 'Sipariş bulunamadı.' ? 404 : 400).json({ error: message });
+    }
+  });
+
   app.post('/api/v1/orders', requireVerifiedUser, async (req, res) => {
     try {
       const buyer = req.body?.buyer || {};
