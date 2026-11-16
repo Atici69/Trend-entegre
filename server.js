@@ -723,12 +723,12 @@ app.post('/api/v1/admin/xml/upload', requireAdmin, express.text({ type: ['text/p
     if (Buffer.byteLength(xml, 'utf8') > 25 * 1024 * 1024) return res.status(413).json({ error: 'XML dosyası 25 MB sınırını aşıyor.' });
     const products = parseProducts(xml);
     const rawFileName = String(req.headers['x-xml-filename'] || 'tedarikci.xml');
-    const rawName = String(req.headers['x-xml-name'] || req.query.name || rawFileName.replace(/\\.xml$/i, ''));
+    const rawName = String(req.headers['x-xml-name'] || req.query.name || rawFileName.replace(/\.xml$/i, ''));
     let fileName = rawFileName;
     let name = rawName;
     try { fileName = decodeURIComponent(rawFileName); } catch {}
     try { name = decodeURIComponent(rawName); } catch {}
-    name = name.replace(/\\.xml$/i, '').trim().slice(0, 100) || 'XML dosyası';
+    name = name.replace(/\.xml$/i, '').trim().slice(0, 100) || 'XML dosyası';
     fileName = fileName.replace(/[\\\\/\\r\\n]/g, '_').slice(0, 180) || 'tedarikci.xml';
     const marginPercent = normalizeProfitMargin(req.headers['x-xml-margin'] ?? req.query.marginPercent ?? 0);
     const now = new Date().toISOString();
