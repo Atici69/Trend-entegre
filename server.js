@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import { randomUUID } from 'node:crypto';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
@@ -636,9 +637,9 @@ app.delete('/api/v1/admin/catalog/products/:id', requireAdmin, async (req, res) 
 
 
 async function loadXmlFeedProducts(firestore, feedId, feed) {
-  if (feed.source_type === 'upload') {
+  if (feed.source_type === 'upload' || feed.products_stored === true) {
     const snapshot = await firestore.collection('xml_feeds').doc(feedId).collection('products').orderBy('index').get();
-    if (snapshot.empty) throw new Error('Yüklenen XML dosyasının kayıtlı ürünleri bulunamadı. Dosyayı yeniden yükleyin.');
+    if (snapshot.empty) throw new Error('XML kaynağının kayıtlı ürünleri bulunamadı. Kaynağı yeniden okuyun.');
     return snapshot.docs.map(doc => doc.data().product).filter(Boolean);
   }
   return parseProducts(await downloadXml(feed.url));
@@ -742,18 +743,26 @@ app.post('/api/v1/admin/xml/upload', requireAdmin, express.text({ type: ['text/p
 
 app.post('/api/v1/admin/xml/preview', requireAdmin, async (req, res) => {
   try {
-    let url = String(req.body?.url || '').trim();
-    if (req.body?.feed_id) {
-      const saved = await req.firestore.collection('xml_feeds').doc(String(req.body.feed_id)).get();
-      if (!saved.exists) return res.status(404).json({ error: 'Kayıtlı XML kaynağı bulunamadı.' });
-      url = saved.data().url;
-    }
+    const url = String(req.body?.url || '').trim();
     const xml = await downloadXml(url);
     const products = parseProducts(xml);
     const margin = normalizeProfitMargin(req.body?.marginPercent ?? 0);
+    const previewId = randomUUID();
+    const now = Date.now();
+    const previewRef = req.firestore.collection('xml_previews').doc(previewId);
+    await previewRef.set({
+      url, margin_percent: margin, products_count: products.length,
+      created_by: req.adminUser.id, created_at: now, expires_at: now + 30 * 60 * 1000,
+    });
+    const writer = req.firestore.bulkWriter();
+    products.forEach((product, index) => {
+      writer.set(previewRef.collection('products').doc(String(index).padStart(5, '0')), { index, product });
+    });
+    await writer.close();
     const pricedProducts = applyProfitMargin(products, margin);
-    res.json({ totalProducts: pricedProducts.length, marginPercent: margin, preview: pricedProducts.slice(0, 10) });
+    res.json({ previewId, totalProducts: pricedProducts.length, marginPercent: margin, preview: pricedProducts.slice(0, 10) });
   } catch (error) {
+    console.error('Admin XML preview failed:', error?.message || 'Unknown error');
     res.status(400).json({ error: error.message || 'XML kaynağı okunamadı.' });
   }
 });
@@ -761,19 +770,39 @@ app.post('/api/v1/admin/xml/preview', requireAdmin, async (req, res) => {
 app.post('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
   const name = String(req.body?.name || '').trim().slice(0, 100);
   const url = String(req.body?.url || '').trim().slice(0, 2048);
-  if (name.length < 2 || !url) return res.status(400).json({ error: 'Kaynak adı ve XML adresi gereklidir.' });
+  const previewId = String(req.body?.preview_id || '').trim();
+  if (name.length < 2 || !url || !previewId) return res.status(400).json({ error: 'Kaynak adı, XML adresi ve başarılı önizleme kaydı gereklidir. Önce bağlantıyı yeniden test edin.' });
   try {
-    const xml = await downloadXml(url);
-    const products = parseProducts(xml);
-    const marginPercent = normalizeProfitMargin(req.body?.marginPercent ?? 0);
+    const previewRef = req.firestore.collection('xml_previews').doc(previewId);
+    const previewSnap = await previewRef.get();
+    if (!previewSnap.exists) return res.status(410).json({ error: 'XML önizleme oturumu bulunamadı. Güvenlik nedeniyle bağlantıyı yeniden test etmeniz gerekiyor.' });
+    const previewData = previewSnap.data();
+    if (previewData.created_by !== req.adminUser.id || Number(previewData.expires_at || 0) < Date.now() || previewData.url !== url) {
+      return res.status(410).json({ error: 'XML önizleme oturumu süresi dolmuş veya adresle eşleşmiyor. Bağlantıyı yeniden test edin.' });
+    }
+    const snapshot = await previewRef.collection('products').orderBy('index').get();
+    const products = snapshot.docs.map(doc => doc.data().product).filter(Boolean);
+    if (!products.length) return res.status(422).json({ error: 'Önizleme ürünleri bulunamadı. Bağlantıyı yeniden test edin.' });
+    const marginPercent = normalizeProfitMargin(req.body?.marginPercent ?? previewData.margin_percent ?? 0);
     const now = new Date().toISOString();
     const ref = await req.firestore.collection('xml_feeds').add({
-      name, url, products_count: products.length, margin_percent: marginPercent, last_tested_at: now,
+      name, url, source_type: 'url', products_stored: true, products_count: products.length,
+      margin_percent: marginPercent, last_tested_at: now,
       created_at: now, updated_at: now, created_by: req.adminUser.id,
     });
+    const writer = req.firestore.bulkWriter();
+    products.forEach((product, index) => {
+      writer.set(ref.collection('products').doc(String(index).padStart(5, '0')), { index, product });
+    });
+    await writer.close();
+    const cleanup = req.firestore.bulkWriter();
+    snapshot.docs.forEach(doc => cleanup.delete(doc.ref));
+    cleanup.delete(previewRef);
+    await cleanup.close();
     await audit(req, 'create', 'xml_feed', ref.id, { name, products_count: products.length });
     res.status(201).json({ feed: { id: ref.id, name, url, products_count: products.length, margin_percent: marginPercent, last_tested_at: now } });
   } catch (error) {
+    console.error('Admin XML feed save failed:', error?.message || 'Unknown error');
     res.status(400).json({ error: error.message || 'XML kaynağı kaydedilemedi.' });
   }
 });
