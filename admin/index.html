@@ -432,7 +432,7 @@ function go(id){
   document.getElementById("pageTitle").textContent=titles[id]||"Yönetim Merkezi";
   window.scrollTo({top:0,behavior:"smooth"});
   if(id==="marketplaces") loadMarketplaceStatus();
-  if(id==="xml") loadXmlFeeds();
+  if(id==="xml"||id==="marketplace-products") loadXmlFeeds();
   if(id==="catalog"){loadCatalogProducts();loadXmlFeeds();}
   if(id==="orders") loadCatalogOrders();
   if(id==="ads") loadAdManager();
