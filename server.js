@@ -9,7 +9,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { marketplaceStatus } from './src/marketplaces/index.js';
 import { testHepsiburadaConnection } from './src/marketplaces/hepsiburada.js';
-import { testTrendyolConnection, getTrendyolProducts, getTrendyolOrders } from './src/marketplaces/trendyol.js';
+import { testTrendyolConnection, getTrendyolProducts, getTrendyolOrders, searchTrendyolBrands, searchTrendyolCategories, getTrendyolCategoryAttributes } from './src/marketplaces/trendyol.js';
 import { validateTrendyolFeed } from './src/marketplaces/trendyol-feed.js';
 import { registerIyzicoRoutes } from './src/payments/iyzico.js';
 import * as XLSX from 'xlsx';
@@ -577,6 +577,75 @@ app.get('/api/v1/marketplaces/trendyol/orders', requireAdmin, async (req, res) =
   const result = await getTrendyolOrders({ status: req.query.status, page: req.query.page, size: req.query.size });
   const statusCode = result.ok ? 200 : result.status === 'not_configured' ? 424 : result.status === 'authentication_failed' ? 502 : 503;
   res.status(statusCode).json(result);
+});
+
+app.get('/api/v1/marketplaces/trendyol/brands', requireAdmin, async (req, res) => {
+  const result = await searchTrendyolBrands(req.query.name);
+  res.status(result.ok ? 200 : result.status === 'not_configured' ? 424 : 502).json(result);
+});
+
+app.get('/api/v1/marketplaces/trendyol/categories', requireAdmin, async (req, res) => {
+  const result = await searchTrendyolCategories(req.query.name);
+  res.status(result.ok ? 200 : result.status === 'not_configured' ? 424 : 502).json(result);
+});
+
+app.get('/api/v1/marketplaces/trendyol/categories/:categoryId/attributes', requireAdmin, async (req, res) => {
+  const result = await getTrendyolCategoryAttributes(req.params.categoryId);
+  res.status(result.ok ? 200 : result.status === 'invalid_category' ? 400 : result.status === 'not_configured' ? 424 : 502).json(result);
+});
+
+app.get('/api/v1/marketplaces/trendyol/feed-mappings', requireAdmin, async (req, res) => {
+  try {
+    const feedId = String(req.query.feed_id || '').trim();
+    if (!feedId) return res.status(400).json({ error: 'XML kaynağı seçilmelidir.' });
+    const feedRef = req.firestore.collection('xml_feeds').doc(feedId);
+    const feedSnap = await feedRef.get();
+    if (!feedSnap.exists) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
+    const productSnap = await feedRef.collection('products').orderBy('index').get();
+    const categories = [...new Set(productSnap.docs.map(doc => String(doc.data().product?.['Kategori'] || '').trim()).filter(Boolean))];
+    const savedSnap = await req.firestore.collection('marketplace_category_mappings').where('marketplace', '==', 'trendyol').get();
+    const saved = {};
+    savedSnap.docs.forEach(doc => { const d = doc.data(); if (d.source_category) saved[d.source_category] = { categoryId: String(d.category_id || ''), brandId: String(d.brand_id || ''), brandName: String(d.brand_name || ''), attributes: d.attributes || [] }; });
+    res.json({ categories: categories.map(sourceCategory => ({ sourceCategory, mapping: saved[sourceCategory] || null })) });
+  } catch (error) {
+    res.status(400).json({ error: error.message || 'Eşleştirmeler yüklenemedi.' });
+  }
+});
+
+app.post('/api/v1/marketplaces/trendyol/feed-mappings', requireAdmin, async (req, res) => {
+  try {
+    const feedId = String(req.body?.feed_id || '').trim();
+    const mappings = Array.isArray(req.body?.mappings) ? req.body.mappings : [];
+    if (!feedId || !mappings.length) return res.status(400).json({ error: 'XML kaynağı ve en az bir kategori eşleştirmesi gerekli.' });
+    const feedRef = req.firestore.collection('xml_feeds').doc(feedId);
+    const feedSnap = await feedRef.get();
+    if (!feedSnap.exists) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
+    const batch = req.firestore.batch();
+    for (const item of mappings) {
+      const sourceCategory = String(item?.sourceCategory || '').trim().slice(0, 160);
+      const categoryId = String(item?.categoryId || '').trim();
+      const brandId = String(item?.brandId || '').trim();
+      const brandName = String(item?.brandName || '').trim().slice(0, 100);
+      const attributes = Array.isArray(item?.attributes) ? item.attributes.slice(0, 80).map(a => ({
+        attributeId: String(a?.attributeId || '').trim(),
+        attributeValueId: a?.attributeValueId == null ? null : String(a.attributeValueId).trim(),
+        customValue: String(a?.customValue || '').trim().slice(0, 200),
+      })).filter(a => a.attributeId && (a.attributeValueId || a.customValue)) : [];
+      if (!sourceCategory || !/^\\d+$/.test(categoryId) || !/^\\d+$/.test(brandId)) {
+        return res.status(400).json({ error: 'Kaynak kategori, geçerli Trendyol kategori ID ve marka ID zorunludur.' });
+      }
+      const docId = 'trendyol_' + Buffer.from(sourceCategory, 'utf8').toString('base64url');
+      batch.set(req.firestore.collection('marketplace_category_mappings').doc(docId), {
+        marketplace: 'trendyol', source_category: sourceCategory, category_id: categoryId,
+        brand_id: brandId, brand_name: brandName, attributes, updated_at: new Date().toISOString(),
+      }, { merge: true });
+    }
+    await batch.commit();
+    await audit(req, 'save_category_mappings', 'xml_feed', feedId, { marketplace: 'trendyol', count: mappings.length });
+    res.json({ ok: true, saved: mappings.length });
+  } catch (error) {
+    res.status(400).json({ error: error.message || 'Eşleştirmeler kaydedilemedi.' });
+  }
 });
 
 app.post('/api/v1/marketplaces/trendyol/validate-feed', requireAdmin, async (req, res) => {
