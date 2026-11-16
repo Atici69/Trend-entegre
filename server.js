@@ -386,6 +386,146 @@ function applyProfitMargin(products, marginValue) {
   });
 }
 
+
+// Product catalog: public reads only active products; every write is admin-only.
+function catalogText(value, max = 500) { return String(value ?? '').trim().slice(0, max); }
+function catalogProduct(body, previous = {}) {
+  const name = catalogText(body.name ?? previous.name, 180);
+  const category = catalogText(body.category ?? previous.category, 100);
+  const description = catalogText(body.description ?? previous.description, 5000);
+  const imageUrl = catalogText(body.image_url ?? previous.image_url, 2048);
+  const sku = catalogText(body.sku ?? previous.sku, 100);
+  const stock = Number(body.stock ?? previous.stock ?? 0);
+  const cost = Number(body.cost_price ?? previous.cost_price ?? 0);
+  const margin = Number(body.margin_percent ?? previous.margin_percent ?? 0);
+  const status = catalogText(body.status ?? previous.status ?? 'draft', 20);
+  let price = body.sale_price !== undefined ? Number(body.sale_price) : (previous.sale_price !== undefined ? Number(previous.sale_price) : null);
+  if (price === null) price = Math.round((cost * (1 + margin / 100) + Number.EPSILON) * 100) / 100;
+  if (!name || !Number.isFinite(stock) || stock < 0 || !Number.isFinite(cost) || cost < 0 ||
+      !Number.isFinite(margin) || margin < 0 || margin > 1000 ||
+      !Number.isFinite(price) || price < 0 || !['draft','active','archived'].includes(status)) {
+    throw new Error('Ürün adı, fiyat, stok, kâr oranı veya yayın durumu geçersiz.');
+  }
+  if (imageUrl) {
+    let parsed;
+    try { parsed = new URL(imageUrl); } catch { throw new Error('Görsel adresi geçersiz.'); }
+    if (!['https:','http:'].includes(parsed.protocol)) throw new Error('Görsel adresi HTTP veya HTTPS olmalıdır.');
+  }
+  return { name, category, description, image_url: imageUrl, sku, stock,
+    cost_price: Math.round(cost * 100) / 100, margin_percent: Math.round(margin * 100) / 100,
+    sale_price: Math.round(price * 100) / 100, status, updated_at: new Date().toISOString() };
+}
+
+app.get('/api/v1/catalog/products', async (req, res) => {
+  try {
+    const firebase = getFirebaseAdmin();
+    if (!firebase) return res.status(503).json({ error: 'Katalog şu anda kullanılamıyor.' });
+    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 48, 1), 100);
+    const snapshot = await firebase.db.collection('catalog_products').where('status', '==', 'active').limit(limit).get();
+    const products = snapshot.docs.map(doc => {
+      const p = doc.data();
+      return { id: doc.id, name: p.name, category: p.category || '', description: p.description || '',
+        image_url: p.image_url || '', sku: p.sku || '', stock: p.stock || 0,
+        sale_price: p.sale_price || 0, currency: p.currency || 'TRY' };
+    });
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json({ products });
+  } catch (error) {
+    console.error('Public catalog read failed:', error?.message || 'Unknown error');
+    res.status(503).json({ error: 'Ürünler şu anda alınamıyor.' });
+  }
+});
+
+app.get('/api/v1/admin/catalog/products', requireAdmin, async (req, res) => {
+  try {
+    const snapshot = await req.firestore.collection('catalog_products').get();
+    const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      .sort((a,b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')));
+    res.json({ products });
+  } catch { res.status(503).json({ error: 'Katalog ürünleri alınamadı.' }); }
+});
+
+app.post('/api/v1/admin/catalog/products', requireAdmin, async (req, res) => {
+  try {
+    const product = catalogProduct(req.body || {});
+    const now = new Date().toISOString();
+    const ref = await req.firestore.collection('catalog_products').add({
+      ...product, source: 'manual', created_at: now, created_by: req.adminUser.id,
+    });
+    await audit(req, 'create', 'catalog_product', ref.id, { name: product.name });
+    res.status(201).json({ product: { id: ref.id, ...product } });
+  } catch (error) { res.status(400).json({ error: error.message || 'Ürün kaydedilemedi.' }); }
+});
+
+app.patch('/api/v1/admin/catalog/products/:id', requireAdmin, async (req, res) => {
+  try {
+    const ref = req.firestore.collection('catalog_products').doc(req.params.id);
+    const snap = await ref.get();
+    if (!snap.exists) return res.status(404).json({ error: 'Ürün bulunamadı.' });
+    const product = catalogProduct(req.body || {}, snap.data());
+    await ref.update(product);
+    await audit(req, 'update', 'catalog_product', ref.id, { name: product.name });
+    res.json({ product: { id: ref.id, ...snap.data(), ...product } });
+  } catch (error) { res.status(400).json({ error: error.message || 'Ürün güncellenemedi.' }); }
+});
+
+app.delete('/api/v1/admin/catalog/products/:id', requireAdmin, async (req, res) => {
+  try {
+    const ref = req.firestore.collection('catalog_products').doc(req.params.id);
+    const snap = await ref.get();
+    if (!snap.exists) return res.status(404).json({ error: 'Ürün bulunamadı.' });
+    await ref.delete();
+    await audit(req, 'delete', 'catalog_product', ref.id);
+    res.json({ ok: true });
+  } catch { res.status(503).json({ error: 'Ürün silinemedi.' }); }
+});
+
+app.post('/api/v1/admin/catalog/import-xml', requireAdmin, async (req, res) => {
+  try {
+    const feedId = catalogText(req.body?.feed_id, 160);
+    if (!feedId) return res.status(400).json({ error: 'Önce kayıtlı bir XML kaynağı seçin.' });
+    const feedRef = req.firestore.collection('xml_feeds').doc(feedId);
+    const feedSnap = await feedRef.get();
+    if (!feedSnap.exists) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
+    const feed = feedSnap.data();
+    const sourceProducts = parseProducts(await downloadXml(feed.url));
+    const margin = normalizeProfitMargin(feed.margin_percent ?? 0);
+    const batch = req.firestore.batch();
+    let imported = 0;
+    for (let index = 0; index < sourceProducts.length && imported < 450; index += 1) {
+      const source = sourceProducts[index];
+      const name = catalogText(source['Ürün Adı'], 180);
+      if (!name) continue;
+      const externalId = catalogText(source['Ürün ID'] || source.SKU || (name + '-' + index), 180);
+      const key = encodeURIComponent(externalId).replace(/%/g, '_').slice(0, 500);
+      const id = feedId + '_' + key;
+      const productRef = req.firestore.collection('catalog_products').doc(id);
+      const previous = await productRef.get();
+      const old = previous.exists ? previous.data() : {};
+      const cost = priceNumber(source['Fiyat']);
+      const sale = cost === null ? Number(old.sale_price || 0) : Math.round((cost * (1 + margin / 100) + Number.EPSILON) * 100) / 100;
+      const data = {
+        name, sku: catalogText(source.SKU,100), barcode: catalogText(source['Barkod'],100),
+        brand: catalogText(source['Marka'],120), category: catalogText(source['Kategori'],100),
+        description: catalogText(source['Açıklama'],5000), image_url: catalogText(source['Görsel URL'],2048),
+        stock: Math.max(0, Number(priceNumber(source['Stok']) ?? old.stock ?? 0)),
+        cost_price: cost === null ? Number(old.cost_price || 0) : cost,
+        margin_percent: margin, sale_price: sale,
+        currency: catalogText(source['Para Birimi'] || 'TRY',8),
+        source: 'xml', source_feed_id: feedId, source_feed_name: catalogText(feed.name,100),
+        external_id: externalId, status: old.status || 'draft',
+        updated_at: new Date().toISOString(), created_at: old.created_at || new Date().toISOString(),
+      };
+      batch.set(productRef, data, { merge: true });
+      imported += 1;
+    }
+    await batch.commit();
+    await audit(req, 'import_xml', 'catalog', feedId, { imported, parsed: sourceProducts.length });
+    res.json({ imported, parsed: sourceProducts.length, margin_percent: margin,
+      message: imported >= 450 ? 'İlk 450 ürün içe aktarıldı. Daha büyük XML katalogları için toplu aktarım bölümlere ayrılmalıdır.' : 'XML ürünleri kataloğa taslak olarak aktarıldı.' });
+  } catch (error) { res.status(400).json({ error: error.message || 'XML ürünleri kataloğa aktarılamadı.' }); }
+});
+
 app.get('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
   try {
     const snapshot = await req.firestore.collection('xml_feeds').get();
