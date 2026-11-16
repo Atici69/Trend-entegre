@@ -681,6 +681,7 @@ document.getElementById('adCampaignForm').addEventListener('submit',async event=
 
 let xmlPreviewReady=false;
 let xmlPreviewUrl='';
+let xmlPreviewId='';
 let xmlFeedCache=[];
 function xmlMessage(message,isError=false){
  const box=document.getElementById('xmlMessage');if(!box)return;
@@ -711,7 +712,7 @@ async function previewXmlFeed(){
  document.getElementById('xmlSaveButton').disabled=true;xmlPreviewReady=false;
  try{
   const data=await adminApi('/api/v1/admin/xml/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,marginPercent:Number(document.getElementById('xmlMarginPercent').value||0)})});
-  xmlPreviewUrl=url;xmlPreviewReady=true;
+  xmlPreviewUrl=url;xmlPreviewId=data.previewId||'';xmlPreviewReady=Boolean(xmlPreviewId);
   document.getElementById('xmlSaveButton').disabled=false;
   document.getElementById('xmlPreviewCard').style.display='block';
   document.getElementById('xmlProductCount').textContent=Number(data.totalProducts).toLocaleString('tr-TR')+' ürün';
@@ -731,7 +732,7 @@ async function saveXmlFeed(){
  const button=document.getElementById('xmlSaveButton');button.disabled=true;button.textContent='Kaydediliyor…';
  xmlMessage('XML kaynağı sunucuya kaydediliyor…');
  try{
-  const data=await adminApi('/api/v1/admin/xml/feeds',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,url,marginPercent})});
+  const data=await adminApi('/api/v1/admin/xml/feeds',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,url,marginPercent,preview_id:xmlPreviewId})});
   if(!data.feed?.id)throw new Error('Sunucu kayıt yanıtı verdi ancak kaynak kimliği dönmedi. Kaynak listesini yenileyin.');
   await loadXmlFeeds();
   document.getElementById('xmlExportSource').value=data.feed.id;
