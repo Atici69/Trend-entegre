@@ -689,7 +689,7 @@ async function loadXmlFeeds(){
  rows.innerHTML='<tr><td colspan="5">Kaynaklar yükleniyor…</td></tr>';
  try{
   const data=await adminApi('/api/v1/admin/xml/feeds');xmlFeedCache=data.feeds||[];
-  rows.innerHTML=xmlFeedCache.length?xmlFeedCache.map(feed=>'<tr><td><strong>'+escapeHtml(feed.name)+'</strong><br><small>'+escapeHtml(feed.url)+'</small></td><td>'+Number(feed.products_count||0).toLocaleString('tr-TR')+'</td><td>%'+Number(feed.margin_percent||0).toLocaleString('tr-TR')+'</td><td>'+formatDate(feed.last_tested_at)+'</td><td><button class="logout-btn" onclick="selectXmlFeed(\''+escapeHtml(feed.id)+'\')">Seç</button> <button class="logout-btn" onclick="deleteXmlFeed(\''+escapeHtml(feed.id)+'\')">Sil</button></td></tr>').join(''):'<tr><td colspan="5">Henüz XML kaynağı eklenmedi.</td></tr>';
+  rows.innerHTML=xmlFeedCache.length?xmlFeedCache.map(feed=>'<tr><td><strong>'+escapeHtml(feed.name)+'</strong><br><small>'+escapeHtml(feed.source_type==='upload'?'Dosya: '+(feed.file_name||'XML yüklemesi'):feed.url)+'</small></td><td>'+Number(feed.products_count||0).toLocaleString('tr-TR')+'</td><td>%'+Number(feed.margin_percent||0).toLocaleString('tr-TR')+'</td><td>'+formatDate(feed.last_tested_at)+'</td><td><button class="logout-btn" onclick="selectXmlFeed(\''+escapeHtml(feed.id)+'\')">Seç</button> <button class="logout-btn" onclick="deleteXmlFeed(\''+escapeHtml(feed.id)+'\')">Sil</button></td></tr>').join(''):'<tr><td colspan="5">Henüz XML kaynağı eklenmedi.</td></tr>';
   const select=document.getElementById('xmlExportSource'),selected=select.value;
   select.innerHTML='<option value="">Kaynak seçin</option>'+xmlFeedCache.map(feed=>'<option value="'+escapeHtml(feed.id)+'">'+escapeHtml(feed.name)+'</option>').join('');
   if(selected)select.value=selected;
@@ -704,7 +704,7 @@ function selectXmlFeed(id){
 }
 async function uploadXmlFile(){
  const file=document.getElementById('xmlUploadFile')?.files?.[0];
- const name=document.getElementById('xmlFeedName').value.trim() || (file?.name||'').replace(/\\.xml$/i,'');
+ const name=document.getElementById('xmlFeedName').value.trim() || (file?.name||'').replace(/\.xml$/i,'');
  const marginPercent=Number(document.getElementById('xmlMarginPercent').value||0);
  const button=document.getElementById('xmlUploadButton');
  if(!file){xmlMessage('Önce bilgisayarınızdan bir XML dosyası seçin.',true);return;}
