@@ -1028,7 +1028,7 @@ async function publishTrendyolXmlFeed(){
  const ready=(summary.match(/Hazır:\s*(\d+)/)||[])[1]||'0';
  const skipped=(summary.match(/Eksik nedeniyle bekleyen:\s*(\d+)/)||[])[1]||'0';
  if(!feedId){xmlMessage('Önce XML kaynağı seçin.',true);return;}
- if(button.disabled){xmlMessage('Önce tüm ürünlerde başarılı ön kontrol tamamlanmalı.',true);return;}
+ if(button.disabled){xmlMessage('Önce ön kontrol tamamlanmalı ve en az bir hazır ürün bulunmalı.',true);return;}
  if(Number(ready)<1){xmlMessage('Gönderime hazır ürün bulunamadı.',true);return;}
  if(!confirm('DİKKAT: '+ready+' hazır ürün Trendyol mağazanıza gönderilecek. '+skipped+' hatalı ürün gönderilmeyecek. Onaylıyor musunuz?'))return;
  button.disabled=true;button.textContent='Trendyol’a gönderiliyor…';
