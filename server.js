@@ -824,7 +824,7 @@ app.delete('/api/v1/admin/xml/feeds/:id', requireAdmin, async (req, res) => {
     const ref = req.firestore.collection('xml_feeds').doc(req.params.id);
     const existing = await ref.get();
     if (!existing.exists) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
-    if (existing.data().source_type === 'upload') {
+    if (existing.data().source_type === 'upload' || existing.data().products_stored === true) {
       const uploaded = await ref.collection('products').get();
       const writer = req.firestore.bulkWriter();
       uploaded.docs.forEach(doc => writer.delete(doc.ref));
@@ -851,7 +851,7 @@ app.post('/api/v1/admin/xml/export', requireAdmin, async (req, res) => {
       fileName = String(saved.data().name || fileName).replace(/[^a-z0-9-_]+/gi, '-').slice(0, 50) || fileName;
     }
     const exportFeed = req.body?.feed_id ? (await req.firestore.collection('xml_feeds').doc(String(req.body.feed_id)).get()).data() : null;
-    const products = exportFeed?.source_type === 'upload'
+    const products = exportFeed?.source_type === 'upload' || exportFeed?.products_stored === true
       ? await loadXmlFeedProducts(req.firestore, String(req.body.feed_id), exportFeed)
       : parseProducts(await downloadXml(url));
     const pricedProducts = applyProfitMargin(products, savedMarginForExport);
