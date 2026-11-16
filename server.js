@@ -215,6 +215,34 @@ async function requireAdmin(req, res, next) {
   }
 }
 
+
+app.get('/api/v1/catalog/products', async (_req, res) => {
+  try {
+    const firebase = getFirebaseAdmin();
+    if (!firebase) return res.status(503).json({ error: 'Katalog servisi şu anda kullanılamıyor.' });
+    const snapshot = await firebase.db.collection('catalog_products').get();
+    const products = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(product => product.status === 'active')
+      .sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')))
+      .map(product => ({
+        id: product.id,
+        name: product.name || '',
+        category: product.category || 'Katalog',
+        description: product.description || '',
+        image_url: product.image_url || '',
+        sku: product.sku || '',
+        stock: Number(product.stock || 0),
+        sale_price: Number(product.sale_price || 0),
+      }));
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json({ products });
+  } catch (error) {
+    console.error('Public catalog list failed:', error?.message || 'Unknown error');
+    res.status(503).json({ error: 'Ürün kataloğu şu anda yüklenemiyor.' });
+  }
+});
+
 app.get('/api/v1/admin/session', requireAdmin, (req, res) => {
   res.json({ ok: true, user: req.adminUser });
 });
