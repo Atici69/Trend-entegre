@@ -9,7 +9,7 @@ export function validateTrendyolProduct(source, mapping = {}) {
   const errors = [];
   const warnings = [];
   const title = String(source['Ürün Adı'] || '').trim();
-  const barcode = String(source['Barkod'] || '').trim();
+  const barcode = String(source['Barkod'] || '').trim().replace(/\\s+/g, '');
   const sku = String(source.SKU || '').trim();
   const brand = String(source['Marka'] || '').trim();
   const category = String(mapping.categoryId || '').trim();
@@ -42,7 +42,11 @@ export function validateTrendyolProduct(source, mapping = {}) {
   if (barcode && !/^[\p{L}\p{N}._-]+$/u.test(barcode.replace(/\s+/g, ''))) errors.push('Barkod yalnızca harf, rakam, nokta, tire ve alt çizgi içerebilir.');
   const requiredAttributes = Array.isArray(mapping.requiredAttributes) ? mapping.requiredAttributes : null;
   if (category && requiredAttributes === null) errors.push('Seçilen Trendyol kategorisinin zorunlu özellikleri henüz kontrol edilmemiş.');
-  else if (category && requiredAttributes.length && !mapping.attributes?.length) errors.push('Seçilen Trendyol kategorisinin zorunlu ürün özellikleri eşleştirilmemiş.');
+  else if (category && requiredAttributes.length) {
+    const mappedAttributeIds = new Set((Array.isArray(mapping.attributes) ? mapping.attributes : []).map(attribute => String(attribute.attributeId || '')));
+    const missingAttributes = requiredAttributes.filter(attribute => !mappedAttributeIds.has(String(attribute.attributeId || '')));
+    if (missingAttributes.length) errors.push('Zorunlu Trendyol özellikleri eksik: ' + missingAttributes.map(attribute => attribute.name || attribute.attributeId).join(', ') + '.');
+  }
   return {
     ready: errors.length === 0,
     errors,
