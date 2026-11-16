@@ -649,6 +649,15 @@ app.delete('/api/v1/admin/catalog/products/:id', requireAdmin, async (req, res) 
   } catch { res.status(503).json({ error: 'Ürün silinemedi.' }); }
 });
 
+async function loadXmlFeedProducts(firestore, feedId, feed) {
+  if (feed.source_type === 'upload') {
+    const snapshot = await firestore.collection('xml_feeds').doc(feedId).collection('products').orderBy('index').get();
+    if (snapshot.empty) throw new Error('Yüklenen XML dosyasının kayıtlı ürünleri bulunamadı. Dosyayı yeniden yükleyin.');
+    return snapshot.docs.map(doc => doc.data().product).filter(Boolean);
+  }
+  return parseProducts(await downloadXml(feed.url));
+}
+
 app.post('/api/v1/admin/catalog/import-xml', requireAdmin, async (req, res) => {
   try {
     const feedId = catalogText(req.body?.feed_id, 160);
@@ -657,7 +666,7 @@ app.post('/api/v1/admin/catalog/import-xml', requireAdmin, async (req, res) => {
     const feedSnap = await feedRef.get();
     if (!feedSnap.exists) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
     const feed = feedSnap.data();
-    const sourceProducts = parseProducts(await downloadXml(feed.url));
+    const sourceProducts = await loadXmlFeedProducts(req.firestore, feedId, feed);
     const margin = normalizeProfitMargin(feed.margin_percent ?? 0);
     const existingSnapshot = await req.firestore.collection('catalog_products').where('source_feed_id', '==', feedId).get();
     const existingByExternalId = new Map(existingSnapshot.docs.map(doc => [String(doc.data().external_id || ''), doc.data()]));
@@ -704,6 +713,36 @@ app.get('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Admin XML feed list failed:', error?.message || 'Unknown error');
     res.status(503).json({ error: 'XML kaynakları alınamadı. Firestore okuma hatası: ' + (error?.message || 'Bilinmeyen hata') });
+  }
+});
+
+app.post('/api/v1/admin/xml/upload', requireAdmin, express.text({ type: ['text/plain', 'application/xml', 'text/xml'], limit: '25mb' }), async (req, res) => {
+  try {
+    const xml = typeof req.body === 'string' ? req.body : '';
+    if (!xml.trim()) return res.status(400).json({ error: 'Yüklenen XML dosyası boş.' });
+    if (Buffer.byteLength(xml, 'utf8') > 25 * 1024 * 1024) return res.status(413).json({ error: 'XML dosyası 25 MB sınırını aşıyor.' });
+    const products = parseProducts(xml);
+    const name = String(req.query.name || req.headers['x-xml-name'] || decodeURIComponent(String(req.headers['x-xml-filename'] || 'tedarikci.xml'))).replace(/\\.xml$/i, '').trim().slice(0, 100) || 'XML dosyası';
+    const marginPercent = normalizeProfitMargin(req.query.marginPercent ?? req.headers['x-xml-margin'] ?? 0);
+    const now = new Date().toISOString();
+    const feedRef = await req.firestore.collection('xml_feeds').add({
+      name, url: '', file_name: String(req.headers['x-xml-filename'] || 'tedarikci.xml').slice(0, 180),
+      source_type: 'upload', products_count: products.length, margin_percent: marginPercent,
+      last_tested_at: now, created_at: now, updated_at: now, created_by: req.adminUser.id,
+    });
+    const writer = req.firestore.bulkWriter();
+    products.forEach((product, index) => {
+      writer.set(feedRef.collection('products').doc(String(index).padStart(5, '0')), { index, product });
+    });
+    await writer.close();
+    await audit(req, 'upload', 'xml_feed', feedRef.id, { name, products_count: products.length });
+    res.status(201).json({
+      feed: { id: feedRef.id, name, file_name: String(req.headers['x-xml-filename'] || 'tedarikci.xml'), source_type: 'upload', products_count: products.length, margin_percent: marginPercent, last_tested_at: now },
+      preview: applyProfitMargin(products, marginPercent).slice(0, 10),
+    });
+  } catch (error) {
+    console.error('Admin XML upload failed:', error?.message || 'Unknown error');
+    res.status(400).json({ error: error.message || 'XML dosyası yüklenemedi.' });
   }
 });
 
@@ -782,8 +821,10 @@ app.post('/api/v1/admin/xml/export', requireAdmin, async (req, res) => {
       savedMarginForExport = saved.data().margin_percent ?? 0;
       fileName = String(saved.data().name || fileName).replace(/[^a-z0-9-_]+/gi, '-').slice(0, 50) || fileName;
     }
-    const xml = await downloadXml(url);
-    const products = parseProducts(xml);
+    const exportFeed = req.body?.feed_id ? (await req.firestore.collection('xml_feeds').doc(String(req.body.feed_id)).get()).data() : null;
+    const products = exportFeed?.source_type === 'upload'
+      ? await loadXmlFeedProducts(req.firestore, String(req.body.feed_id), exportFeed)
+      : parseProducts(await downloadXml(url));
     const pricedProducts = applyProfitMargin(products, savedMarginForExport);
     const count = clampProductLimit(req.body?.limit ?? 'all', pricedProducts.length);
     const selected = pricedProducts.slice(0, count);
