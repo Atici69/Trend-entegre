@@ -109,3 +109,29 @@ export async function getTrendyolOrders({ status = 'Created', page = 0, size = 5
   if (!result.ok) return result;
   return { ok: true, httpStatus: result.httpStatus, orders: Array.isArray(result.data?.content) ? result.data.content : [], totalElements: Number(result.data?.totalElements || 0), totalPages: Number(result.data?.totalPages || 0), page: safePage, size: safeSize };
 }
+
+
+export async function searchTrendyolBrands(name) {
+  const query = String(name || '').trim().slice(0, 100);
+  if (!query) return { ok: false, status: 'invalid_query', message: 'Marka arama metni gerekli.' };
+  const result = await trendyolRequest('/integration/product/brands/by-name', { name: query });
+  if (!result.ok) return result;
+  const brands = Array.isArray(result.data) ? result.data : Array.isArray(result.data?.brands) ? result.data.brands : [];
+  return { ok: true, brands: brands.map(item => ({ id: item.id, name: item.name, luxe: Boolean(item.luxe) })) };
+}
+
+export async function searchTrendyolCategories(name) {
+  const query = String(name || '').trim().slice(0, 100);
+  if (!query) return { ok: false, status: 'invalid_query', message: 'Kategori arama metni gerekli.' };
+  const result = await trendyolRequest('/integration/product/product-categories', { name: query });
+  if (!result.ok) return result;
+  return { ok: true, categories: result.data?.categories || result.data || [] };
+}
+
+export async function getTrendyolCategoryAttributes(categoryId) {
+  const id = String(categoryId || '').trim();
+  if (!/^\\d+$/.test(id)) return { ok: false, status: 'invalid_category', message: 'Geçerli Trendyol kategori ID gerekli.' };
+  const result = await trendyolRequest(`/integration/product/categories/${encodeURIComponent(id)}/attributes`);
+  if (!result.ok) return result;
+  return { ok: true, attributes: result.data?.categoryAttributes || [], category: { id: result.data?.id || Number(id), name: result.data?.name || result.data?.displayName || '' } };
+}
