@@ -626,6 +626,7 @@ app.post('/api/v1/marketplaces/trendyol/feed-mappings', requireAdmin, async (req
       const categoryId = String(item?.categoryId || '').trim();
       const brandId = String(item?.brandId || '').trim();
       const brandName = String(item?.brandName || '').trim().slice(0, 100);
+      const requiredAttributes = Array.isArray(item?.requiredAttributes) ? item.requiredAttributes.slice(0, 80).map(a => ({ attributeId: String(a?.attributeId || '').trim(), name: String(a?.name || '').trim().slice(0, 120) })).filter(a => a.attributeId) : [];
       const attributes = Array.isArray(item?.attributes) ? item.attributes.slice(0, 80).map(a => ({
         attributeId: String(a?.attributeId || '').trim(),
         attributeValueId: a?.attributeValueId == null ? null : String(a.attributeValueId).trim(),
@@ -637,7 +638,7 @@ app.post('/api/v1/marketplaces/trendyol/feed-mappings', requireAdmin, async (req
       const docId = 'trendyol_' + Buffer.from(sourceCategory, 'utf8').toString('base64url');
       batch.set(req.firestore.collection('marketplace_category_mappings').doc(docId), {
         marketplace: 'trendyol', source_category: sourceCategory, category_id: categoryId,
-        brand_id: brandId, brand_name: brandName, attributes, updated_at: new Date().toISOString(),
+        brand_id: brandId, brand_name: brandName, attributes, required_attributes: requiredAttributes, updated_at: new Date().toISOString(),
       }, { merge: true });
     }
     await batch.commit();
@@ -670,7 +671,7 @@ app.post('/api/v1/marketplaces/trendyol/validate-feed', requireAdmin, async (req
     mappingsSnap.docs.forEach(doc => {
       const data = doc.data();
       if (data.source_category) mappings[String(data.source_category)] = {
-        categoryId: data.category_id, brandId: data.brand_id, attributes: data.attributes || [],
+        categoryId: data.category_id, brandId: data.brand_id, attributes: data.attributes || [], requiredAttributes: data.required_attributes || null,
       };
     });
     const report = validateTrendyolFeed(pricedProducts, mappings);
