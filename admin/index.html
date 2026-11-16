@@ -726,4 +726,64 @@ async function exportXmlFeed(){
  finally{button.disabled=false;button.textContent='Excel dosyasını oluştur ve indir';}
 }
 
+
+let catalogCache=[];
+function catalogMessage(message,error=false){const el=document.getElementById('catalogMessage');if(el){el.textContent=message;el.style.color=error?'#a52d20':'#13845c';}}
+function resetCatalogForm(){
+ ['catalogProductId','catalogName','catalogSku','catalogCategory','catalogImage','catalogDescription'].forEach(id=>document.getElementById(id).value='');
+ ['catalogCost','catalogMargin','catalogStock'].forEach(id=>document.getElementById(id).value='0');
+ document.getElementById('catalogSale').value='';
+ document.getElementById('catalogStatus').value='draft';
+ document.getElementById('catalogFormHeading').textContent='Yeni ürün ekle';
+}
+function editCatalogProduct(id){
+ const p=catalogCache.find(x=>x.id===id);if(!p)return;
+ document.getElementById('catalogProductId').value=p.id;
+ document.getElementById('catalogName').value=p.name||'';
+ document.getElementById('catalogSku').value=p.sku||'';
+ document.getElementById('catalogCategory').value=p.category||'';
+ document.getElementById('catalogImage').value=p.image_url||'';
+ document.getElementById('catalogDescription').value=p.description||'';
+ document.getElementById('catalogCost').value=p.cost_price??0;
+ document.getElementById('catalogMargin').value=p.margin_percent??0;
+ document.getElementById('catalogSale').value=p.sale_price??'';
+ document.getElementById('catalogStock').value=p.stock??0;
+ document.getElementById('catalogStatus').value=p.status||'draft';
+ document.getElementById('catalogFormHeading').textContent='Ürünü düzenle';
+ document.getElementById('catalogFormHeading').scrollIntoView({behavior:'smooth',block:'center'});
+}
+async function loadCatalogProducts(){
+ const rows=document.getElementById('catalogRows');if(!rows)return;
+ rows.innerHTML='<tr><td colspan="7">Ürünler yükleniyor…</td></tr>';
+ try{
+  const data=await adminApi('/api/v1/admin/catalog/products');catalogCache=data.products||[];
+  rows.innerHTML=catalogCache.length?catalogCache.map(p=>'<tr><td><strong>'+escapeHtml(p.name)+'</strong><br><small>'+escapeHtml(p.sku||p.source||'Manuel')+'</small></td><td>'+Number(p.cost_price||0).toLocaleString('tr-TR',{minimumFractionDigits:2})+' TL</td><td>%'+Number(p.margin_percent||0).toLocaleString('tr-TR')+'</td><td>'+Number(p.sale_price||0).toLocaleString('tr-TR',{minimumFractionDigits:2})+' TL</td><td>'+Number(p.stock||0).toLocaleString('tr-TR')+'</td><td>'+({draft:'Taslak',active:'Satışta',archived:'Arşiv'}[p.status]||'Taslak')+'</td><td><button class="logout-btn" onclick="editCatalogProduct(\''+escapeHtml(p.id)+'\')">Düzenle</button> <button class="logout-btn" onclick="deleteCatalogProduct(\''+escapeHtml(p.id)+'\')">Sil</button></td></tr>').join(''):'<tr><td colspan="7">Henüz ürün yok. XML kaynağından aktarabilir veya manuel ürün ekleyebilirsiniz.</td></tr>';
+  const feedData=await adminApi('/api/v1/admin/xml/feeds'),select=document.getElementById('catalogXmlFeed'),selected=select.value;
+  select.innerHTML='<option value="">Kaynak seçin</option>'+(feedData.feeds||[]).map(f=>'<option value="'+escapeHtml(f.id)+'">'+escapeHtml(f.name)+' (%'+Number(f.margin_percent||0)+')</option>').join('');
+  if(selected)select.value=selected;
+ }catch(error){rows.innerHTML='<tr><td colspan="7">Katalog yüklenemedi.</td></tr>';catalogMessage(error.message,true);}
+}
+async function saveCatalogProduct(){
+ const id=document.getElementById('catalogProductId').value,saleRaw=document.getElementById('catalogSale').value;
+ const payload={name:document.getElementById('catalogName').value.trim(),sku:document.getElementById('catalogSku').value.trim(),category:document.getElementById('catalogCategory').value.trim(),image_url:document.getElementById('catalogImage').value.trim(),description:document.getElementById('catalogDescription').value.trim(),cost_price:Number(document.getElementById('catalogCost').value||0),margin_percent:Number(document.getElementById('catalogMargin').value||0),stock:Number(document.getElementById('catalogStock').value||0),status:document.getElementById('catalogStatus').value};
+ if(saleRaw!=='')payload.sale_price=Number(saleRaw);
+ try{
+  await adminApi('/api/v1/admin/catalog/products'+(id?'/'+encodeURIComponent(id):''),{method:id?'PATCH':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  resetCatalogForm();catalogMessage('Ürün kaydedildi.');await loadCatalogProducts();
+ }catch(error){catalogMessage(error.message,true);}
+}
+async function deleteCatalogProduct(id){
+ if(!confirm('Bu ürünü katalogdan silmek istiyor musunuz?'))return;
+ try{await adminApi('/api/v1/admin/catalog/products/'+encodeURIComponent(id),{method:'DELETE'});catalogMessage('Ürün silindi.');await loadCatalogProducts();}
+ catch(error){catalogMessage(error.message,true);}
+}
+async function importCatalogXml(){
+ const feedId=document.getElementById('catalogXmlFeed').value;
+ if(!feedId){catalogMessage('Önce XML kaynağı seçin.',true);return;}
+ try{
+  const data=await adminApi('/api/v1/admin/catalog/import-xml',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({feed_id:feedId})});
+  catalogMessage(data.message+' ('+data.imported+' ürün, kâr oranı %'+data.margin_percent+')');await loadCatalogProducts();
+ }catch(error){catalogMessage(error.message,true);}
+}
+
 </script></body></html>
