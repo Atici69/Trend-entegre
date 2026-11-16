@@ -1021,12 +1021,15 @@ footer{background:#0a132d!important;color:#d9e1f2!important}footer a{color:#d9e1
  if(form)form.addEventListener("submit",async event=>{
   event.preventDefault();
   const message=byId("storeOrderMessage"),button=byId("storeOrderButton");
+  const user=window.trendAuth?.currentUser;
+  if(!user||!user.emailVerified){message.textContent="Sipariş verebilmek için hesap oluşturun veya giriş yapıp e-posta adresinizi doğrulayın.";byId("authOpenBtn")?.click();return;}
   if(!cart.size){message.textContent="Önce sepetinize ürün ekleyin.";return;}
   const formData=new FormData(form);
   const buyer={name:formData.get("name"),phone:formData.get("phone"),email:formData.get("email"),address:formData.get("address")};
   button.disabled=true;button.textContent="Sipariş gönderiliyor…";message.textContent="";
   try{
-   const response=await fetch(api+"/orders",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({buyer,items:[...cart.entries()].map(([product_id,item])=>({product_id,quantity:item.quantity}))})});
+   const idToken=await user.getIdToken();
+   const response=await fetch(api+"/orders",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+idToken},body:JSON.stringify({buyer,items:[...cart.entries()].map(([product_id,item])=>({product_id,quantity:item.quantity}))})});
    const data=await response.json().catch(()=>({}));
    if(!response.ok)throw new Error(data.error||"Sipariş gönderilemedi.");
    cart.clear();renderCart();form.reset();
