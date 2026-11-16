@@ -946,9 +946,26 @@ async function loadTrendyolCategoryAttributes(index){
  note.textContent='Kategori özellikleri Trendyol’dan alınıyor…';
  try{
   const data=await adminApi('/api/v1/marketplaces/trendyol/categories/'+encodeURIComponent(item.categoryId)+'/attributes');
-  const required=(data.attributes||[]).filter(a=>a.required);
-  item.requiredAttributes=required.map(a=>({attributeId:String(a.attribute?.id||''),name:a.attribute?.name||''}));
-  note.innerHTML='<b>'+escapeHtml(data.category?.name||'Kategori')+'</b> · '+required.length+' zorunlu özellik<br>'+ (required.length?required.map(a=>escapeHtml(a.attribute?.name||'Özellik')+(a.allowCustom?' (serbest değer)':' (Trendyol değer ID gerekli)')).join(' · '):'Zorunlu özellik bulunamadı.');
+  const required=(data.categoryAttributes||data.attributes||[]).filter(a=>a.required);
+  const sourceOptions=['Renk','Web Color','Beden','Cinsiyet','Menşei','Kutu Durumu','Materyal'];
+  item.requiredAttributes=await Promise.all(required.map(async a=>{
+   const attr=a.attribute||a,attributeId=String(attr.id||a.attributeId||''),name=attr.name||'Özellik';
+   let values=[];
+   try{const v=await adminApi('/api/v1/marketplaces/trendyol/categories/'+encodeURIComponent(item.categoryId)+'/attributes/'+encodeURIComponent(attributeId)+'/values');values=v.values||[];}catch{}
+   return {attributeId,name,allowCustom:!!(a.allowCustom||a.allowCustomValue),values};
+  }));
+  const saved=item.attributes||[];
+  note.innerHTML='<b>'+escapeHtml(data.category?.name||'Kategori')+'</b> · '+required.length+' zorunlu özellik'+
+   (item.requiredAttributes.map((a,j)=>{
+    const current=saved.find(x=>String(x.attributeId)===a.attributeId)||{};
+    const defaultSource=/renk|color/i.test(a.name)?'Renk':/beden|size/i.test(a.name)?'Beden':/cinsiyet|gender/i.test(a.name)?'Cinsiyet':/menşei|mensei|origin/i.test(a.name)?'Menşei':/kutu|box|package/i.test(a.name)?'Kutu Durumu':'';
+    const source=current.sourceField||defaultSource;
+    return '<div class="field" style="margin-top:9px"><label>'+escapeHtml(a.name)+'</label>'+
+     '<select id="trendyolAttrSource'+index+'_'+a.attributeId+'" style="width:100%"><option value="">XML’den otomatik bul</option>'+sourceOptions.map(x=>'<option value="'+x+'" '+(source===x?'selected':'')+'>'+x+' alanını kullan</option>').join('')+'</select>'+
+     (a.allowCustom?'<input id="trendyolAttrCustom'+index+'_'+a.attributeId+'" placeholder="Sabit değer (isteğe bağlı)" value="'+escapeHtml(current.customAttributeValue||'')+'" style="width:100%;margin-top:5px">':
+      '<select id="trendyolAttrValue'+index+'_'+a.attributeId+'" style="width:100%;margin-top:5px"><option value="">XML alanından al / otomatik eşleştir</option>'+a.values.map(v=>'<option value="'+escapeHtml(String(v.id))+'" '+(String(current.attributeValueId||'')===String(v.id)?'selected':'')+'>'+escapeHtml(v.value)+'</option>').join('')+'</select>')+
+     '</div>';
+   }).join('')||'<p class="section-note">Bu kategori için zorunlu özellik bulunamadı.</p>');
  }catch(error){note.textContent=error.message;}
 }
 async function saveTrendyolFeedMappings(){
