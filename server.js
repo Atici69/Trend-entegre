@@ -9,6 +9,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { marketplaceStatus } from './src/marketplaces/index.js';
 import { testHepsiburadaConnection } from './src/marketplaces/hepsiburada.js';
+import { testTrendyolConnection, getTrendyolProducts, getTrendyolOrders } from './src/marketplaces/trendyol.js';
 import { registerIyzicoRoutes } from './src/payments/iyzico.js';
 import * as XLSX from 'xlsx';
 import { downloadXml, parseProducts, clampProductLimit } from './src/xml/feed-service.js';
@@ -557,6 +558,24 @@ app.get('/api/v1/marketplaces/status', requireAdmin, (_req, res) => {
 app.post('/api/v1/marketplaces/hepsiburada/test', requireAdmin, async (_req, res) => {
   const result = await testHepsiburadaConnection();
   res.status(result.ok ? 200 : result.status === 'not_configured' ? 424 : 502).json(result);
+});
+
+app.post('/api/v1/marketplaces/trendyol/test', requireAdmin, async (_req, res) => {
+  const result = await testTrendyolConnection();
+  const statusCode = result.ok ? 200 : result.status === 'not_configured' ? 424 : result.status === 'authentication_failed' ? 502 : 503;
+  res.status(statusCode).json(result);
+});
+
+app.get('/api/v1/marketplaces/trendyol/products', requireAdmin, async (req, res) => {
+  const result = await getTrendyolProducts({ page: req.query.page, size: req.query.size });
+  const statusCode = result.ok ? 200 : result.status === 'not_configured' ? 424 : result.status === 'authentication_failed' ? 502 : 503;
+  res.status(statusCode).json(result);
+});
+
+app.get('/api/v1/marketplaces/trendyol/orders', requireAdmin, async (req, res) => {
+  const result = await getTrendyolOrders({ status: req.query.status, page: req.query.page, size: req.query.size });
+  const statusCode = result.ok ? 200 : result.status === 'not_configured' ? 424 : result.status === 'authentication_failed' ? 502 : 503;
+  res.status(statusCode).json(result);
 });
 
 
