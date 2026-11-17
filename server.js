@@ -943,6 +943,39 @@ app.post('/api/v1/admin/catalog/import-xml', requireAdmin, async (req, res) => {
 });
 
 
+app.get('/api/v1/admin/xml/turso-status', requireAdmin, async (req, res) => {
+  try {
+    const { ensureXmlSchema, getTursoClient } = await import('./src/storage/turso-xml.js');
+    const client = await getTursoClient();
+    await ensureXmlSchema(client);
+    const [feedCount, productCount, firestoreFeeds] = await Promise.all([
+      client.execute('SELECT COUNT(*) AS count FROM xml_feeds'),
+      client.execute('SELECT COUNT(*) AS count FROM xml_feed_products'),
+      req.firestore.collection('xml_feeds').get(),
+    ]);
+    const storedFirestoreProducts = firestoreFeeds.docs.reduce((sum, doc) => {
+      const data = doc.data();
+      return sum + (data.source_type === 'upload' || data.products_stored === true ? Number(data.products_count || 0) : 0);
+    }, 0);
+    return res.json({
+      ok: true,
+      database: 'turso',
+      turso: {
+        feeds: Number(feedCount.rows[0]?.count || 0),
+        storedProducts: Number(productCount.rows[0]?.count || 0),
+      },
+      firestore: {
+        feeds: firestoreFeeds.size,
+        storedProducts: storedFirestoreProducts,
+      },
+      note: 'Bu uç nokta yalnızca sayım yapar; hiçbir veriyi değiştirmez.',
+    });
+  } catch (error) {
+    console.error('Turso XML status check failed:', error?.message || 'Unknown error');
+    return res.status(503).json({ error: 'Turso XML durumu doğrulanamadı.' });
+  }
+});
+
 app.post('/api/v1/admin/xml/migrate-to-turso', requireAdmin, async (req, res) => {
   try {
     const { ensureXmlSchema, getTursoClient, importXmlFeedToTurso } = await import('./src/storage/turso-xml.js');
