@@ -27,6 +27,7 @@ export async function ensureXmlSchema(db = getTursoClient()) {
       FOREIGN KEY (feed_id) REFERENCES xml_feeds(id) ON DELETE CASCADE
     );
     CREATE INDEX IF NOT EXISTS idx_xml_feeds_created_at ON xml_feeds(created_at);
+    CREATE TABLE IF NOT EXISTS xml_storage_state (key TEXT PRIMARY KEY, value TEXT NOT NULL);
   `);
   const columns = await db.execute('PRAGMA table_info(xml_feeds)');
   if (!columns.rows.some(row => row.name === 'discount_percent')) {
@@ -113,4 +114,14 @@ export async function deleteTursoXmlFeed(id) {
     {sql:'DELETE FROM xml_feed_products WHERE feed_id=?',args:[String(id)]},
     {sql:'DELETE FROM xml_feeds WHERE id=?',args:[String(id)]},
   ],'write');
+}
+
+export async function isLegacyXmlMigrationDone() {
+  const db=getTursoClient(); await ensureXmlSchema(db);
+  const r=await db.execute({sql:"SELECT value FROM xml_storage_state WHERE key='firestore_xml_v1'",args:[]});
+  return r.rows[0]?.value === 'done';
+}
+export async function markLegacyXmlMigrationDone() {
+  const db=getTursoClient(); await ensureXmlSchema(db);
+  await db.execute({sql:"INSERT INTO xml_storage_state(key,value) VALUES('firestore_xml_v1','done') ON CONFLICT(key) DO UPDATE SET value='done'",args:[]});
 }
