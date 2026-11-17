@@ -15,6 +15,7 @@ import { testHepsiburadaConnection } from './src/marketplaces/hepsiburada.js';
 import { registerIyzicoRoutes } from './src/payments/iyzico.js';
 import * as XLSX from 'xlsx';
 import { downloadXml, parseProducts, clampProductLimit } from './src/xml/feed-service.js';
+import { saveTursoXmlFeed, listTursoXmlFeeds, getTursoXmlFeed, getTursoXmlProducts, updateTursoXmlFeed, deleteTursoXmlFeed } from './src/storage/turso-xml.js';
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -694,11 +695,11 @@ app.post('/api/v1/admin/catalog/import-xml', requireAdmin, async (req, res) => {
   try {
     const feedId = catalogText(req.body?.feed_id, 160);
     if (!feedId) return res.status(400).json({ error: 'Önce kayıtlı bir XML kaynağı seçin.' });
-    const feedRef = req.firestore.collection('xml_feeds').doc(feedId);
-    const feedSnap = await feedRef.get();
-    if (!feedSnap.exists) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
-    const feed = feedSnap.data();
-    const sourceProducts = parseProducts(await downloadXml(feed.url));
+    const feed = await getTursoXmlFeed(feedId);
+    if (!feed) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
+    const sourceProducts = feed.products_stored
+      ? await getTursoXmlProducts(feedId)
+      : parseProducts(await downloadXml(feed.url));
     const margin = normalizeProfitMargin(feed.margin_percent ?? 0);
     const existingSnapshot = await req.firestore.collection('catalog_products').where('source_feed_id', '==', feedId).get();
     const existingByExternalId = new Map(existingSnapshot.docs.map(doc => [String(doc.data().external_id || ''), doc.data()]));
@@ -747,26 +748,15 @@ app.post('/api/v1/admin/xml/upload', express.text({ type: ['application/xml', 't
     const suppliedName = decodeHeader(req.get('X-XML-Name')) || decodeHeader(req.get('X-XML-Filename'));
     const name = (suppliedName || 'Yüklenen XML').replace(/\.[^.]+$/, '').replace(/[<>:"/\\|?*\x00-\x1f]/g, ' ').trim().slice(0, 100) || 'Yüklenen XML';
     const marginPercent = normalizeProfitMargin(req.get('X-XML-Margin') ?? 0);
-    const bucketName = process.env.FIREBASE_STORAGE_BUCKET?.trim();
-    if (!bucketName) return res.status(503).json({ error: 'Dosya depolama alanı yapılandırılmamış (FIREBASE_STORAGE_BUCKET).' });
-    const bucket = getStorage().bucket(bucketName);
-    const objectPath = 'xml-feeds/' + req.adminUser.id + '/' + randomUUID() + '.xml';
-    const downloadToken = randomUUID();
-    await bucket.file(objectPath).save(xml, {
-      resumable: false,
-      contentType: 'application/xml; charset=utf-8',
-      metadata: { metadata: { firebaseStorageDownloadTokens: downloadToken } },
-    });
-    const sourceUrl = 'https://firebasestorage.googleapis.com/v0/b/' + encodeURIComponent(bucket.name) +
-      '/o/' + encodeURIComponent(objectPath) + '?alt=media&token=' + encodeURIComponent(downloadToken);
+    const id = randomUUID();
     const now = new Date().toISOString();
-    const ref = await req.firestore.collection('xml_feeds').add({
-      name, url: sourceUrl, storage_path: objectPath, products_count: products.length,
-      margin_percent: marginPercent, discount_percent: 0, last_tested_at: now,
-      created_at: now, updated_at: now, created_by: req.adminUser.id, upload_type: 'file',
-    });
-    await audit(req, 'upload', 'xml_feed', ref.id, { name, products_count: products.length });
-    res.status(201).json({ feed: { id: ref.id, name, products_count: products.length, margin_percent: marginPercent, discount_percent: 0, last_tested_at: now } });
+    await saveTursoXmlFeed({
+      id, name, url: '', file_name: suppliedName || '', source_type: 'upload',
+      products_count: products.length, margin_percent: marginPercent, discount_percent: 0,
+      last_tested_at: now, created_at: now, updated_at: now, created_by: req.adminUser.id,
+    }, products);
+    await audit(req, 'upload', 'xml_feed', id, { name, products_count: products.length });
+    res.status(201).json({ feed: { id, name, products_count: products.length, margin_percent: marginPercent, discount_percent: 0, last_tested_at: now } });
   } catch (error) {
     res.status(400).json({ error: error.message || 'XML dosyası yüklenemedi.' });
   }
@@ -774,9 +764,22 @@ app.post('/api/v1/admin/xml/upload', express.text({ type: ['application/xml', 't
 
 app.get('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
   try {
-    const snapshot = await req.firestore.collection('xml_feeds').get();
-    const feeds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-      .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+    let feeds = await listTursoXmlFeeds();
+    // One-time, non-destructive migration of legacy Firestore XML feeds into Turso.
+    if (!feeds.length) {
+      const legacy = await req.firestore.collection('xml_feeds').get();
+      for (const doc of legacy.docs) {
+        const feed = { id: doc.id, ...doc.data() };
+        let products;
+        try { products = parseProducts(await downloadXml(feed.url)); }
+        catch (error) {
+          console.warn('Legacy XML feed could not be copied to Turso:', doc.id, error?.message || 'unknown');
+          products = undefined;
+        }
+        await saveTursoXmlFeed(feed, products);
+      }
+      feeds = await listTursoXmlFeeds();
+    }
     res.json({ feeds });
   } catch (error) {
     console.error('Admin XML feed list failed:', error?.message || 'Unknown error');
@@ -786,14 +789,15 @@ app.get('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
 
 app.post('/api/v1/admin/xml/preview', requireAdmin, async (req, res) => {
   try {
-    let url = String(req.body?.url || '').trim();
+    let products;
     if (req.body?.feed_id) {
-      const saved = await req.firestore.collection('xml_feeds').doc(String(req.body.feed_id)).get();
-      if (!saved.exists) return res.status(404).json({ error: 'Kayıtlı XML kaynağı bulunamadı.' });
-      url = saved.data().url;
+      const feed = await getTursoXmlFeed(String(req.body.feed_id));
+      if (!feed) return res.status(404).json({ error: 'Kayıtlı XML kaynağı bulunamadı.' });
+      products = feed.products_stored ? await getTursoXmlProducts(feed.id) : parseProducts(await downloadXml(feed.url));
+    } else {
+      const url = String(req.body?.url || '').trim();
+      products = parseProducts(await downloadXml(url));
     }
-    const xml = await downloadXml(url);
-    const products = parseProducts(xml);
     const margin = normalizeProfitMargin(req.body?.marginPercent ?? 0);
     const discount = normalizeDiscountPercent(req.body?.discountPercent ?? 0);
     const pricedProducts = applyProfitMargin(products, margin, discount);
@@ -813,12 +817,14 @@ app.post('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
     const marginPercent = normalizeProfitMargin(req.body?.marginPercent ?? 0);
     const discountPercent = normalizeDiscountPercent(req.body?.discountPercent ?? 0);
     const now = new Date().toISOString();
-    const ref = await req.firestore.collection('xml_feeds').add({
-      name, url, products_count: products.length, margin_percent: marginPercent, discount_percent: discountPercent, last_tested_at: now,
-      created_at: now, updated_at: now, created_by: req.adminUser.id,
-    });
-    await audit(req, 'create', 'xml_feed', ref.id, { name, products_count: products.length });
-    res.status(201).json({ feed: { id: ref.id, name, url, products_count: products.length, margin_percent: marginPercent, discount_percent: discountPercent, last_tested_at: now } });
+    const id = randomUUID();
+    await saveTursoXmlFeed({
+      id, name, url, products_count: products.length, margin_percent: marginPercent,
+      discount_percent: discountPercent, last_tested_at: now, created_at: now,
+      updated_at: now, created_by: req.adminUser.id, source_type: 'url',
+    }, products);
+    await audit(req, 'create', 'xml_feed', id, { name, products_count: products.length });
+    res.status(201).json({ feed: { id, name, url, products_count: products.length, margin_percent: marginPercent, discount_percent: discountPercent, last_tested_at: now } });
   } catch (error) {
     res.status(400).json({ error: error.message || 'XML kaynağı kaydedilemedi.' });
   }
@@ -826,31 +832,29 @@ app.post('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
 
 app.patch('/api/v1/admin/xml/feeds/:id', requireAdmin, async (req, res) => {
   try {
-    const ref = req.firestore.collection('xml_feeds').doc(req.params.id);
-    const existing = await ref.get();
-    if (!existing.exists) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
+    const existing = await getTursoXmlFeed(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
     const updates = { updated_at: new Date().toISOString() };
     if (req.body?.marginPercent !== undefined) updates.margin_percent = normalizeProfitMargin(req.body.marginPercent);
     if (req.body?.discountPercent !== undefined) updates.discount_percent = normalizeDiscountPercent(req.body.discountPercent);
     if (updates.margin_percent === undefined && updates.discount_percent === undefined) {
       return res.status(400).json({ error: 'Güncellenecek kâr veya indirim oranı belirtilmedi.' });
     }
-    await ref.update(updates);
+    await updateTursoXmlFeed(req.params.id, updates);
     await audit(req, 'update_pricing', 'xml_feed', req.params.id, {
-      margin_percent: updates.margin_percent ?? existing.data().margin_percent ?? 0,
-      discount_percent: updates.discount_percent ?? existing.data().discount_percent ?? 0,
+      margin_percent: updates.margin_percent ?? existing.margin_percent ?? 0,
+      discount_percent: updates.discount_percent ?? existing.discount_percent ?? 0,
     });
-    res.json({ ok: true, margin_percent: updates.margin_percent ?? existing.data().margin_percent ?? 0,
-      discount_percent: updates.discount_percent ?? existing.data().discount_percent ?? 0 });
+    res.json({ ok: true, margin_percent: updates.margin_percent ?? existing.margin_percent ?? 0,
+      discount_percent: updates.discount_percent ?? existing.discount_percent ?? 0 });
   } catch (error) { res.status(400).json({ error: error.message || 'Kâr oranı kaydedilemedi.' }); }
 });
 
 app.delete('/api/v1/admin/xml/feeds/:id', requireAdmin, async (req, res) => {
   try {
-    const ref = req.firestore.collection('xml_feeds').doc(req.params.id);
-    const existing = await ref.get();
-    if (!existing.exists) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
-    await ref.delete();
+    const existing = await getTursoXmlFeed(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
+    await deleteTursoXmlFeed(req.params.id);
     await audit(req, 'delete', 'xml_feed', req.params.id);
     res.json({ ok: true });
   } catch (error) {
@@ -861,19 +865,21 @@ app.delete('/api/v1/admin/xml/feeds/:id', requireAdmin, async (req, res) => {
 app.post('/api/v1/admin/xml/export', requireAdmin, async (req, res) => {
   try {
     let url = String(req.body?.url || '').trim();
+    let products;
     let fileName = 'urunler';
     let savedMarginForExport = 0;
     let savedDiscountForExport = 0;
     if (req.body?.feed_id) {
-      const saved = await req.firestore.collection('xml_feeds').doc(String(req.body.feed_id)).get();
-      if (!saved.exists) return res.status(404).json({ error: 'Kayıtlı XML kaynağı bulunamadı.' });
-      url = saved.data().url;
-      savedMarginForExport = saved.data().margin_percent ?? 0;
-      savedDiscountForExport = saved.data().discount_percent ?? 0;
-      fileName = String(saved.data().name || fileName).replace(/[^a-z0-9-_]+/gi, '-').slice(0, 50) || fileName;
+      const saved = await getTursoXmlFeed(String(req.body.feed_id));
+      if (!saved) return res.status(404).json({ error: 'Kayıtlı XML kaynağı bulunamadı.' });
+      url = saved.url;
+      savedMarginForExport = saved.margin_percent ?? 0;
+      savedDiscountForExport = saved.discount_percent ?? 0;
+      fileName = String(saved.name || fileName).replace(/[^a-z0-9-_]+/gi, '-').slice(0, 50) || fileName;
+      products = saved.products_stored ? await getTursoXmlProducts(saved.id) : parseProducts(await downloadXml(url));
+    } else {
+      products = parseProducts(await downloadXml(url));
     }
-    const xml = await downloadXml(url);
-    const products = parseProducts(xml);
     const pricedProducts = applyProfitMargin(products, savedMarginForExport, savedDiscountForExport);
     const count = clampProductLimit(req.body?.limit ?? 'all', pricedProducts.length);
     const selected = pricedProducts.slice(0, count);
