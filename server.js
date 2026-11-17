@@ -931,7 +931,7 @@ app.delete('/api/v1/admin/catalog/products/:id', requireAdmin, async (req, res) 
 
 
 async function loadXmlFeedProducts(feedId, feed) {
-  if (feed.source_type === 'upload' || feed.products_stored === true) {
+  if (feed.products_stored === true || feed.source_type === 'upload') {
     const { getTursoXmlProducts } = await import('./src/storage/turso-xml.js');
     const products = await getTursoXmlProducts(feedId);
     if (!products.length) throw new Error('XML kaynağının Turso üzerinde kayıtlı ürünleri bulunamadı. Kaynağı yeniden yükleyin.');
@@ -944,48 +944,53 @@ app.post('/api/v1/admin/catalog/import-xml', requireAdmin, async (req, res) => {
   try {
     const feedId = catalogText(req.body?.feed_id, 160);
     if (!feedId) return res.status(400).json({ error: 'Önce kayıtlı bir XML kaynağı seçin.' });
-    const feedRef = req.firestore.collection('xml_feeds').doc(feedId);
-    const feedSnap = await feedRef.get();
-    if (!feedSnap.exists) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
-    const feed = feedSnap.data();
-    const sourceProducts = await loadXmlFeedProducts(req.firestore, feedId, feed);
+    const { getTursoXmlFeed } = await import('./src/storage/turso-xml.js');
+    const feed = await getTursoXmlFeed(feedId);
+    if (!feed) return res.status(404).json({ error: 'Turso üzerinde kayıtlı XML kaynağı bulunamadı.' });
+    const sourceProducts = await loadXmlFeedProducts(feedId, feed);
+    if (!sourceProducts.length) return res.status(422).json({ error: 'XML kaynağında aktarılabilir ürün bulunamadı.' });
+    if (sourceProducts.length > 5000) return res.status(413).json({ error: 'Tek seferde en fazla 5.000 ürün aktarılabilir.' });
+
     const margin = normalizeProfitMargin(feed.margin_percent ?? 0);
     const existingSnapshot = await req.firestore.collection('catalog_products').where('source_feed_id', '==', feedId).get();
     const existingByExternalId = new Map(existingSnapshot.docs.map(doc => [String(doc.data().external_id || ''), doc.data()]));
     const writer = req.firestore.bulkWriter();
-    let imported = 0;
+    let imported = 0, skipped = 0;
+    const now = new Date().toISOString();
     for (let index = 0; index < sourceProducts.length; index += 1) {
       const source = sourceProducts[index];
       const name = catalogText(source['Ürün Adı'], 180);
-      if (!name) continue;
+      if (!name) { skipped += 1; continue; }
       const externalId = catalogText(source['Ürün ID'] || source.SKU || (name + '-' + index), 180);
       const key = encodeURIComponent(externalId).replace(/%/g, '_').slice(0, 500);
-      const id = feedId + '_' + key;
+      const id = 'xml_' + feedId + '_' + key;
       const old = existingByExternalId.get(externalId) || {};
-      const cost = priceNumber(source['Fiyat']);
+      const cost = priceNumber(source['Fiyat'] ?? source['Alış Fiyatı']);
       const sale = cost === null ? Number(old.sale_price || 0) : Math.round((cost * (1 + margin / 100) + Number.EPSILON) * 100) / 100;
       const data = {
         name, sku: catalogText(source.SKU,100), barcode: catalogText(source['Barkod'],100),
-        brand: catalogText(source['Marka'],120), category: catalogText(source['Kategori'],100),
+        brand: catalogText(source['Marka'],120), category: catalogText(source['Kategori'] || 'Katalog',100),
         description: catalogText(source['Açıklama'],5000), image_url: catalogText(source['Görsel URL'],2048),
         stock: Math.max(0, Number(priceNumber(source['Stok']) ?? old.stock ?? 0)),
         cost_price: cost === null ? Number(old.cost_price || 0) : cost,
         margin_percent: margin, sale_price: sale,
-        currency: catalogText(source['Para Birimi'] || 'TRY',8),
+        currency: catalogText(source['Para Birimi'] || 'TRY',8).toUpperCase(),
         source: 'xml', source_feed_id: feedId, source_feed_name: catalogText(feed.name,100),
         external_id: externalId, status: old.status === 'archived' ? 'archived' : 'active',
-        updated_at: new Date().toISOString(), created_at: old.created_at || new Date().toISOString(),
+        updated_at: now, created_at: old.created_at || now,
       };
       writer.set(req.firestore.collection('catalog_products').doc(id), data, { merge: true });
       imported += 1;
     }
     await writer.close();
-    await audit(req, 'import_xml', 'catalog', feedId, { imported, parsed: sourceProducts.length });
-    res.json({ imported, parsed: sourceProducts.length, margin_percent: margin,
-      message: 'XML ürünleri kataloğa taslak olarak aktarıldı. Yayına almak için ürün durumunu Satışta yapın.' });
-  } catch (error) { res.status(400).json({ error: error.message || 'XML ürünleri kataloğa aktarılamadı.' }); }
+    await audit(req, 'import_xml', 'catalog', feedId, { imported, skipped, parsed: sourceProducts.length, margin_percent: margin });
+    res.json({ imported, skipped, parsed: sourceProducts.length, margin_percent: margin,
+      message: 'XML ürünleri Katalog bölümüne aktarıldı. Aynı kaynak yeniden aktarıldığında mevcut ürün kayıtları güncellenir; mükerrer ürün oluşturulmaz.' });
+  } catch (error) {
+    console.error('XML catalog import failed:', error?.message || 'Unknown error');
+    res.status(400).json({ error: error.message || 'XML ürünleri kataloğa aktarılamadı.' });
+  }
 });
-
 
 app.get('/api/v1/admin/xml/turso-status', requireAdmin, async (req, res) => {
   try {
