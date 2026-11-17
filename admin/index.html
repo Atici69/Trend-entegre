@@ -180,6 +180,12 @@ function go(id){
 }
 document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.page)));
 
+async function adminApiFetch(url,options={}){
+  const token=await window.adminGetToken();
+  const headers=new Headers(options.headers||{});
+  headers.set("Authorization","Bearer "+token);
+  return fetch(url,{...options,headers});
+}
 function escapeHtml(value){
   return String(value ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
@@ -197,7 +203,7 @@ async function loadMarketplaceStatus(){
   if(!rows) return;
   rows.innerHTML='<tr><td colspan="4">Durumlar yükleniyor...</td></tr>';
   try{
-    const response=await fetch(API_BASE_URL+"/api/v1/marketplaces/status");
+    const response=await adminApiFetch(API_BASE_URL+"/api/v1/marketplaces/status");
     if(!response.ok) throw new Error("Sunucu HTTP "+response.status);
     const data=await response.json();
     if(!Array.isArray(data.marketplaces)) throw new Error("API beklenen pazaryeri listesini döndürmedi.");
@@ -228,7 +234,7 @@ async function testTrendyol(button){
   button.disabled=true;
   button.textContent="Test ediliyor...";
   try{
-    const response=await fetch(API_BASE_URL+"/api/v1/marketplaces/trendyol/test",{method:"POST"});
+    const response=await adminApiFetch(API_BASE_URL+"/api/v1/marketplaces/trendyol/test",{method:"POST"});
     const result=await response.json().catch(()=>({message:"Sunucudan geçerli JSON yanıtı alınamadı."}));
     if(!response.ok || !result.ok || result.status!=="connected")
       throw new Error(result.message||("Sunucu HTTP "+response.status));
@@ -246,7 +252,7 @@ async function testHepsiburada(button){
   button.disabled=true;
   button.textContent="Test ediliyor...";
   try{
-    const response=await fetch(API_BASE_URL+"/api/v1/marketplaces/hepsiburada/test",{method:"POST"});
+    const response=await adminApiFetch(API_BASE_URL+"/api/v1/marketplaces/hepsiburada/test",{method:"POST"});
     const result=await response.json().catch(()=>({message:"Sunucudan geçerli JSON yanıtı alınamadı."}));
     if(!response.ok || !result.ok || result.status!=="connected")
       throw new Error(result.message||("Sunucu HTTP "+response.status));
