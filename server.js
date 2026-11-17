@@ -943,6 +943,41 @@ app.post('/api/v1/admin/catalog/import-xml', requireAdmin, async (req, res) => {
 });
 
 
+app.post('/api/v1/admin/xml/migrate-to-turso', requireAdmin, async (req, res) => {
+  try {
+    const { ensureXmlSchema, getTursoClient, importXmlFeedToTurso } = await import('./src/storage/turso-xml.js');
+    const client = await getTursoClient();
+    await ensureXmlSchema(client);
+    const snapshot = await req.firestore.collection('xml_feeds').get();
+      let migratedFeeds = 0;
+      let migratedProducts = 0;
+      for (const doc of snapshot.docs) {
+        const feed = { id: doc.id, ...doc.data() };
+        let products = [];
+        if (feed.source_type === 'upload' || feed.products_stored === true) {
+          const productSnapshot = await req.firestore.collection('xml_feeds').doc(doc.id)
+            .collection('products').orderBy('index').get();
+          products = productSnapshot.docs.map(item => item.data().product).filter(Boolean);
+        }
+        await importXmlFeedToTurso(feed, products);
+        migratedFeeds += 1;
+        migratedProducts += products.length;
+      }
+    return res.json({
+      ok: true,
+      database: 'turso',
+      migratedFeeds,
+      migratedProducts,
+      source: 'firestore',
+      mode: 'copy_only',
+      note: 'Veriler Turso’ya kopyalandı. Firestore kayıtları silinmedi ve uygulamanın aktif okuma/yazma yönü değiştirilmedi.',
+    });
+  } catch (error) {
+    console.error('XML feed migration to Turso failed:', error?.message || 'Unknown error');
+    return res.status(503).json({ error: 'XML kaynakları Turso’ya kopyalanamadı. Firestore verileri korunuyor.' });
+  }
+});
+
 app.get('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
   try {
     const snapshot = await req.firestore.collection('xml_feeds').get();
