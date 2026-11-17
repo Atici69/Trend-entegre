@@ -75,7 +75,7 @@ export async function importXmlFeedToTurso(feed, products = []) {
       metadata.created_at, metadata.updated_at, metadata.created_by],
   });
 
-  if (products.length) {
+  if (metadata.products_stored) {
     const statements = products.map((product, index) => ({
       sql: `INSERT INTO xml_feed_products (feed_id,product_index,product_json) VALUES (?,?,?)
         ON CONFLICT(feed_id,product_index) DO UPDATE SET product_json=excluded.product_json`,
@@ -84,6 +84,11 @@ export async function importXmlFeedToTurso(feed, products = []) {
     for (let offset = 0; offset < statements.length; offset += 500) {
       await client.batch(statements.slice(offset, offset + 500), 'write');
     }
+    // Keep repeat migrations idempotent if a source feed now contains fewer products.
+    await client.execute({
+      sql: 'DELETE FROM xml_feed_products WHERE feed_id = ? AND product_index >= ?',
+      args: [id, products.length],
+    });
   }
   return { id, products_count: metadata.products_count };
 }
