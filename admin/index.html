@@ -48,6 +48,7 @@ body:not(.admin-authenticated) .shell{display:none}
 <button data-page="store-packages"><span class="ico">▤</span> E-Ticaret Paketleri</button>
 <button data-page="dealers"><span class="ico">♧</span> Bayi Ağı</button>
 <button data-page="marketplaces"><span class="ico">⇄</span> Pazaryeri Entegrasyonları</button>
+<button data-page="catalog"><span class="ico">▣</span> Katalog</button>
 <button data-page="xml"><span class="ico">⌘</span> XML İşlemleri</button>
 <button data-page="buybox"><span class="ico">◈</span> BuyBox</button>
 <button data-page="payments"><span class="ico">₺</span> Ödemeler</button>
@@ -106,6 +107,12 @@ body:not(.admin-authenticated) .shell{display:none}
     </table>
   </div>
   <p class="section-note" id="marketplaceUpdated"></p>
+</section>
+<section class="page" id="catalog">
+ <div class="head"><div><h1>Ürün Kataloğu</h1><p>XML kaynaklarından aktarılan ve manuel eklenen ürünleri yönetin.</p></div><button class="btn light" onclick="loadAdminCatalog()">Ürünleri yenile</button></div>
+ <div class="card"><div class="toolbar"><input id="catalogSearch" placeholder="Ürün adı, SKU veya barkod ara" oninput="renderAdminCatalog()"><select id="catalogStatus" onchange="renderAdminCatalog()"><option value="">Tüm durumlar</option><option value="active">Yayında</option><option value="draft">Taslak</option><option value="archived">Arşiv</option></select></div>
+ <div id="catalogMessage" class="section-note" style="margin:8px 0" aria-live="polite">Katalog yükleniyor…</div>
+ <div class="tablebox"><table><thead><tr><th>Ürün</th><th>SKU / Barkod</th><th>Kategori</th><th>Alış</th><th>Satış</th><th>Stok</th><th>Durum</th></tr></thead><tbody id="catalogProductRows"><tr><td colspan="7">Yükleniyor…</td></tr></tbody></table></div></div>
 </section>
 <section class="page" id="xml">
 <div class="head"><div><h1>XML İşlemleri</h1><p>URL veya dosya ile XML kaynağı ekleyin, ürünleri kontrol edin ve dışa aktarın.</p></div><button class="btn light" onclick="loadAdminXmlData()">Canlı verileri yenile</button></div>
@@ -190,7 +197,7 @@ const API_BASE_URL = "https://trend-entegre.onrender.com";
 let hepsiburadaTestedThisSession = false;
 let trendyolTestedThisSession = false;
 
-const titles={home:"Genel Bakış",customers:"Müşteri Yönetimi",subscriptions:"Entegrasyon Paketleri ve Abonelikler","store-packages":"E-Ticaret Mağazası Paketleri",dealers:"Bayi Ağı",marketplaces:"Pazaryeri Entegrasyonları",xml:"XML İşlemleri",buybox:"BuyBox Yönetimi",payments:"Ödeme Yönetimi",accounting:"Muhasebe",ads:"Reklam Alanları",settings:"Sistem Ayarları"};
+const titles={home:"Genel Bakış",customers:"Müşteri Yönetimi",subscriptions:"Entegrasyon Paketleri ve Abonelikler","store-packages":"E-Ticaret Mağazası Paketleri",dealers:"Bayi Ağı",marketplaces:"Pazaryeri Entegrasyonları",catalog:"Ürün Kataloğu",xml:"XML İşlemleri",buybox:"BuyBox Yönetimi",payments:"Ödeme Yönetimi",accounting:"Muhasebe",ads:"Reklam Alanları",settings:"Sistem Ayarları"};
 
 function go(id){
   document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===id));
@@ -198,9 +205,31 @@ function go(id){
   document.getElementById("pageTitle").textContent=titles[id]||"Yönetim Merkezi";
   window.scrollTo({top:0,behavior:"smooth"});
   if(id==="marketplaces") loadMarketplaceStatus();
+  if(id==="catalog") loadAdminCatalog();
 }
 document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.page)));
 
+let adminCatalogProducts=[];
+async function loadAdminCatalog(){
+ const box=document.getElementById("catalogMessage"),rows=document.getElementById("catalogProductRows");
+ if(box)box.textContent="Katalog ürünleri yükleniyor…";
+ try{
+  const response=await adminApiFetch(API_BASE_URL+"/api/v1/admin/catalog/products",{cache:"no-store"});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.error||"Katalog ürünleri alınamadı.");
+  adminCatalogProducts=Array.isArray(data.products)?data.products:[];
+  renderAdminCatalog();
+ }catch(error){if(box)box.textContent=error.message;if(rows)rows.innerHTML="<tr><td colspan='7'>Ürünler yüklenemedi.</td></tr>";}
+}
+function renderAdminCatalog(){
+ const rows=document.getElementById("catalogProductRows"),box=document.getElementById("catalogMessage");
+ if(!rows)return;
+ const query=(document.getElementById("catalogSearch")?.value||"").toLocaleLowerCase("tr-TR");
+ const status=document.getElementById("catalogStatus")?.value||"";
+ const products=adminCatalogProducts.filter(p=>(!status||p.status===status)&&[p.name,p.sku,p.barcode,p.category].some(v=>String(v||"").toLocaleLowerCase("tr-TR").includes(query)));
+ if(box)box.textContent=adminCatalogProducts.length+" ürün kayıtlı · "+products.length+" ürün gösteriliyor.";
+ rows.innerHTML=products.length?products.map(p=>"<tr><td><b>"+escapeHtml(p.name||"Adsız ürün")+"</b><br><small>"+escapeHtml(p.source_feed_name||p.source||"")+"</small></td><td>"+escapeHtml(p.sku||"—")+" / "+escapeHtml(p.barcode||"—")+"</td><td>"+escapeHtml(p.category||"Katalog")+"</td><td>"+Number(p.cost_price||0).toLocaleString("tr-TR",{style:"currency",currency:p.currency||"TRY"})+"</td><td>"+Number(p.sale_price||0).toLocaleString("tr-TR",{style:"currency",currency:p.currency||"TRY"})+"</td><td>"+Number(p.stock||0).toLocaleString("tr-TR")+"</td><td>"+escapeHtml(p.status||"—")+"</td></tr>").join(""):"<tr><td colspan='7'>Bu filtrede ürün bulunamadı.</td></tr>";
+}
 async function adminApiFetch(url,options={}){
   const token=await window.adminGetToken();
   const headers=new Headers(options.headers||{});
