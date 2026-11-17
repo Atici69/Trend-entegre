@@ -388,6 +388,20 @@ window.exportXmlFeed=async function(feedId){
   showXmlMessage("Dışa aktarma tamamlandı: "+filename);
  }catch(error){showXmlMessage(error.message,true);}
 };
+window.importXmlFeedToCatalog=async function(feedId,button){
+ if(!feedId)return;
+ if(button){button.disabled=true;button.textContent="Aktarılıyor…";}
+ try{
+  const response=await adminApiFetch(API_BASE_URL+"/api/v1/admin/catalog/import-xml",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({feed_id:feedId})});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.error||"Ürünler kataloğa aktarılamadı.");
+  showXmlMessage(data.message+" Aktarılan: "+Number(data.imported||0)+" / Okunan: "+Number(data.parsed||0)+". Kâr oranı: %"+Number(data.margin_percent||0)+".");
+  if(button)button.textContent="Tekrar aktar";
+ }catch(error){
+  showXmlMessage(error.message,true);
+  if(button){button.disabled=false;button.textContent="Tekrar dene";}
+ }
+};
 window.loadAdminXmlData=async function(){
   const status=document.getElementById("adminXmlStatus");
   const rows=document.getElementById("adminXmlFeedRows");
@@ -404,8 +418,8 @@ window.loadAdminXmlData=async function(){
     const turso=await tursoResponse.json().catch(()=>({}));
     if(!feedResponse.ok)throw new Error(feedData.error||"XML kaynakları alınamadı.");
     const feeds=Array.isArray(feedData.feeds)?feedData.feeds:[];
-    status.textContent="Firestore: "+feeds.length+" kaynak. "+(tursoResponse.ok&&turso.ok?"Turso: "+Number(turso.turso?.feeds||0)+" kaynak, "+Number(turso.turso?.storedProducts||0)+" ürün.":"Turso durumu şu anda alınamadı.")+" Turso sayımı ayrı; aktif uygulama kaynağı henüz Firestore.";
-    rows.innerHTML=feeds.length?feeds.map(feed=>`<tr><td><b>${escapeHtml(feed.name||"Adsız kaynak")}</b></td><td>${escapeHtml(feed.source_type||"url")}</td><td>${Number(feed.products_count||0).toLocaleString("tr-TR")}</td><td>%${Number(feed.margin_percent||0)}</td><td>${escapeHtml(feed.last_tested_at?new Date(feed.last_tested_at).toLocaleString("tr-TR"):"—")}</td><td><button class="btn light" onclick="window.exportXmlFeed('${escapeHtml(feed.id)}')">İndir</button></td></tr>`).join(""):"<tr><td colspan='6'>Henüz kayıtlı XML kaynağı bulunamadı.</td></tr>";
+    status.textContent="Turso: "+feeds.length+" kayıtlı XML kaynağı. "+(tursoResponse.ok&&turso.ok?Number(turso.turso?.storedProducts||0)+" ürün XML veritabanında saklanıyor.":"Turso ürün sayımı şu anda alınamadı.")+" Kataloğa aktarılan ürünler mevcut mağaza kataloğu veritabanına kaydedilir.";
+    rows.innerHTML=feeds.length?feeds.map(feed=>`<tr><td><b>${escapeHtml(feed.name||"Adsız kaynak")}</b></td><td>${escapeHtml(feed.source_type||"url")}</td><td>${Number(feed.products_count||0).toLocaleString("tr-TR")}</td><td>%${Number(feed.margin_percent||0)}</td><td>${escapeHtml(feed.last_tested_at?new Date(feed.last_tested_at).toLocaleString("tr-TR"):"—")}</td><td><button class="btn" onclick="window.importXmlFeedToCatalog('${escapeHtml(feed.id)}',this)">Kataloğa aktar</button> <button class="btn light" onclick="window.exportXmlFeed('${escapeHtml(feed.id)}')">İndir</button></td></tr>`).join(""):"<tr><td colspan='6'>Henüz kayıtlı XML kaynağı bulunamadı.</td></tr>";
     const selector=document.getElementById("xmlExportFeed");
     if(selector){const previous=selector.value;selector.innerHTML="<option value=''>Kaynak seçin</option>"+feeds.map(feed=>"<option value='"+escapeHtml(feed.id)+"'>"+escapeHtml(feed.name||"Adsız kaynak")+"</option>").join("");if(feeds.some(feed=>feed.id===previous))selector.value=previous;}
   }catch(error){status.textContent="XML verileri alınamadı: "+error.message;rows.innerHTML="<tr><td colspan='5'>Sunucu yanıtı bekleniyor.</td></tr>";}
