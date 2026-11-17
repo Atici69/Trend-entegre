@@ -205,7 +205,7 @@ function go(id){
   document.getElementById("pageTitle").textContent=titles[id]||"Yönetim Merkezi";
   window.scrollTo({top:0,behavior:"smooth"});
   if(id==="marketplaces") loadMarketplaceStatus();
-  if(id==="catalog") loadAdminCatalog();
+  if(id==="catalog"){loadAdminCatalog();loadTrendyolCatalogMappings();}
 }
 document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.page)));
 
