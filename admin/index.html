@@ -524,16 +524,14 @@ async function initAdminAuth(){
   const form=document.getElementById("adminLoginForm");
   const button=document.getElementById("adminLoginButton");
   try{
-    const response=await fetch(API_BASE_URL+"/api/v1/admin/config");
+    const response=await fetch(API_BASE_URL+"/api/v1/admin/config",{cache:"no-store"});
     const config=await response.json();
     if(!response.ok || !config.enabled){
-      hint.textContent="Giriş henüz etkin değil. Render ortamında Firebase ve yönetici ayarları tamamlanmalı.";
+      hint.textContent="Yönetici girişi etkin değil. Render üzerindeki Turso yönetici ayarlarını kontrol edin.";
       button.disabled=true;
       return;
     }
-    firebasePublicConfig=config.firebaseConfig;
-    if(!firebase.apps.length) firebase.initializeApp(firebasePublicConfig);
-    hint.textContent="Firebase kimlik doğrulaması ve sunucu taraflı yönetici izin listesi kullanılır.";
+    hint.textContent="Turso tabanlı güvenli yönetici girişi hazır.";
     const saved=adminToken();
     if(saved){
       try{
@@ -542,22 +540,38 @@ async function initAdminAuth(){
       }catch(_error){sessionStorage.removeItem(ADMIN_TOKEN_KEY);}
     }
   }catch(error){
-    hint.textContent="API sunucusuna ulaşılamadı. Yönetici servisi hazır olduğunda giriş açılacak.";
+    hint.textContent="Yönetici servisine bağlanılamadı. Biraz sonra sayfayı yenileyin.";
     button.disabled=true;
+    return;
   }
   form.addEventListener("submit",async event=>{
-    event.preventDefault();clearAuthMessage();button.disabled=true;button.textContent="Giriş doğrulanıyor…";
+    event.preventDefault();
+    clearAuthMessage();
+    button.disabled=true;
+    button.textContent="Giriş doğrulanıyor…";
     try{
-      const credential=await firebase.auth().signInWithEmailAndPassword(document.getElementById("adminEmail").value.trim(),document.getElementById("adminPassword").value);
-      const token=await credential.user.getIdToken(true);
-      sessionStorage.setItem(ADMIN_TOKEN_KEY,token);
+      const response=await fetch(API_BASE_URL+"/api/v1/admin/login",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        cache:"no-store",
+        body:JSON.stringify({
+          email:document.getElementById("adminEmail").value.trim(),
+          password:document.getElementById("adminPassword").value
+        })
+      });
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok || !result.token) throw new Error(result.error||"E-posta veya şifre hatalı.");
+      sessionStorage.setItem(ADMIN_TOKEN_KEY,result.token);
       const verified=await adminApi("/api/v1/admin/session");
       document.getElementById("adminPassword").value="";
-      showAdminApp(verified.user);
+      showAdminApp(verified.user||result.user||{});
     }catch(error){
       sessionStorage.removeItem(ADMIN_TOKEN_KEY);
       authMessage(error.message||"Giriş başarısız.");
-    }finally{button.disabled=false;button.textContent="Güvenli giriş yap";}
+    }finally{
+      button.disabled=false;
+      button.textContent="Güvenli giriş yap";
+    }
   });
 }
 window.addEventListener("DOMContentLoaded",initAdminAuth);
