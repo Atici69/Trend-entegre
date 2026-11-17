@@ -207,10 +207,10 @@ function hasForbiddenXmlDeclarations(xml) {
   // DTD markup is forbidden, but the same characters inside comments or CDATA
   // are ordinary text and must not cause a false positive.
   const markup = xml
-    .replace(/<!--[\\s\\S]*?-->/g, '')
-    .replace(/<!\\[CDATA\\[[\\s\\S]*?\\]\\]>/g, '')
-    .replace(/<\\?[\\s\\S]*?\\?>/g, '');
-  return /<!\\s*(?:DOCTYPE|ENTITY)\\b/i.test(markup);
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, '')
+    .replace(/<\?[\s\S]*?\\?>/g, '');
+  return /<!\s*(?:DOCTYPE|ENTITY)\\b/i.test(markup);
 }
 
 export function parseProducts(xml) {
