@@ -5,6 +5,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { randomUUID } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
@@ -17,7 +19,30 @@ import * as XLSX from 'xlsx';
 import { downloadXml, parseProducts, clampProductLimit } from './src/xml/feed-service.js';
 
 const app = express();
+const projectRoot = dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.PORT || 3000);
+
+// Serve the existing standalone web pages from the same Render service.
+// The pages currently contain inline CSS/JS, so their CSP explicitly permits it.
+function sendProjectPage(fileName) {
+  return (_req, res) => {
+    res.set('Content-Security-Policy', [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.googleapis.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "img-src 'self' data: https:",
+      "font-src 'self' data: https://fonts.gstatic.com",
+      "connect-src 'self' https://trend-entegre.onrender.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com",
+      "frame-src 'self' https://*.firebaseapp.com"
+    ].join('; '));
+    return res.sendFile(join(projectRoot, fileName));
+  };
+}
+app.get('/', sendProjectPage('index.html'));
+app.get('/admin', (_req, res) => res.redirect(301, '/admin/'));
+app.get('/admin/', sendProjectPage('admin/index.html'));
+app.get('/xml-merkezi', (_req, res) => res.redirect(301, '/xml-merkezi.html'));
+app.get('/xml-merkezi.html', sendProjectPage('xml-merkezi.html'));
 const allowedOrigins = [...new Set([
   'https://atici69.github.io',
   'http://localhost:3000',
