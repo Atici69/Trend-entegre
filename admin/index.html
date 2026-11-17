@@ -318,55 +318,48 @@ window.loadAdminXmlData=async function(){
 };
 </script>
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 const gate=document.getElementById("adminLoginGate");
 const form=document.getElementById("adminLoginForm");
 const message=document.getElementById("adminLoginMessage");
 const button=document.getElementById("adminLoginButton");
-let auth=null;
-let currentToken=null;
+const tokenKey="trendEntregreAdminSession";
+let currentToken=sessionStorage.getItem(tokenKey)||"";
 function showLoginMessage(text){message.textContent=text;}
-async function verifyAdminSession(user){
-  if(!user){document.body.classList.remove("admin-authenticated");gate.hidden=false;currentToken=null;return false;}
+function clearSession(){currentToken="";sessionStorage.removeItem(tokenKey);document.body.classList.remove("admin-authenticated");gate.hidden=false;}
+async function verifyAdminSession(){
+  if(!currentToken){clearSession();return false;}
   try{
-    const token=await user.getIdToken(true);
-    const response=await fetch("/api/v1/admin/session",{headers:{Authorization:"Bearer "+token},cache:"no-store"});
+    const response=await fetch("/api/v1/admin/session",{headers:{Authorization:"Bearer "+currentToken},cache:"no-store"});
     const result=await response.json().catch(()=>({}));
-    if(!response.ok) throw new Error(result.error||"Bu hesap yönetici erişimine sahip değil.");
-    currentToken=token;
-    document.body.classList.add("admin-authenticated");
-    gate.hidden=true;
+    if(!response.ok)throw new Error(result.error||"Yönetici oturumu doğrulanamadı.");
+    document.body.classList.add("admin-authenticated");gate.hidden=true;
     document.getElementById("adminConnectionBadge").textContent="GÜVENLİ OTURUM AKTİF";
-    if(typeof window.loadAdminLiveData==="function") window.loadAdminLiveData();
+    if(typeof window.loadAdminLiveData==="function")window.loadAdminLiveData();
     return true;
-  }catch(error){
-    document.body.classList.remove("admin-authenticated");
-    gate.hidden=false;
-    currentToken=null;
-    showLoginMessage(error.message||"Yönetici doğrulaması başarısız.");
-    await signOut(auth);
-    return false;
-  }
+  }catch(error){clearSession();showLoginMessage(error.message||"Yönetici doğrulaması başarısız.");return false;}
 }
-window.adminGetToken=async()=>{if(!auth?.currentUser) throw new Error("Yönetici oturumu bulunamadı.");currentToken=await auth.currentUser.getIdToken();return currentToken;};
+window.adminGetToken=async()=>{if(!currentToken)throw new Error("Yönetici oturumu bulunamadı.");return currentToken;};
 try{
   const configResponse=await fetch("/api/v1/admin/config",{cache:"no-store"});
   const configResult=await configResponse.json();
-  if(!configResponse.ok||!configResult.enabled||!configResult.firebaseConfig) throw new Error("Yönetici giriş servisi yapılandırılmamış. Render ortam değişkenlerini kontrol edin.");
-  auth=getAuth(initializeApp(configResult.firebaseConfig));
-  await setPersistence(auth,browserLocalPersistence);
-  onAuthStateChanged(auth,user=>{verifyAdminSession(user);});
-  document.getElementById("adminLogoutBtn")?.addEventListener("click",async()=>{await signOut(auth);});
+  if(!configResponse.ok||!configResult.enabled)throw new Error("Turso yönetici girişi yapılandırılmamış. Render ortam değişkenlerini kontrol edin.");
+  await verifyAdminSession();
+  document.getElementById("adminLogoutBtn")?.addEventListener("click",async()=>{
+    try{if(currentToken)await fetch("/api/v1/admin/logout",{method:"POST",headers:{Authorization:"Bearer "+currentToken}});}
+    finally{clearSession();}
+  });
   form.addEventListener("submit",async event=>{
     event.preventDefault();button.disabled=true;button.textContent="Doğrulanıyor…";showLoginMessage("");
     try{
-      await signInWithEmailAndPassword(auth,document.getElementById("adminEmail").value.trim(),document.getElementById("adminPassword").value);
-      showLoginMessage("Oturum doğrulanıyor…");
-    }catch(error){
-      const messages={"auth/invalid-credential":"E-posta veya şifre hatalı.","auth/too-many-requests":"Çok fazla deneme yapıldı. Bir süre sonra tekrar deneyin.","auth/network-request-failed":"Bağlantı kurulamadı."};
-      showLoginMessage(messages[error.code]||"Giriş yapılamadı. Bilgileri kontrol edin.");
-    }finally{button.disabled=false;button.textContent="Güvenli giriş yap";}
+      const response=await fetch("/api/v1/admin/login",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({email:document.getElementById("adminEmail").value.trim(),password:document.getElementById("adminPassword").value})});
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok||!result.token)throw new Error(result.error||"Giriş yapılamadı.");
+      currentToken=result.token;sessionStorage.setItem(tokenKey,currentToken);
+      document.getElementById("adminPassword").value="";showLoginMessage("Oturum doğrulanıyor…");
+      await verifyAdminSession();
+    }catch(error){showLoginMessage(error.message||"Giriş yapılamadı. Bilgileri kontrol edin.");}
+    finally{button.disabled=false;button.textContent="Güvenli giriş yap";}
   });
 }catch(error){showLoginMessage(error.message||"Giriş servisi başlatılamadı.");}
 </script>
