@@ -411,8 +411,8 @@ window.loadAdminXmlData=async function(){
   try{
     const token=await window.adminGetToken();
     const [feedResponse,tursoResponse]=await Promise.all([
-      fetch("/api/v1/admin/xml/feeds",{headers:{Authorization:"Bearer "+token},cache:"no-store"}),
-      fetch("/api/v1/admin/xml/turso-status",{headers:{Authorization:"Bearer "+token},cache:"no-store"})
+      fetch(API_BASE_URL+"/api/v1/admin/xml/feeds",{headers:{Authorization:"Bearer "+token},cache:"no-store"}),
+      fetch(API_BASE_URL+"/api/v1/admin/xml/turso-status",{headers:{Authorization:"Bearer "+token},cache:"no-store"})
     ]);
     const feedData=await feedResponse.json().catch(()=>({}));
     const turso=await tursoResponse.json().catch(()=>({}));
