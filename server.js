@@ -252,6 +252,7 @@ async function requireAdmin(req, res, next) {
     if (!firebase || !allowedEmails.length || !token) return res.status(401).json({ error: 'Yönetici oturumu doğrulanamadı.' });
     const decoded = await firebase.auth.verifyIdToken(token);
     const email = decoded.email?.toLowerCase();
+    if (decoded.email_verified !== true) return res.status(403).json({ error: 'Yönetici hesabının e-posta adresi doğrulanmış olmalıdır.' });
     if (!email || !allowedEmails.includes(email)) return res.status(403).json({ error: 'Bu hesap yönetici erişim listesinde bulunmuyor.' });
     req.adminUser = { id: decoded.uid, email: decoded.email };
     req.firestore = firebase.db;
