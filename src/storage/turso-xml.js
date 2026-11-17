@@ -40,6 +40,16 @@ export async function ensureXmlSchema(client) {
       FOREIGN KEY (feed_id) REFERENCES xml_feeds(id) ON DELETE CASCADE
     );
     CREATE INDEX IF NOT EXISTS idx_xml_feeds_created_at ON xml_feeds(created_at);
+    CREATE TABLE IF NOT EXISTS xml_previews (
+      id TEXT PRIMARY KEY,
+      url TEXT NOT NULL,
+      margin_percent REAL NOT NULL DEFAULT 0,
+      products_json TEXT NOT NULL,
+      created_by TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      expires_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_xml_previews_expires_at ON xml_previews(expires_at);
   `);
 }
 
@@ -129,4 +139,52 @@ export async function getTursoXmlProducts(feedId) {
     args: [String(feedId)],
   });
   return result.rows.map(row => JSON.parse(String(row.product_json)));
+}
+
+export async function updateTursoXmlFeedMargin(feedId, marginPercent) {
+  const client = await getTursoClient();
+  await ensureXmlSchema(client);
+  const result = await client.execute({
+    sql: 'UPDATE xml_feeds SET margin_percent = ?, updated_at = ? WHERE id = ?',
+    args: [Number(marginPercent), new Date().toISOString(), String(feedId)],
+  });
+  return Number(result.rowsAffected || 0) > 0;
+}
+
+export async function deleteTursoXmlFeed(feedId) {
+  const client = await getTursoClient();
+  await ensureXmlSchema(client);
+  await client.execute({ sql: 'DELETE FROM xml_feed_products WHERE feed_id = ?', args: [String(feedId)] });
+  const result = await client.execute({ sql: 'DELETE FROM xml_feeds WHERE id = ?', args: [String(feedId)] });
+  return Number(result.rowsAffected || 0) > 0;
+}
+
+export async function saveTursoXmlPreview(preview) {
+  const client = await getTursoClient();
+  await ensureXmlSchema(client);
+  await client.execute({
+    sql: 'INSERT INTO xml_previews (id,url,margin_percent,products_json,created_by,created_at,expires_at) VALUES (?,?,?,?,?,?,?)',
+    args: [String(preview.id), String(preview.url), Number(preview.margin_percent || 0),
+      JSON.stringify(preview.products || []), String(preview.created_by),
+      Number(preview.created_at), Number(preview.expires_at)],
+  });
+}
+
+export async function getTursoXmlPreview(previewId) {
+  const client = await getTursoClient();
+  await ensureXmlSchema(client);
+  const result = await client.execute({ sql: 'SELECT * FROM xml_previews WHERE id = ?', args: [String(previewId)] });
+  const row = result.rows[0];
+  if (!row) return null;
+  return {
+    id: String(row.id), url: String(row.url), margin_percent: Number(row.margin_percent || 0),
+    products: JSON.parse(String(row.products_json)), created_by: String(row.created_by),
+    created_at: Number(row.created_at), expires_at: Number(row.expires_at),
+  };
+}
+
+export async function deleteTursoXmlPreview(previewId) {
+  const client = await getTursoClient();
+  await ensureXmlSchema(client);
+  await client.execute({ sql: 'DELETE FROM xml_previews WHERE id = ?', args: [String(previewId)] });
 }
