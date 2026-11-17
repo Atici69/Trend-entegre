@@ -930,11 +930,12 @@ app.delete('/api/v1/admin/catalog/products/:id', requireAdmin, async (req, res) 
 });
 
 
-async function loadXmlFeedProducts(firestore, feedId, feed) {
+async function loadXmlFeedProducts(feedId, feed) {
   if (feed.source_type === 'upload' || feed.products_stored === true) {
-    const snapshot = await firestore.collection('xml_feeds').doc(feedId).collection('products').orderBy('index').get();
-    if (snapshot.empty) throw new Error('XML kaynağının kayıtlı ürünleri bulunamadı. Kaynağı yeniden okuyun.');
-    return snapshot.docs.map(doc => doc.data().product).filter(Boolean);
+    const { getTursoXmlProducts } = await import('./src/storage/turso-xml.js');
+    const products = await getTursoXmlProducts(feedId);
+    if (!products.length) throw new Error('XML kaynağının Turso üzerinde kayıtlı ürünleri bulunamadı. Kaynağı yeniden yükleyin.');
+    return products;
   }
   return parseProducts(await downloadXml(feed.url));
 }
@@ -1054,15 +1055,14 @@ app.post('/api/v1/admin/xml/migrate-to-turso', requireAdmin, async (req, res) =>
   }
 });
 
-app.get('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
+app.get('/api/v1/admin/xml/feeds', requireAdmin, async (_req, res) => {
   try {
-    const snapshot = await req.firestore.collection('xml_feeds').get();
-    const feeds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-      .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
-    res.json({ feeds });
+    const { listTursoXmlFeeds } = await import('./src/storage/turso-xml.js');
+    const feeds = await listTursoXmlFeeds();
+    return res.json({ feeds, database: 'turso' });
   } catch (error) {
     console.error('Admin XML feed list failed:', error?.message || 'Unknown error');
-    res.status(503).json({ error: 'XML kaynakları alınamadı. Firestore okuma hatası: ' + (error?.message || 'Bilinmeyen hata') });
+    return res.status(503).json({ error: 'XML kaynakları Turso üzerinden alınamadı.' });
   }
 });
 
@@ -1082,24 +1082,21 @@ app.post('/api/v1/admin/xml/upload', requireAdmin, express.text({ type: ['text/p
     fileName = fileName.replaceAll('\\\\', '_').replaceAll('/', '_').replace(/[\r\n]/g, '_').slice(0, 180) || 'tedarikci.xml';
     const marginPercent = normalizeProfitMargin(req.headers['x-xml-margin'] ?? req.query.marginPercent ?? 0);
     const now = new Date().toISOString();
-    const feedRef = await req.firestore.collection('xml_feeds').add({
-      name, url: '', file_name: fileName,
-      source_type: 'upload', products_count: products.length, margin_percent: marginPercent,
+    const id = randomUUID();
+    const { importXmlFeedToTurso } = await import('./src/storage/turso-xml.js');
+    await importXmlFeedToTurso({
+      id, name, url: '', file_name: fileName, source_type: 'upload',
+      products_stored: true, products_count: products.length, margin_percent: marginPercent,
       last_tested_at: now, created_at: now, updated_at: now, created_by: req.adminUser.id,
-    });
-    const writer = req.firestore.bulkWriter();
-    products.forEach((product, index) => {
-      writer.set(feedRef.collection('products').doc(String(index).padStart(5, '0')), { index, product });
-    });
-    await writer.close();
-    await audit(req, 'upload', 'xml_feed', feedRef.id, { name, products_count: products.length });
-    res.status(201).json({
-      feed: { id: feedRef.id, name, file_name: fileName, source_type: 'upload', products_count: products.length, margin_percent: marginPercent, last_tested_at: now },
+    }, products);
+    await audit(req, 'upload', 'xml_feed', id, { name, products_count: products.length, database: 'turso' });
+    return res.status(201).json({
+      feed: { id, name, file_name: fileName, source_type: 'upload', products_stored: true, products_count: products.length, margin_percent: marginPercent, last_tested_at: now },
       preview: applyProfitMargin(products, marginPercent).slice(0, 10),
     });
   } catch (error) {
     console.error('Admin XML upload failed:', error?.message || 'Unknown error');
-    res.status(400).json({ error: error.message || 'XML dosyası yüklenemedi.' });
+    return res.status(400).json({ error: error.message || 'XML dosyası Turso’ya yüklenemedi.' });
   }
 });
 
@@ -1111,21 +1108,16 @@ app.post('/api/v1/admin/xml/preview', requireAdmin, async (req, res) => {
     const margin = normalizeProfitMargin(req.body?.marginPercent ?? 0);
     const previewId = randomUUID();
     const now = Date.now();
-    const previewRef = req.firestore.collection('xml_previews').doc(previewId);
-    await previewRef.set({
-      url, margin_percent: margin, products_count: products.length,
+    const { saveTursoXmlPreview } = await import('./src/storage/turso-xml.js');
+    await saveTursoXmlPreview({
+      id: previewId, url, margin_percent: margin, products,
       created_by: req.adminUser.id, created_at: now, expires_at: now + 30 * 60 * 1000,
     });
-    const writer = req.firestore.bulkWriter();
-    products.forEach((product, index) => {
-      writer.set(previewRef.collection('products').doc(String(index).padStart(5, '0')), { index, product });
-    });
-    await writer.close();
     const pricedProducts = applyProfitMargin(products, margin);
-    res.json({ previewId, totalProducts: pricedProducts.length, marginPercent: margin, preview: pricedProducts.slice(0, 10) });
+    return res.json({ previewId, totalProducts: pricedProducts.length, marginPercent: margin, preview: pricedProducts.slice(0, 10) });
   } catch (error) {
     console.error('Admin XML preview failed:', error?.message || 'Unknown error');
-    res.status(400).json({ error: error.message || 'XML kaynağı okunamadı.' });
+    return res.status(400).json({ error: error.message || 'XML kaynağı okunamadı veya önizleme Turso’ya kaydedilemedi.' });
   }
 });
 
@@ -1135,68 +1127,55 @@ app.post('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
   const previewId = String(req.body?.preview_id || '').trim();
   if (name.length < 2 || !url || !previewId) return res.status(400).json({ error: 'Kaynak adı, XML adresi ve başarılı önizleme kaydı gereklidir. Önce bağlantıyı yeniden test edin.' });
   try {
-    const previewRef = req.firestore.collection('xml_previews').doc(previewId);
-    const previewSnap = await previewRef.get();
-    if (!previewSnap.exists) return res.status(410).json({ error: 'XML önizleme oturumu bulunamadı. Güvenlik nedeniyle bağlantıyı yeniden test etmeniz gerekiyor.' });
-    const previewData = previewSnap.data();
-    if (previewData.created_by !== req.adminUser.id || Number(previewData.expires_at || 0) < Date.now() || previewData.url !== url) {
+    const { getTursoXmlPreview, importXmlFeedToTurso, deleteTursoXmlPreview } = await import('./src/storage/turso-xml.js');
+    const previewData = await getTursoXmlPreview(previewId);
+    if (!previewData) return res.status(410).json({ error: 'XML önizleme oturumu bulunamadı. Bağlantıyı yeniden test edin.' });
+    if (previewData.created_by !== req.adminUser.id || previewData.expires_at < Date.now() || previewData.url !== url) {
       return res.status(410).json({ error: 'XML önizleme oturumu süresi dolmuş veya adresle eşleşmiyor. Bağlantıyı yeniden test edin.' });
     }
-    const snapshot = await previewRef.collection('products').orderBy('index').get();
-    const products = snapshot.docs.map(doc => doc.data().product).filter(Boolean);
+    const products = Array.isArray(previewData.products) ? previewData.products : [];
     if (!products.length) return res.status(422).json({ error: 'Önizleme ürünleri bulunamadı. Bağlantıyı yeniden test edin.' });
     const marginPercent = normalizeProfitMargin(req.body?.marginPercent ?? previewData.margin_percent ?? 0);
     const now = new Date().toISOString();
-    const ref = await req.firestore.collection('xml_feeds').add({
-      name, url, source_type: 'url', products_stored: true, products_count: products.length,
-      margin_percent: marginPercent, last_tested_at: now,
-      created_at: now, updated_at: now, created_by: req.adminUser.id,
-    });
-    const writer = req.firestore.bulkWriter();
-    products.forEach((product, index) => {
-      writer.set(ref.collection('products').doc(String(index).padStart(5, '0')), { index, product });
-    });
-    await writer.close();
-    const cleanup = req.firestore.bulkWriter();
-    snapshot.docs.forEach(doc => cleanup.delete(doc.ref));
-    cleanup.delete(previewRef);
-    await cleanup.close();
-    await audit(req, 'create', 'xml_feed', ref.id, { name, products_count: products.length });
-    res.status(201).json({ feed: { id: ref.id, name, url, products_count: products.length, margin_percent: marginPercent, last_tested_at: now } });
+    const id = randomUUID();
+    await importXmlFeedToTurso({
+      id, name, url, source_type: 'url', products_stored: true, products_count: products.length,
+      margin_percent: marginPercent, last_tested_at: now, created_at: now, updated_at: now,
+      created_by: req.adminUser.id,
+    }, products);
+    await deleteTursoXmlPreview(previewId);
+    await audit(req, 'create', 'xml_feed', id, { name, products_count: products.length, database: 'turso' });
+    return res.status(201).json({ feed: { id, name, url, source_type: 'url', products_stored: true, products_count: products.length, margin_percent: marginPercent, last_tested_at: now } });
   } catch (error) {
     console.error('Admin XML feed save failed:', error?.message || 'Unknown error');
-    res.status(400).json({ error: error.message || 'XML kaynağı kaydedilemedi.' });
+    return res.status(400).json({ error: error.message || 'XML kaynağı Turso’ya kaydedilemedi.' });
   }
 });
 
 app.patch('/api/v1/admin/xml/feeds/:id', requireAdmin, async (req, res) => {
   try {
     const marginPercent = normalizeProfitMargin(req.body?.marginPercent);
-    const ref = req.firestore.collection('xml_feeds').doc(req.params.id);
-    const existing = await ref.get();
-    if (!existing.exists) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
-    await ref.update({ margin_percent: marginPercent, updated_at: new Date().toISOString() });
-    await audit(req, 'update_margin', 'xml_feed', req.params.id, { margin_percent: marginPercent });
-    res.json({ ok: true, margin_percent: marginPercent });
-  } catch (error) { res.status(400).json({ error: error.message || 'Kâr oranı kaydedilemedi.' }); }
+    const { updateTursoXmlFeedMargin } = await import('./src/storage/turso-xml.js');
+    const updated = await updateTursoXmlFeedMargin(req.params.id, marginPercent);
+    if (!updated) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
+    await audit(req, 'update_margin', 'xml_feed', req.params.id, { margin_percent: marginPercent, database: 'turso' });
+    return res.json({ ok: true, margin_percent: marginPercent, database: 'turso' });
+  } catch (error) {
+    console.error('Admin XML feed margin update failed:', error?.message || 'Unknown error');
+    return res.status(400).json({ error: error.message || 'Kâr oranı kaydedilemedi.' });
+  }
 });
 
 app.delete('/api/v1/admin/xml/feeds/:id', requireAdmin, async (req, res) => {
   try {
-    const ref = req.firestore.collection('xml_feeds').doc(req.params.id);
-    const existing = await ref.get();
-    if (!existing.exists) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
-    if (existing.data().source_type === 'upload' || existing.data().products_stored === true) {
-      const uploaded = await ref.collection('products').get();
-      const writer = req.firestore.bulkWriter();
-      uploaded.docs.forEach(doc => writer.delete(doc.ref));
-      await writer.close();
-    }
-    await ref.delete();
-    await audit(req, 'delete', 'xml_feed', req.params.id);
-    res.json({ ok: true });
+    const { deleteTursoXmlFeed } = await import('./src/storage/turso-xml.js');
+    const deleted = await deleteTursoXmlFeed(req.params.id);
+    if (!deleted) return res.status(404).json({ error: 'XML kaynağı bulunamadı.' });
+    await audit(req, 'delete', 'xml_feed', req.params.id, { database: 'turso' });
+    return res.json({ ok: true, database: 'turso' });
   } catch (error) {
-    res.status(400).json({ error: 'XML kaynağı silinemedi.' });
+    console.error('Admin XML feed delete failed:', error?.message || 'Unknown error');
+    return res.status(400).json({ error: 'XML kaynağı Turso üzerinden silinemedi.' });
   }
 });
 
