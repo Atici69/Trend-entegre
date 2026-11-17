@@ -2,7 +2,7 @@ name: Deploy Trend-Entegre to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/secure-marketplace-api]
   workflow_dispatch:
 
 permissions:
