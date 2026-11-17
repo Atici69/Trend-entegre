@@ -211,6 +211,7 @@ document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",(
 
 let adminCatalogProducts=[];
 let adminCatalogPage=1;
+const trendyolSelectedProductIds=new Set();
 const ADMIN_CATALOG_PAGE_SIZE=20;
 function changeAdminCatalogPage(delta){adminCatalogPage+=delta;renderAdminCatalog();}
 async function loadAdminCatalog(){
@@ -244,7 +245,48 @@ function renderAdminCatalog(){
   if(info)info.textContent=filtered.length?((start+1)+"–"+Math.min(start+products.length,filtered.length)+" / "+filtered.length+" ürün · Sayfa "+adminCatalogPage+" / "+totalPages):"Gösterilecek ürün yok.";
   if(prev)prev.disabled=adminCatalogPage<=1||!filtered.length;
   if(next)next.disabled=adminCatalogPage>=totalPages||!filtered.length;
-  rows.innerHTML=products.length?products.map(p=>"<tr><td><b>"+escapeHtml(p.name||"Adsız ürün")+"</b><br><small>"+escapeHtml(p.source_feed_name||p.source||"")+"</small></td><td>"+escapeHtml(p.sku||"—")+" / "+escapeHtml(p.barcode||"—")+"</td><td>"+escapeHtml(p.category||"Katalog")+"</td><td>"+Number(p.cost_price||0).toLocaleString("tr-TR",{style:"currency",currency:catalogCurrencyCode(p.currency)})+"</td><td>"+Number(p.sale_price||0).toLocaleString("tr-TR",{style:"currency",currency:catalogCurrencyCode(p.currency)})+"</td><td>"+Number(p.stock||0).toLocaleString("tr-TR")+"</td><td>"+escapeHtml(p.status||"—")+"</td><td><button class="btn light" onclick="deleteCatalogProduct(\'"+encodeURIComponent(p.id)+"\')">Sil</button></td></tr>").join(""):"<tr><td colspan='8'>Bu filtrede ürün bulunamadı.</td></tr>";
+  rows.innerHTML=products.length?products.map(p=>"<tr><td><input type='checkbox' "+(trendyolSelectedProductIds.has(p.id)?"checked ":"")+(trendyolSelectedProductIds.size>=20&&!trendyolSelectedProductIds.has(p.id)?"disabled ":"")+"onchange='toggleTrendyolProduct(\""+encodeURIComponent(p.id)+"\",this.checked)'></td><td><b>"+escapeHtml(p.name||"Adsız ürün")+"</b><br><small>"+escapeHtml(p.source_feed_name||p.source||"")+"</small></td><td>"+escapeHtml(p.sku||"—")+" / "+escapeHtml(p.barcode||"—")+"</td><td>"+escapeHtml(p.category||"Katalog")+"</td><td>"+Number(p.cost_price||0).toLocaleString("tr-TR",{style:"currency",currency:catalogCurrencyCode(p.currency)})+"</td><td>"+Number(p.sale_price||0).toLocaleString("tr-TR",{style:"currency",currency:catalogCurrencyCode(p.currency)})+"</td><td>"+Number(p.stock||0).toLocaleString("tr-TR")+"</td><td>"+escapeHtml(p.status||"—")+"</td><td><button class='btn light' onclick='deleteCatalogProduct(\""+encodeURIComponent(p.id)+"\")'>Sil</button></td></tr>").join(""):"<tr><td colspan='9'>Bu filtrede ürün bulunamadı.</td></tr>";
+  updateTrendyolSelectionUi();
+}
+function updateTrendyolSelectionUi(){
+ const el=document.getElementById("trendyolSelectedCount");
+ if(el)el.textContent=trendyolSelectedProductIds.size+" / 20 ürün seçildi";
+}
+function toggleTrendyolProduct(encodedId,checked){
+ const id=decodeURIComponent(encodedId);
+ if(checked&&trendyolSelectedProductIds.size>=20){alert("En fazla 20 ürün seçebilirsiniz.");renderAdminCatalog();return;}
+ if(checked)trendyolSelectedProductIds.add(id);else trendyolSelectedProductIds.delete(id);
+ renderAdminCatalog();
+}
+function selectCurrentCatalogPage(){
+ const q=(document.getElementById("catalogSearch")?.value||"").toLocaleLowerCase("tr-TR");
+ const status=document.getElementById("catalogStatus")?.value||"";
+ const filtered=adminCatalogProducts.filter(p=>(!status||p.status===status)&&[p.name,p.sku,p.barcode,p.category].some(v=>String(v||"").toLocaleLowerCase("tr-TR").includes(q)));
+ const start=(adminCatalogPage-1)*ADMIN_CATALOG_PAGE_SIZE;
+ filtered.slice(start,start+ADMIN_CATALOG_PAGE_SIZE).forEach(p=>{if(trendyolSelectedProductIds.size<20)trendyolSelectedProductIds.add(p.id);});
+ renderAdminCatalog();
+}
+function clearTrendyolSelection(){
+ trendyolSelectedProductIds.clear();
+ document.getElementById("trendyolValidationReport").innerHTML="";
+ document.getElementById("trendyolValidationMessage").textContent="Seçim temizlendi.";
+ renderAdminCatalog();
+}
+async function validateSelectedCatalog(){
+ const msg=document.getElementById("trendyolValidationMessage");
+ const out=document.getElementById("trendyolValidationReport");
+ const btn=document.getElementById("trendyolValidateButton");
+ const ids=[...trendyolSelectedProductIds];
+ if(!ids.length){msg.textContent="Önce ürün seçin.";return;}
+ btn.disabled=true;msg.textContent="Ürünler kontrol ediliyor…";out.innerHTML="";
+ try{
+  const response=await adminApiFetch(API_BASE_URL+"/api/v1/marketplaces/trendyol/validate-catalog",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({product_ids:ids})});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.error||"Kontrol başarısız.");
+  msg.textContent="Kontrol tamamlandı. Bu işlem ürünleri Trendyol’a göndermez.";
+  out.innerHTML="<p><b>"+data.ready+" hazır</b> · "+data.blocked+" eksik · "+data.total+" kontrol edildi</p><div class='tablebox'><table><thead><tr><th>Ürün</th><th>Durum</th><th>Eksikler</th></tr></thead><tbody>"+(data.rows||[]).map(row=>"<tr><td>"+escapeHtml(row.title||row.sku||"Ürün")+"</td><td>"+(row.ready?"Hazır":"Eksik")+"</td><td>"+escapeHtml((row.errors||[]).join(" · ")||"—")+"</td></tr>").join("")+"</tbody></table></div>";
+ }catch(error){msg.textContent=error.message;}
+ finally{btn.disabled=false;}
 }
 async function createCatalogProduct(){
  const msg=document.getElementById("catalogCreateMessage");
