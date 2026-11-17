@@ -715,7 +715,7 @@ app.post('/api/v1/marketplaces/trendyol/catalog-mappings', requireAdmin, async (
         attributeValueId: a?.attributeValueId == null ? null : String(a.attributeValueId).trim(),
         customValue: String(a?.customValue || '').trim().slice(0, 200),
       })).filter(a => a.attributeId && (a.attributeValueId || a.customValue)) : [];
-      if (!sourceCategory || !/^\\d+$/.test(categoryId) || !/^\\d+$/.test(brandId)) {
+      if (!sourceCategory || !/^\d+$/.test(categoryId) || !/^\d+$/.test(brandId)) {
         return res.status(400).json({ error: 'Kaynak kategori, geçerli Trendyol kategori ID ve marka ID zorunludur.' });
       }
       const docId = 'trendyol_' + Buffer.from(sourceCategory, 'utf8').toString('base64url');
