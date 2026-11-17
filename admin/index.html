@@ -365,7 +365,7 @@ async function searchTrendyolBrandOptions(){
  }catch(error){msg.textContent=error.message;}
 }
 async function saveTrendyolCatalogMappings(){
- const msg=document.getElementById("trendyolMappingSaveMessage"),brandSelect=document.getElementById("trendyolBrandSelect"),brandId=brandSelect?.value,brandName=brandSelect?.selectedOptions?.[0]?.textContent?.replace(/\\s*\\(#.*$/,"").trim()||"Gönder Bana";
+ const msg=document.getElementById("trendyolMappingSaveMessage"),brandSelect=document.getElementById("trendyolBrandSelect"),brandId=brandSelect?.value,brandName=brandSelect?.selectedOptions?.[0]?.textContent?.replace(/\s*\(#.*$/,"").trim()||"Gönder Bana";
  if(!brandId){msg.textContent="Önce Trendyol marka aramasından Gönder Bana markasını seçin.";return;}
  const cards=[...document.querySelectorAll("#trendyolCategoryMappings [data-source-category]")],mappings=[];
  for(let i=0;i<cards.length;i++){
