@@ -17,6 +17,7 @@ import { validateTrendyolFeed } from './src/marketplaces/trendyol-feed.js';
 import { registerIyzicoRoutes } from './src/payments/iyzico.js';
 import * as XLSX from 'xlsx';
 import { downloadXml, parseProducts, clampProductLimit } from './src/xml/feed-service.js';
+import { isTursoAdminAuthConfigured, createAdminSession, verifyAdminSession, revokeAdminSession } from './src/auth/turso-admin.js';
 
 const app = express();
 const projectRoot = dirname(fileURLToPath(import.meta.url));
@@ -239,30 +240,45 @@ app.put('/api/v1/customer/profile', requireCustomer, async (req, res) => {
 });
 
 app.get('/api/v1/admin/config', (_req, res) => {
-  const config = firebasePublicConfig();
-  const enabled = Object.values(config).every(Boolean) && Boolean(process.env.ADMIN_EMAILS?.trim()) && Boolean(process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim());
-  res.status(200).json(enabled ? { enabled: true, firebaseConfig: config } : { enabled: false });
+  res.status(200).json({ enabled: isTursoAdminAuthConfigured(), provider: 'turso' });
 });
-
+app.post('/api/v1/admin/login', async (req, res) => {
+  try {
+    const session = await createAdminSession(req.body?.email, req.body?.password);
+    if (!session) return res.status(401).json({ error: 'E-posta veya şifre hatalı.' });
+    res.set('Cache-Control', 'no-store');
+    return res.json({ ok:true, token:session.token, user:{email:session.email}, expiresAt:session.expiresAt });
+  } catch (error) {
+    console.error('Turso admin login failed:', error?.message || 'Unknown error');
+    return res.status(503).json({ error:'Yönetici giriş servisi şu anda kullanılamıyor.' });
+  }
+});
+app.post('/api/v1/admin/logout', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.match(/^Bearer\\s+(.+)$/i)?.[1];
+    await revokeAdminSession(token);
+    return res.json({ok:true});
+  } catch (error) {
+    console.error('Admin logout failed:', error?.message || 'Unknown error');
+    return res.status(503).json({error:'Oturum kapatılamadı.'});
+  }
+});
 async function requireAdmin(req, res, next) {
   try {
-    const token = req.headers.authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
+    const token = req.headers.authorization?.match(/^Bearer\\s+(.+)$/i)?.[1];
+    const admin = await verifyAdminSession(token);
+    if (!admin) return res.status(401).json({error:'Yönetici oturumu doğrulanamadı.'});
+    // Admin identity/session is in Turso; admin data remains in Firestore during this migration phase.
     const firebase = getFirebaseAdmin();
-    const allowedEmails = process.env.ADMIN_EMAILS?.split(',').map((email) => email.trim().toLowerCase()).filter(Boolean) || [];
-    if (!firebase || !allowedEmails.length || !token) return res.status(401).json({ error: 'Yönetici oturumu doğrulanamadı.' });
-    const decoded = await firebase.auth.verifyIdToken(token);
-    const email = decoded.email?.toLowerCase();
-    if (decoded.email_verified !== true) return res.status(403).json({ error: 'Yönetici hesabının e-posta adresi doğrulanmış olmalıdır.' });
-    if (!email || !allowedEmails.includes(email)) return res.status(403).json({ error: 'Bu hesap yönetici erişim listesinde bulunmuyor.' });
-    req.adminUser = { id: decoded.uid, email: decoded.email };
+    if (!firebase) return res.status(503).json({error:'Yönetici veri servisi henüz hazır değil.'});
+    req.adminUser = {id:admin.id,email:admin.email};
     req.firestore = firebase.db;
     return next();
   } catch (error) {
     console.error('Admin auth error:', error?.message || 'Unknown error');
-    return res.status(401).json({ error: 'Yönetici oturumu doğrulanamadı.' });
+    return res.status(401).json({error:'Yönetici oturumu doğrulanamadı.'});
   }
 }
-
 
 app.get('/api/v1/catalog/products', async (_req, res) => {
   try {
