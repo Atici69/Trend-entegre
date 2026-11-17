@@ -209,8 +209,8 @@ function hasForbiddenXmlDeclarations(xml) {
   const markup = xml
     .replace(/<!--[\s\S]*?-->/g, '')
     .replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, '')
-    .replace(/<\?[\s\S]*?\\?>/g, '');
-  return /<!\s*(?:DOCTYPE|ENTITY)\\b/i.test(markup);
+    .replace(/<\?[\s\S]*?\?>/g, '');
+  return /<!\s*(?:DOCTYPE|ENTITY)\b/i.test(markup);
 }
 
 export function parseProducts(xml) {
