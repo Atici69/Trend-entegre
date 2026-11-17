@@ -112,7 +112,7 @@ body:not(.admin-authenticated) .shell{display:none}
  <div class="head"><div><h1>Ürün Merkezi</h1><p>Tedarikçi XML kaynaklarından aktarılan ve manuel eklenen ürünleri pazaryerlerine hazırlayın.</p></div><button class="btn light" onclick="loadAdminCatalog()">Ürünleri yenile</button></div>
  <div class="card" style="margin-bottom:15px"><h2>Manuel ürün ekle</h2><div class="two"><div class="field"><label>Ürün adı</label><input id="catalogNewName" placeholder="Ürün adı"></div><div class="field"><label>Kategori</label><input id="catalogNewCategory" value="Katalog" placeholder="Kategori"></div><div class="field"><label>SKU</label><input id="catalogNewSku" placeholder="Stok kodu"></div><div class="field"><label>Barkod</label><input id="catalogNewBarcode" placeholder="Barkod"></div><div class="field"><label>Alış fiyatı (TL)</label><input id="catalogNewCost" type="number" min="0" step="0.01" value="0"></div><div class="field"><label>Kâr oranı (%)</label><input id="catalogNewMargin" type="number" min="0" max="1000" step="0.1" value="40"></div><div class="field"><label>Stok</label><input id="catalogNewStock" type="number" min="0" step="1" value="0"></div><div class="field"><label>Durum</label><select id="catalogNewStatus"><option value="draft">Taslak</option><option value="active">Yayında</option></select></div></div><button class="btn" onclick="createCatalogProduct()">Ürünü kaydet</button><div id="catalogCreateMessage" class="section-note" style="margin-top:8px" aria-live="polite"></div></div><div class="card"><div class="toolbar"><input id="catalogSearch" placeholder="Ürün adı, SKU veya barkod ara" oninput="adminCatalogPage=1;renderAdminCatalog()"><select id="catalogStatus" onchange="adminCatalogPage=1;renderAdminCatalog()"><option value="">Tüm durumlar</option><option value="active">Yayında</option><option value="draft">Taslak</option><option value="archived">Arşiv</option></select></div>
  <div id="catalogMessage" class="section-note" style="margin:8px 0" aria-live="polite">Ürün Merkezi yükleniyor…</div>
- <div class="card" style="margin:14px 0"><h2>Trendyol’a gönderim hazırlığı</h2><p class="section-note">En fazla 20 ürün seçip önce eksik bilgilerini kontrol edin. Bu kontrol ürün göndermez.</p><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0"><span id="trendyolSelectedCount" class="tag">0 / 20 ürün seçildi</span><button class="btn light" onclick="selectCurrentCatalogPage()">Bu sayfadakileri seç</button><button class="btn light" onclick="clearTrendyolSelection()">Seçimi temizle</button><button class="btn" id="trendyolValidateButton" onclick="validateSelectedCatalog()">Seçilen ürünleri kontrol et</button></div><div id="trendyolValidationMessage" class="section-note" aria-live="polite"></div><div id="trendyolValidationReport"></div></div><div class="tablebox"><table><thead><tr><th>Seç</th><th>Ürün</th><th>SKU / Barkod</th><th>Kategori</th><th>Alış</th><th>Satış</th><th>Stok</th><th>Durum</th><th>İşlem</th></tr></thead><tbody id="catalogProductRows"><tr><td colspan="9">Yükleniyor…</td></tr></tbody></table></div><div id="catalogPagination" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px"><span id="catalogPageInfo" class="section-note"></span><div style="display:flex;gap:8px"><button id="catalogPrevPage" class="btn light" onclick="changeAdminCatalogPage(-1)" disabled>Önceki</button><button id="catalogNextPage" class="btn light" onclick="changeAdminCatalogPage(1)" disabled>Sonraki</button></div></div></div>
+ <div class="card" style="margin:14px 0"><h2>Trendyol toplu ürün hazırlığı</h2><p class="section-note">Seçili ürünlere marka adı ve desi bilgisini uygular. Ürün adı içinde “bileklik” geçenler Bileklik, diğer seçili ürünler Kolye kaynak kategorisine alınır. Sonrasında aşağıdan Trendyol kategori ve marka ID eşleştirmesini yapın.</p><div class="toolbar" style="margin-top:10px"><button class="btn light" onclick="applySelectedTrendyolDefaults()">Seçilenlere Gönder Bana + 1 desi uygula</button><button class="btn light" onclick="loadTrendyolCatalogMappings()">Trendyol eşleştirmelerini yükle</button></div><div id="trendyolDefaultsMessage" class="section-note" aria-live="polite"></div><div class="divider" style="height:1px;background:var(--line);margin:14px 0"></div><h3 style="font-size:13px;color:var(--navy)">Trendyol marka eşleştirmesi</h3><div class="toolbar"><input id="trendyolBrandSearch" value="Gönder Bana" placeholder="Trendyol marka ara"><button class="btn light" onclick="searchTrendyolBrandOptions()">Markayı ara</button><select id="trendyolBrandSelect" style="min-width:260px"><option value="">Önce marka arayın</option></select></div><div id="trendyolBrandMessage" class="section-note"></div><h3 style="font-size:13px;color:var(--navy);margin-top:16px">Kategori eşleştirmeleri</h3><div id="trendyolCategoryMappings" class="section-note">Eşleştirmeleri yükleyin…</div><button class="btn" style="margin-top:12px" onclick="saveTrendyolCatalogMappings()">Kategori ve marka eşleştirmelerini kaydet</button><div id="trendyolMappingSaveMessage" class="section-note" style="margin-top:8px" aria-live="polite"></div></div><div class="card" style="margin:14px 0"><h2>Trendyol’a gönderim hazırlığı</h2><p class="section-note">En fazla 20 ürün seçip önce eksik bilgilerini kontrol edin. Bu kontrol ürün göndermez.</p><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0"><span id="trendyolSelectedCount" class="tag">0 / 20 ürün seçildi</span><button class="btn light" onclick="selectCurrentCatalogPage()">Bu sayfadakileri seç</button><button class="btn light" onclick="clearTrendyolSelection()">Seçimi temizle</button><button class="btn" id="trendyolValidateButton" onclick="validateSelectedCatalog()">Seçilen ürünleri kontrol et</button></div><div id="trendyolValidationMessage" class="section-note" aria-live="polite"></div><div id="trendyolValidationReport"></div></div><div class="tablebox"><table><thead><tr><th>Seç</th><th>Ürün</th><th>SKU / Barkod</th><th>Kategori</th><th>Alış</th><th>Satış</th><th>Stok</th><th>Durum</th><th>İşlem</th></tr></thead><tbody id="catalogProductRows"><tr><td colspan="9">Yükleniyor…</td></tr></tbody></table></div><div id="catalogPagination" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px"><span id="catalogPageInfo" class="section-note"></span><div style="display:flex;gap:8px"><button id="catalogPrevPage" class="btn light" onclick="changeAdminCatalogPage(-1)" disabled>Önceki</button><button id="catalogNextPage" class="btn light" onclick="changeAdminCatalogPage(1)" disabled>Sonraki</button></div></div></div>
 </section>
 <section class="page" id="xml">
 <div class="head"><div><h1>XML İşlemleri</h1><p>URL veya dosya ile XML kaynağı ekleyin, ürünleri kontrol edin ve dışa aktarın.</p></div><button class="btn light" onclick="loadAdminXmlData()">Canlı verileri yenile</button></div>
@@ -271,6 +271,123 @@ function clearTrendyolSelection(){
  document.getElementById("trendyolValidationReport").innerHTML="";
  document.getElementById("trendyolValidationMessage").textContent="Seçim temizlendi.";
  renderAdminCatalog();
+}
+const trendyolMappingState={categories:[],categoryOptions:{},attributes:{}};
+async function applySelectedTrendyolDefaults(){
+ const msg=document.getElementById("trendyolDefaultsMessage"),ids=[...trendyolSelectedProductIds];
+ if(!ids.length){msg.textContent="Önce ürün seçin.";return;}
+ msg.textContent="Seçili ürünlerin marka adı, desi ve kaynak kategorisi güncelleniyor…";
+ let updated=0,failed=[];
+ for(const id of ids){
+  const p=adminCatalogProducts.find(x=>x.id===id);if(!p)continue;
+  const category=/bileklik/i.test(p.name||"")?"Bileklik":"Kolye";
+  try{
+   const response=await adminApiFetch(API_BASE_URL+"/api/v1/admin/catalog/products/"+encodeURIComponent(id),{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({brand:"Gönder Bana",category,dimensional_weight:1})});
+   const data=await response.json().catch(()=>({}));
+   if(!response.ok)throw new Error(data.error||"Güncellenemedi");
+   updated++;
+  }catch(e){failed.push((p.name||id)+": "+e.message);}
+ }
+ msg.textContent=updated+" ürün güncellendi."+ (failed.length?" Hata: "+failed.join(" | "):" Ürün listesi yenilendi.");
+ await loadAdminCatalog();
+ await loadTrendyolCatalogMappings();
+}
+async function loadTrendyolCatalogMappings(){
+ const box=document.getElementById("trendyolCategoryMappings");if(!box)return;
+ box.textContent="Ürün kategorileri yükleniyor…";
+ try{
+  const response=await adminApiFetch(API_BASE_URL+"/api/v1/marketplaces/trendyol/catalog-mappings");
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.error||"Kategori listesi alınamadı.");
+  trendyolMappingState.categories=Array.isArray(data.categories)?data.categories:[];
+  box.innerHTML=trendyolMappingState.categories.length?trendyolMappingState.categories.map((item,i)=>{
+   const source=item.sourceCategory||"";
+   const saved=item.mapping||{};
+   return "<div class='card' style='margin:10px 0;padding:12px' data-source-category='"+escapeHtml(source)+"'><b>"+escapeHtml(source)+"</b><div class='toolbar' style='margin-top:8px'><input id='trendyolCategorySearch_"+i+"' value='"+escapeHtml(source)+"' placeholder='Trendyol kategori ara'><button class='btn light' onclick='searchTrendyolCategoryOptions("+i+")'>Kategori ara</button><select id='trendyolCategorySelect_"+i+"' style='min-width:250px' onchange='loadTrendyolCategoryAttributes("+i+")'><option value=''>Trendyol kategorisi seçin</option>"+(saved.categoryId?"<option selected value='"+escapeHtml(saved.categoryId)+"'>Kayıtlı kategori #"+escapeHtml(saved.categoryId)+"</option>":"")+"</select></div><div id='trendyolAttributes_"+i+"' class='section-note'></div></div>";
+  }).join(""):"Ürünlerde kaynak kategori bulunamadı.";
+ }catch(error){box.textContent=error.message;}
+}
+function flattenTrendyolCategories(items,out=[],prefix=""){
+ (Array.isArray(items)?items:[]).forEach(item=>{
+  if(!item||typeof item!=="object")return;
+  const name=String(item.name||item.displayName||item.categoryName||"").trim(),id=String(item.id||item.categoryId||"").trim();
+  const children=item.subCategories||item.children||item.categories||[];
+  if(id&&name)out.push({id,name:(prefix?prefix+" / ":"")+name,leaf:!Array.isArray(children)||!children.length});
+  if(Array.isArray(children)&&children.length)flattenTrendyolCategories(children,out,name);
+ });
+ return out;
+}
+async function searchTrendyolCategoryOptions(index){
+ const query=document.getElementById("trendyolCategorySearch_"+index)?.value.trim();
+ const select=document.getElementById("trendyolCategorySelect_"+index);
+ if(!query||!select)return;
+ select.innerHTML="<option value=''>Aranıyor…</option>";
+ try{
+  const response=await adminApiFetch(API_BASE_URL+"/api/v1/marketplaces/trendyol/categories?name="+encodeURIComponent(query));
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.message||data.error||"Kategori araması başarısız.");
+  const items=flattenTrendyolCategories(data.categories||[]);
+  trendyolMappingState.categoryOptions[index]=items;
+  select.innerHTML="<option value=''>Trendyol kategorisini seçin</option>"+items.map(x=>"<option value='"+escapeHtml(x.id)+"'>"+escapeHtml(x.name)+" (#"+escapeHtml(x.id)+")"+(x.leaf?"":" · alt kategori var")+"</option>").join("");
+  if(!items.length)select.innerHTML="<option value=''>Sonuç bulunamadı</option>";
+ }catch(error){select.innerHTML="<option value=''>Kategori alınamadı</option>";document.getElementById("trendyolAttributes_"+index).textContent=error.message;}
+}
+async function loadTrendyolCategoryAttributes(index){
+ const select=document.getElementById("trendyolCategorySelect_"+index),box=document.getElementById("trendyolAttributes_"+index),categoryId=select?.value;
+ if(!categoryId||!box)return;
+ box.textContent="Kategori özellikleri yükleniyor…";
+ try{
+  const response=await adminApiFetch(API_BASE_URL+"/api/v1/marketplaces/trendyol/categories/"+encodeURIComponent(categoryId)+"/attributes");
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.message||data.error||"Kategori özellikleri alınamadı.");
+  const attrs=Array.isArray(data.attributes)?data.attributes:[];
+  trendyolMappingState.attributes[index]=attrs;
+  const required=attrs.filter(a=>a.required===true||a.isRequired===true);
+  box.innerHTML=required.length?"<b>Zorunlu özellikler</b>"+required.map((a,j)=>{
+   const id=String(a.attribute?.id||a.attributeId||a.id||"");
+   const name=String(a.attribute?.name||a.name||a.attributeName||id);
+   const values=a.attributeValues||a.values||a.attribute?.attributeValues||[];
+   return "<div class='field' style='margin:8px 0'><label>"+escapeHtml(name)+"</label>"+(Array.isArray(values)&&values.length?"<select data-attr-id='"+escapeHtml(id)+"' data-attr-name='"+escapeHtml(name)+"'><option value=''>Seçin</option>"+values.map(v=>"<option value='"+escapeHtml(v.id||v.attributeValueId||"")+"'>"+escapeHtml(v.name||v.value||"")+"</option>").join("")+"</select>":"<input data-attr-id='"+escapeHtml(id)+"' data-attr-name='"+escapeHtml(name)+"' placeholder='Özellik değerini yazın'>")+"</div>";
+  }).join(""):"Bu kategoride zorunlu özellik bildirilmedi.";
+ }catch(error){box.textContent=error.message;}
+}
+async function searchTrendyolBrandOptions(){
+ const query=document.getElementById("trendyolBrandSearch")?.value.trim(),select=document.getElementById("trendyolBrandSelect"),msg=document.getElementById("trendyolBrandMessage");
+ if(!query)return;
+ msg.textContent="Markalar aranıyor…";
+ try{
+  const response=await adminApiFetch(API_BASE_URL+"/api/v1/marketplaces/trendyol/brands?name="+encodeURIComponent(query));
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.message||data.error||"Marka araması başarısız.");
+  const brands=Array.isArray(data.brands)?data.brands:[];
+  select.innerHTML="<option value=''>Marka seçin</option>"+brands.map(b=>"<option value='"+escapeHtml(b.id)+"'>"+escapeHtml(b.name)+" (#"+escapeHtml(b.id)+")</option>").join("");
+  msg.textContent=brands.length+" marka bulundu. “Gönder Bana” markasını seçin.";
+ }catch(error){msg.textContent=error.message;}
+}
+async function saveTrendyolCatalogMappings(){
+ const msg=document.getElementById("trendyolMappingSaveMessage"),brandSelect=document.getElementById("trendyolBrandSelect"),brandId=brandSelect?.value,brandName=brandSelect?.selectedOptions?.[0]?.textContent?.replace(/\\s*\\(#.*$/,"").trim()||"Gönder Bana";
+ if(!brandId){msg.textContent="Önce Trendyol marka aramasından Gönder Bana markasını seçin.";return;}
+ const cards=[...document.querySelectorAll("#trendyolCategoryMappings [data-source-category]")],mappings=[];
+ for(let i=0;i<cards.length;i++){
+  const sourceCategory=cards[i].getAttribute("data-source-category"),categoryId=document.getElementById("trendyolCategorySelect_"+i)?.value;
+  if(!categoryId){msg.textContent=sourceCategory+" için Trendyol kategorisi seçilmedi.";return;}
+  const attrs=trendyolMappingState.attributes[i]||[],required=attrs.filter(a=>a.required===true||a.isRequired===true);
+  const controls=[...document.querySelectorAll("#trendyolAttributes_"+i+" [data-attr-id]")],mapped=[];
+  for(const control of controls){
+   const attributeId=control.dataset.attrId,value=control.value.trim();
+   if(value)mapped.push({attributeId,...(control.tagName==="SELECT"?{attributeValueId:value}:{customValue:value})});
+  }
+  const requiredAttributes=required.map(a=>({attributeId:String(a.attribute?.id||a.attributeId||a.id||""),name:String(a.attribute?.name||a.name||a.attributeName||"") })).filter(a=>a.attributeId);
+  mappings.push({sourceCategory,categoryId,brandId,brandName,requiredAttributes,attributes:mapped});
+ }
+ if(!mappings.length){msg.textContent="Kaydedilecek kategori yok.";return;}
+ msg.textContent="Eşleştirmeler kaydediliyor…";
+ try{
+  const response=await adminApiFetch(API_BASE_URL+"/api/v1/marketplaces/trendyol/catalog-mappings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mappings})});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.error||"Eşleştirmeler kaydedilemedi.");
+  msg.textContent=data.saved+" kategori eşleştirmesi kaydedildi.";
+ }catch(error){msg.textContent=error.message;}
 }
 async function validateSelectedCatalog(){
  const msg=document.getElementById("trendyolValidationMessage");
