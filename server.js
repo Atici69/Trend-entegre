@@ -856,7 +856,8 @@ function catalogProduct(body, previous = {}) {
   const sku = catalogText(body.sku ?? previous.sku, 100);
   const barcode = catalogText(body.barcode ?? previous.barcode, 100);
   const brand = catalogText(body.brand ?? previous.brand, 120);
-  const currency = catalogText(body.currency ?? previous.currency ?? 'TRY', 8).toUpperCase();
+  const rawCurrency = catalogText(body.currency ?? previous.currency ?? 'TRY', 8).toUpperCase();
+  const currency = rawCurrency === 'TL' ? 'TRY' : rawCurrency;
   const stock = Number(body.stock ?? previous.stock ?? 0);
   const cost = Number(body.cost_price ?? previous.cost_price ?? 0);
   const margin = Number(body.margin_percent ?? previous.margin_percent ?? 0);
@@ -974,7 +975,7 @@ app.post('/api/v1/admin/catalog/import-xml', requireAdmin, async (req, res) => {
         stock: Math.max(0, Number(priceNumber(source['Stok']) ?? old.stock ?? 0)),
         cost_price: cost === null ? Number(old.cost_price || 0) : cost,
         margin_percent: margin, sale_price: sale,
-        currency: catalogText(source['Para Birimi'] || 'TRY',8).toUpperCase(),
+        currency: (() => { const code = catalogText(source['Para Birimi'] || 'TRY',8).toUpperCase(); return code === 'TL' ? 'TRY' : (['TRY','USD','EUR','GBP'].includes(code) ? code : 'TRY'); })(),
         source: 'xml', source_feed_id: feedId, source_feed_name: catalogText(feed.name,100),
         external_id: externalId, status: old.status === 'archived' ? 'archived' : 'active',
         updated_at: now, created_at: old.created_at || now,
