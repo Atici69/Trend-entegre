@@ -39,7 +39,7 @@ function sendProjectPage(fileName) {
   };
 }
 app.get('/', sendProjectPage('index.html'));
-app.get('/admin', (_req, res) => res.redirect(301, '/admin/'));
+app.get('/admin', sendProjectPage('admin/index.html'));
 app.get('/admin/', sendProjectPage('admin/index.html'));
 app.get('/xml-merkezi', (_req, res) => res.redirect(301, '/xml-merkezi.html'));
 app.get('/xml-merkezi.html', sendProjectPage('xml-merkezi.html'));
