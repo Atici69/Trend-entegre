@@ -203,9 +203,19 @@ function collectProducts(node, found = []) {
   return found;
 }
 
+function hasForbiddenXmlDeclarations(xml) {
+  // DTD markup is forbidden, but the same characters inside comments or CDATA
+  // are ordinary text and must not cause a false positive.
+  const markup = xml
+    .replace(/<!--[\\s\\S]*?-->/g, '')
+    .replace(/<!\\[CDATA\\[[\\s\\S]*?\\]\\]>/g, '')
+    .replace(/<\\?[\\s\\S]*?\\?>/g, '');
+  return /<!\\s*(?:DOCTYPE|ENTITY)\\b/i.test(markup);
+}
+
 export function parseProducts(xml) {
   if (typeof xml !== 'string' || !xml.trim()) throw new Error('XML dosyası boş.');
-  if (/<!DOCTYPE|<!ENTITY/i.test(xml)) throw new Error('Güvenlik nedeniyle DTD ve özel XML varlıkları kabul edilmez.');
+  if (hasForbiddenXmlDeclarations(xml)) throw new Error('Güvenlik nedeniyle DTD ve özel XML varlıkları kabul edilmez.');
   const validation = XMLValidator.validate(xml);
   if (validation !== true) throw new Error('XML biçimi geçersiz. Etiketleri ve XML yapısını kontrol edin.');
   const parsed = parser.parse(xml);
