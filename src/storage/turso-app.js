@@ -46,7 +46,7 @@ export async function ensureAppSchema(db = getTursoClient()) {
 
 function mapRecord(row) {
   const data = JSON.parse(String(row.data_json));
-  return { id: String(row.id), ...data };
+  return { ...data, id: String(row.id) };
 }
 
 export async function getAppRecord(collection, id, db = getTursoClient()) {
