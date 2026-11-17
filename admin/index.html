@@ -57,8 +57,8 @@ body:not(.admin-authenticated) .shell{display:none}
 </nav><div class="side-note">Trend-Entegre<br>Yönetim Merkezi · Yetkili erişim</div></aside>
 <main><header class="topbar"><strong id="pageTitle">Genel Bakış</strong><div class="top-right"><span class="preview" id="adminConnectionBadge">YÖNETİCİ OTURUMU</span><span class="avatar">Y</span></div></header>
 <div class="wrap">
-<div class="notice"><b>Geliştirme notu:</b> Bu sayfa yönetim panelinin yeniden tasarlanmış arayüz taslağıdır. Henüz gerçek müşteri, ödeme veya entegrasyon verisi göstermez. Güvenli giriş, sunucu tarafı yetkilendirme ve veritabanı kurulmadan gerçek yönetim paneli olarak kullanılmamalıdır.</div>
-<section class="page active" id="home"><div class="head"><div><h1>Yönetim Merkezi</h1><p>Trend-Entegre hizmetlerini tek noktadan yönetmek için tasarlandı.</p></div><button class="btn" onclick="go('customers')">Müşterileri görüntüle →</button></div>
+<div class="notice" id="adminLiveNotice"><b>Güvenli yönetici oturumu:</b> Oturum açıldıktan sonra canlı API ve veritabanı durumları yüklenir. Henüz bağlanmamış modüller ayrı olarak işaretlenir.</div>
+<section class="page active" id="home"><div class="card" style="margin-bottom:15px"><h2>Canlı sistem durumu</h2><div id="adminLiveStatus" class="section-note">Yönetici oturumu doğrulandıktan sonra yükleniyor…</div></div><div class="head"><div><h1>Yönetim Merkezi</h1><p>Trend-Entegre hizmetlerini tek noktadan yönetmek için tasarlandı.</p></div><button class="btn" onclick="go('customers')">Müşterileri görüntüle →</button></div>
 <div class="grid">
 <div class="metric"><label>Müşteri kayıtları</label><strong>—</strong><small>Veritabanı bağlantısı bekleniyor</small></div>
 <div class="metric"><label>Aktif abonelikler</label><strong>—</strong><small>Abonelik servisi bağlanmadı</small></div>
@@ -107,7 +107,7 @@ body:not(.admin-authenticated) .shell{display:none}
   </div>
   <p class="section-note" id="marketplaceUpdated"></p>
 </section>
-<section class="page" id="xml"><div class="head"><div><h1>XML İşlemleri</h1><p>Kaynak XML, pazaryerine göre dönüştürme ve Excel aktarımı.</p></div></div><div class="two"><div class="card"><h2>XML içe aktarma</h2><div class="field"><label>XML kaynak adresi</label><input placeholder="https://tedarikci.com/urunler.xml" disabled></div><button class="btn" disabled>Kaynağı kontrol et</button><p class="section-note">Standart paketlerin mevcut XML ve ürün limitleri korunur.</p></div><div class="card"><h2>Dışa aktarma</h2><div class="field"><label>Çıktı biçimi</label><select disabled><option>Excel / XLSX</option><option>CSV</option><option>Pazaryeri XML</option></select></div><button class="btn" disabled>Dosya oluştur</button></div></div><div class="card" style="margin-top:14px"><h2>Ücretli ek hizmet · URL ile büyük XML aktarımı</h2><p class="section-note">Müşteri XML bağlantısını girer. Sunucu XML kaynağını güvenli şekilde indirir, akış halinde işler ve seçilen ürünleri Excel (XLSX) olarak dışa aktarır.</p><div class="two"><div><div class="field"><label>Hedef dosya boyutu üst sınırı</label><input value="100 MB (önerilen başlangıç limiti)" disabled></div><div class="field"><label>Ürün / kayıt limiti</label><input value="Yönetici tarafından paket bazında belirlenir" disabled></div></div><div><div class="field"><label>Ücretlendirme</label><input value="Ayrı ücretli ek hizmet · fiyat yönetici tarafından belirlenir" disabled></div><div class="field"><label>Erişim kontrolü</label><input value="Aktif ücretli hak / abonelik doğrulaması gerekir" disabled></div></div></div><span class="tag">Backend, ödeme doğrulaması ve yetkilendirme gerekli</span></div><p class="section-note">Bu panel şu an arayüz taslağıdır. XML indirme, güvenli URL kontrolü, akış işleme, XLSX üretimi ve ücretli erişim denetimi henüz çalışır durumda değildir.</p></section>
+<section class="page" id="xml"><div class="head"><div><h1>XML İşlemleri</h1><p>Kaynak XML, pazaryerine göre dönüştürme ve Excel aktarımı.</p></div><button class="btn light" onclick="loadAdminXmlData()">Canlı verileri yenile</button></div><div class="card" style="margin-bottom:15px"><h2>XML veritabanı durumu</h2><div id="adminXmlStatus" class="section-note">Yükleniyor…</div><div class="tablebox" style="margin-top:12px"><table><thead><tr><th>Kaynak</th><th>Tür</th><th>Ürün</th><th>Kâr oranı</th><th>Son kontrol</th></tr></thead><tbody id="adminXmlFeedRows"><tr><td colspan="5">Yükleniyor…</td></tr></tbody></table></div></div><div class="two"><div class="card"><h2>XML içe aktarma</h2><div class="field"><label>XML kaynak adresi</label><input placeholder="https://tedarikci.com/urunler.xml" disabled></div><button class="btn" disabled>Kaynağı kontrol et</button><p class="section-note">Standart paketlerin mevcut XML ve ürün limitleri korunur.</p></div><div class="card"><h2>Dışa aktarma</h2><div class="field"><label>Çıktı biçimi</label><select disabled><option>Excel / XLSX</option><option>CSV</option><option>Pazaryeri XML</option></select></div><button class="btn" disabled>Dosya oluştur</button></div></div><div class="card" style="margin-top:14px"><h2>Ücretli ek hizmet · URL ile büyük XML aktarımı</h2><p class="section-note">Müşteri XML bağlantısını girer. Sunucu XML kaynağını güvenli şekilde indirir, akış halinde işler ve seçilen ürünleri Excel (XLSX) olarak dışa aktarır.</p><div class="two"><div><div class="field"><label>Hedef dosya boyutu üst sınırı</label><input value="100 MB (önerilen başlangıç limiti)" disabled></div><div class="field"><label>Ürün / kayıt limiti</label><input value="Yönetici tarafından paket bazında belirlenir" disabled></div></div><div><div class="field"><label>Ücretlendirme</label><input value="Ayrı ücretli ek hizmet · fiyat yönetici tarafından belirlenir" disabled></div><div class="field"><label>Erişim kontrolü</label><input value="Aktif ücretli hak / abonelik doğrulaması gerekir" disabled></div></div></div><span class="tag">Backend, ödeme doğrulaması ve yetkilendirme gerekli</span></div><p class="section-note">Bu panel şu an arayüz taslağıdır. XML indirme, güvenli URL kontrolü, akış işleme, XLSX üretimi ve ücretli erişim denetimi henüz çalışır durumda değildir.</p></section>
 <section class="page" id="buybox"><div class="head"><div><h1>BuyBox Yönetimi</h1><p>Rakip fiyat izleme ve BuyBox hizmetlerinin operasyon alanı.</p></div></div><div class="empty-state"><b>BuyBox servisi henüz bağlı değil.</b><br>Ürün eşleştirme, fiyat izleme sıklığı, bildirim ve raporlama modülleri servis altyapısıyla birlikte geliştirilecek.</div></section>
 <section class="page" id="payments"><div class="head"><div><h1>Ödeme Yönetimi</h1><p>Abonelik tahsilatları ve ödeme bildirimleri.</p></div></div><div class="notice">iyzico entegrasyonu henüz yapılmadı. Kart bilgileri bu statik sayfada alınmaz veya saklanmaz.</div><div class="empty-state"><b>Ödeme kayıtları henüz yok.</b><br>iyzico API, sunucu tarafı ödeme oluşturma ve imzalı bildirim doğrulaması tamamlandığında işlemler burada listelenecek.</div></section>
 <section class="page" id="accounting"><div class="head"><div><h1>Muhasebe</h1><p>Gelir-gider, bayi komisyonları, tahsilat ve finansal kayıtlar.</p></div><span class="tag gray">MODÜL PASİF</span></div><div class="notice"><b>Muhasebe modülü henüz aktif edilmemiştir.</b> Bu bölüm yönetim panelinde hazır tutulmaktadır. Aktifleştirme yapılana kadar kayıt oluşturma, düzenleme, silme ve finansal hesaplama işlemleri kapalıdır.</div><div class="grid"><div class="metric"><label>Muhasebe Genel Bakış</label><strong>—</strong><small class="state">Pasif</small></div><div class="metric"><label>Gelir – Gider Takibi</label><strong>—</strong><small class="state">Pasif</small></div><div class="metric"><label>Bayi Komisyonları</label><strong>—</strong><small class="state">Pasif</small></div><div class="metric"><label>Tahsilat Raporları</label><strong>—</strong><small class="state">Pasif</small></div></div><div class="card" style="margin-top:15px"><h2>Finansal kayıt alanları</h2><div class="tablebox"><table><thead><tr><th>Alt bölüm</th><th>Durum</th><th>Açıklama</th></tr></thead><tbody><tr><td>Gelir – Gider Takibi</td><td><span class="tag gray">Pasif</span></td><td>Gelir ve gider kayıtları</td></tr><tr><td>Bayi Komisyonları</td><td><span class="tag gray">Pasif</span></td><td>Bayi / alt bayi hakedişleri</td></tr><tr><td>Tahsilat Raporları</td><td><span class="tag gray">Pasif</span></td><td>Ödeme ve tahsilat dökümleri</td></tr><tr><td>Fatura ve Ödeme Kayıtları</td><td><span class="tag gray">Pasif</span></td><td>Fatura ve ödeme geçmişi</td></tr></tbody></table></div><p class="section-note">Modül, ileride güvenli veritabanı ve muhasebe iş kuralları bağlandığında yönetici tarafından etkinleştirilebilir.</p></div></section>
@@ -259,6 +259,57 @@ async function testHepsiburada(button){
     button.textContent="Tekrar Dene";
   }
 }
+
+window.loadAdminLiveData=async function(){
+  const box=document.getElementById("adminLiveStatus");
+  if(!box)return;
+  box.textContent="Canlı veriler alınıyor…";
+  try{
+    const token=await window.adminGetToken();
+    const [overviewResponse,tursoResponse]=await Promise.all([
+      fetch("/api/v1/admin/overview",{headers:{Authorization:"Bearer "+token},cache:"no-store"}),
+      fetch("/api/v1/admin/xml/turso-status",{headers:{Authorization:"Bearer "+token},cache:"no-store"})
+    ]);
+    const overview=await overviewResponse.json().catch(()=>({}));
+    const turso=await tursoResponse.json().catch(()=>({}));
+    if(!overviewResponse.ok)throw new Error(overview.error||"Yönetim özeti alınamadı.");
+    const systems=overview.systems||{};
+    const line=(name,item)=>"<div style='padding:7px 0;border-bottom:1px solid #e6eaf1'><b>"+escapeHtml(name)+":</b> "+escapeHtml(item?.detail||item?.status||"Bilgi yok")+"</div>";
+    box.innerHTML=
+      "<div class='grid' style='margin-bottom:12px'>"+
+      "<div class='metric'><label>Müşteri</label><strong>"+Number(overview.counts?.customers||0)+"</strong></div>"+
+      "<div class='metric'><label>Aktif abonelik</label><strong>"+Number(overview.counts?.activeSubscriptions||0)+"</strong></div>"+
+      "<div class='metric'><label>Bayi</label><strong>"+Number(overview.counts?.dealers||0)+"</strong></div>"+
+      "<div class='metric'><label>Ödeme kaydı</label><strong>"+Number(overview.counts?.payments||0)+"</strong></div></div>"+
+      line("Yetkilendirme",systems.auth)+line("Veritabanı",systems.database)+line("iyzico",systems.iyzico)+line("Pazaryerleri",systems.marketplaces)+line("XML",systems.xml);
+    if(tursoResponse.ok&&turso.ok){
+      box.innerHTML+="<div style='padding-top:10px'><b>Turso:</b> "+Number(turso.turso?.feeds||0)+" kaynak · "+Number(turso.turso?.storedProducts||0)+" ürün</div>";
+    }else{
+      box.innerHTML+="<div style='padding-top:10px;color:#a96012'><b>Turso:</b> Durum alınamadı.</div>";
+    }
+    await window.loadAdminXmlData();
+  }catch(error){box.textContent="Canlı yönetim verileri alınamadı: "+error.message;}
+};
+window.loadAdminXmlData=async function(){
+  const status=document.getElementById("adminXmlStatus");
+  const rows=document.getElementById("adminXmlFeedRows");
+  if(!status||!rows)return;
+  status.textContent="XML verileri yükleniyor…";
+  rows.innerHTML="<tr><td colspan='5'>Yükleniyor…</td></tr>";
+  try{
+    const token=await window.adminGetToken();
+    const [feedResponse,tursoResponse]=await Promise.all([
+      fetch("/api/v1/admin/xml/feeds",{headers:{Authorization:"Bearer "+token},cache:"no-store"}),
+      fetch("/api/v1/admin/xml/turso-status",{headers:{Authorization:"Bearer "+token},cache:"no-store"})
+    ]);
+    const feedData=await feedResponse.json().catch(()=>({}));
+    const turso=await tursoResponse.json().catch(()=>({}));
+    if(!feedResponse.ok)throw new Error(feedData.error||"XML kaynakları alınamadı.");
+    const feeds=Array.isArray(feedData.feeds)?feedData.feeds:[];
+    status.textContent="Firestore: "+feeds.length+" kaynak. "+(tursoResponse.ok&&turso.ok?"Turso: "+Number(turso.turso?.feeds||0)+" kaynak, "+Number(turso.turso?.storedProducts||0)+" ürün.":"Turso durumu şu anda alınamadı.")+" Turso sayımı ayrı; aktif uygulama kaynağı henüz Firestore.";
+    rows.innerHTML=feeds.length?feeds.map(feed=>"<tr><td><b>"+escapeHtml(feed.name||"Adsız kaynak")+"</b></td><td>"+escapeHtml(feed.source_type||"url")+"</td><td>"+Number(feed.products_count||0).toLocaleString("tr-TR")+"</td><td>%"+Number(feed.margin_percent||0)+"</td><td>"+escapeHtml(feed.last_tested_at?new Date(feed.last_tested_at).toLocaleString("tr-TR"):"—")+"</td></tr>").join(""):"<tr><td colspan='5'>Henüz kayıtlı XML kaynağı bulunamadı.</td></tr>";
+  }catch(error){status.textContent="XML verileri alınamadı: "+error.message;rows.innerHTML="<tr><td colspan='5'>Sunucu yanıtı bekleniyor.</td></tr>";}
+};
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
@@ -300,6 +351,7 @@ try{
   auth=getAuth(initializeApp(configResult.firebaseConfig));
   await setPersistence(auth,browserLocalPersistence);
   onAuthStateChanged(auth,user=>{verifyAdminSession(user);});
+  document.getElementById("adminLogoutBtn")?.addEventListener("click",async()=>{await signOut(auth);});
   form.addEventListener("submit",async event=>{
     event.preventDefault();button.disabled=true;button.textContent="Doğrulanıyor…";showLoginMessage("");
     try{
