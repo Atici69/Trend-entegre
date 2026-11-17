@@ -256,7 +256,7 @@ app.post('/api/v1/admin/login', async (req, res) => {
 });
 app.post('/api/v1/admin/logout', async (req, res) => {
   try {
-    const token = req.headers.authorization?.match(/^Bearer\\s+(.+)$/i)?.[1];
+    const token = req.headers.authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
     await revokeAdminSession(token);
     return res.json({ok:true});
   } catch (error) {
@@ -266,7 +266,7 @@ app.post('/api/v1/admin/logout', async (req, res) => {
 });
 async function requireAdmin(req, res, next) {
   try {
-    const token = req.headers.authorization?.match(/^Bearer\\s+(.+)$/i)?.[1];
+    const token = req.headers.authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
     const admin = await verifyAdminSession(token);
     if (!admin) return res.status(401).json({error:'Yönetici oturumu doğrulanamadı.'});
     // Admin identity/session is in Turso; admin data remains in Firestore during this migration phase.
