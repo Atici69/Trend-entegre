@@ -1005,9 +1005,10 @@ function catalogProduct(body, previous = {}) {
   if (!['TRY','USD','EUR','GBP'].includes(currency)) throw new Error('Para birimi TRY, USD, EUR veya GBP olmalıdır.');
   for (const url of galleryImages) { let parsed; try { parsed = new URL(url); } catch { throw new Error('Ek görsel adresi geçersiz.'); } if (!['https:','http:'].includes(parsed.protocol)) throw new Error('Ek görsel adresi HTTP veya HTTPS olmalıdır.'); }
   const dimensionalWeight = Number(body.dimensional_weight ?? previous.dimensional_weight ?? 0);
-  const vatRate = Number(body.vat_rate ?? previous.vat_rate ?? 0);
+  const vatRaw = body.vat_rate ?? previous.vat_rate ?? null;
+  const vatRate = vatRaw === null || String(vatRaw).trim() === '' ? null : Number(vatRaw);
   const origin = catalogText(body.origin ?? previous.origin, 2).toUpperCase();
-  if (!Number.isFinite(dimensionalWeight) || dimensionalWeight < 0 || !Number.isFinite(vatRate) || ![0,1,10,20].includes(vatRate) || (origin && !/^[A-Z]{2}$/.test(origin))) throw new Error('Desi, KDV oranı veya menşei bilgisi geçersiz.');
+  if (!Number.isFinite(dimensionalWeight) || dimensionalWeight < 0 || (vatRate !== null && (!Number.isFinite(vatRate) || ![0,1,10,20].includes(vatRate))) || (origin && !/^[A-Z]{2}$/.test(origin))) throw new Error('Desi, KDV oranı veya menşei bilgisi geçersiz.');
   return { name, category, description, image_url: imageUrl, gallery_images: galleryImages, features, sku, barcode, brand, currency, stock,
     cost_price: Math.round(cost * 100) / 100, margin_percent: Math.round(margin * 100) / 100,
     sale_price: Math.round(price * 100) / 100, dimensional_weight: dimensionalWeight, vat_rate: vatRate, origin, status, updated_at: new Date().toISOString() };
@@ -1101,7 +1102,7 @@ app.post('/api/v1/admin/catalog/import-xml', requireAdmin, async (req, res) => {
         brand: catalogText(source['Marka'],120), category: catalogText(source['Kategori'] || 'Katalog',100),
         description: catalogText(source['Açıklama'],5000), image_url: catalogText(source['Görsel URL'],2048),
         dimensional_weight: Math.max(0, Number(priceNumber(source['Desi'] ?? source.dimensionalWeight) ?? old.dimensional_weight ?? 0)),
-        vat_rate: Number(priceNumber(source['KDV Oranı'] ?? source.vatRate) ?? old.vat_rate ?? 0),
+        vat_rate: priceNumber(source['KDV Oranı'] ?? source.vatRate) ?? old.vat_rate ?? null,
         origin: catalogText(source['Menşei'] ?? source.origin ?? old.origin,2).toUpperCase(),
         stock: Math.max(0, Number(priceNumber(source['Stok']) ?? old.stock ?? 0)),
         cost_price: cost === null ? Number(old.cost_price || 0) : cost,
