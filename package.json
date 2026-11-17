@@ -10,7 +10,7 @@
     "start": "node server.js",
     "android:add": "cap add android",
     "android:sync": "cap sync android",
-    "test": "node --test src/xml/*.test.js src/storage/*.test.js"
+    "test": "node --test src/xml/*.test.js src/storage/*.test.js scripts/*.test.js"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.3",
