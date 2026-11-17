@@ -29,7 +29,8 @@ function normalizeRecord(record) {
   return record;
 }
 
-export async function ensureAppSchema(db = getTursoClient()) {
+export async function ensureAppSchema(db = null) {
+  db ||= getTursoClient();
   await db.executeMultiple(`
     CREATE TABLE IF NOT EXISTS app_records (
       collection_name TEXT NOT NULL,
@@ -49,8 +50,9 @@ function mapRecord(row) {
   return { ...data, id: String(row.id) };
 }
 
-export async function getAppRecord(collection, id, db = getTursoClient()) {
+export async function getAppRecord(collection, id, db = null) {
   const name = assertCollection(collection);
+  db ||= getTursoClient();
   await ensureAppSchema(db);
   const result = await db.execute({
     sql: 'SELECT id, data_json FROM app_records WHERE collection_name = ? AND id = ?',
@@ -59,8 +61,9 @@ export async function getAppRecord(collection, id, db = getTursoClient()) {
   return result.rows[0] ? mapRecord(result.rows[0]) : null;
 }
 
-export async function listAppRecords(collection, options = {}, db = getTursoClient()) {
+export async function listAppRecords(collection, options = {}, db = null) {
   const name = assertCollection(collection);
+  db ||= getTursoClient();
   await ensureAppSchema(db);
   const limit = Math.min(Math.max(Number.parseInt(options.limit, 10) || 100, 1), 1000);
   const result = await db.execute({
@@ -70,11 +73,12 @@ export async function listAppRecords(collection, options = {}, db = getTursoClie
   return result.rows.map(mapRecord);
 }
 
-export async function putAppRecord(collection, id, record, options = {}, db = getTursoClient()) {
+export async function putAppRecord(collection, id, record, options = {}, db = null) {
   const name = assertCollection(collection);
   const recordId = String(id || '').trim();
   if (!recordId) throw new TypeError('Application record ID is required.');
   const incoming = normalizeRecord(record);
+  db ||= getTursoClient();
   await ensureAppSchema(db);
 
   const existing = options.merge === false ? null : await getAppRecord(name, recordId, db);
@@ -95,8 +99,9 @@ export async function putAppRecord(collection, id, record, options = {}, db = ge
   return { id: recordId, ...data };
 }
 
-export async function deleteAppRecord(collection, id, db = getTursoClient()) {
+export async function deleteAppRecord(collection, id, db = null) {
   const name = assertCollection(collection);
+  db ||= getTursoClient();
   await ensureAppSchema(db);
   const result = await db.execute({
     sql: 'DELETE FROM app_records WHERE collection_name = ? AND id = ?',
