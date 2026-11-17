@@ -45,6 +45,7 @@ app.get('/admin/', sendProjectPage('admin/index.html'));
 app.get('/xml-merkezi', (_req, res) => res.redirect(301, '/xml-merkezi.html'));
 app.get('/xml-merkezi.html', sendProjectPage('xml-merkezi.html'));
 const allowedOrigins = [...new Set([
+  'https://trend-entegre.onrender.com',
   'https://atici69.github.io',
   'http://localhost:3000',
   ...(process.env.CORS_ORIGINS || '').split(',').map((origin) => origin.trim()).filter(Boolean),
