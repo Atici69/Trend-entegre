@@ -966,7 +966,7 @@ app.get('/api/v1/admin/xml/turso-status', requireAdmin, async (req, res) => {
       },
       firestore: {
         feeds: firestoreFeeds.size,
-        storedProducts: storedFirestoreProducts,
+        expectedStoredProducts: storedFirestoreProducts,
       },
       note: 'Bu uç nokta yalnızca sayım yapar; hiçbir veriyi değiştirmez.',
     });
