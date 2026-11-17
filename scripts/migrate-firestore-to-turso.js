@@ -20,7 +20,7 @@ export function parseMigrationArgs(argv = []) {
     if (arg === '--page-size') {
       const value = Number.parseInt(argv[index + 1], 10);
       if (!Number.isInteger(value) || value < 1 || value > MAX_PAGE_SIZE) {
-        throw new Error(`--page-size 1 ile ${MAX_PAGE_SIZE} arasında olmalıdır.`);
+        throw new Error(`--page-size: sayfa boyutu 1 ile ${MAX_PAGE_SIZE} arasında olmalıdır.`);
       }
       pageSize = value;
       index += 1;
