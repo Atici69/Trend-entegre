@@ -11,7 +11,7 @@ export function isTursoAdminAuthConfigured() {
     process.env.ADMIN_PASSWORD && process.env.ADMIN_PASSWORD.length >= 12 && allowedAdminEmails().length);
 }
 export async function ensureAdminAuthSchema(client) {
-  await client.execute(`CREATE TABLE IF NOT EXISTS admin_sessions (
+  await client.executeMultiple(`CREATE TABLE IF NOT EXISTS admin_sessions (
     token_hash TEXT PRIMARY KEY, email TEXT NOT NULL, created_at TEXT NOT NULL, expires_at TEXT NOT NULL
   ); CREATE INDEX IF NOT EXISTS idx_admin_sessions_expires_at ON admin_sessions(expires_at);`);
 }
