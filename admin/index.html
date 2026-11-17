@@ -221,6 +221,11 @@ async function loadAdminCatalog(){
   renderAdminCatalog();
  }catch(error){if(box)box.textContent=error.message;if(rows)rows.innerHTML="<tr><td colspan='7'>Ürünler yüklenemedi.</td></tr>";}
 }
+function catalogCurrencyCode(value){
+  const code=String(value||"TRY").trim().toUpperCase();
+  if(code==="TL")return "TRY";
+  return ["TRY","USD","EUR","GBP"].includes(code)?code:"TRY";
+}
 function renderAdminCatalog(){
  const rows=document.getElementById("catalogProductRows"),box=document.getElementById("catalogMessage");
  if(!rows)return;
@@ -228,7 +233,7 @@ function renderAdminCatalog(){
  const status=document.getElementById("catalogStatus")?.value||"";
  const products=adminCatalogProducts.filter(p=>(!status||p.status===status)&&[p.name,p.sku,p.barcode,p.category].some(v=>String(v||"").toLocaleLowerCase("tr-TR").includes(query)));
  if(box)box.textContent=adminCatalogProducts.length+" ürün kayıtlı · "+products.length+" ürün gösteriliyor.";
- rows.innerHTML=products.length?products.map(p=>"<tr><td><b>"+escapeHtml(p.name||"Adsız ürün")+"</b><br><small>"+escapeHtml(p.source_feed_name||p.source||"")+"</small></td><td>"+escapeHtml(p.sku||"—")+" / "+escapeHtml(p.barcode||"—")+"</td><td>"+escapeHtml(p.category||"Katalog")+"</td><td>"+Number(p.cost_price||0).toLocaleString("tr-TR",{style:"currency",currency:p.currency||"TRY"})+"</td><td>"+Number(p.sale_price||0).toLocaleString("tr-TR",{style:"currency",currency:p.currency||"TRY"})+"</td><td>"+Number(p.stock||0).toLocaleString("tr-TR")+"</td><td>"+escapeHtml(p.status||"—")+"</td><td><button class=\"btn light\" onclick=\"deleteCatalogProduct(\'"+encodeURIComponent(p.id)+"\')\">Sil</button></td></tr>").join(""):"<tr><td colspan='7'>Bu filtrede ürün bulunamadı.</td></tr>";
+ rows.innerHTML=products.length?products.map(p=>"<tr><td><b>"+escapeHtml(p.name||"Adsız ürün")+"</b><br><small>"+escapeHtml(p.source_feed_name||p.source||"")+"</small></td><td>"+escapeHtml(p.sku||"—")+" / "+escapeHtml(p.barcode||"—")+"</td><td>"+escapeHtml(p.category||"Katalog")+"</td><td>"+Number(p.cost_price||0).toLocaleString("tr-TR",{style:"currency",currency:catalogCurrencyCode(p.currency)})+"</td><td>"+Number(p.sale_price||0).toLocaleString("tr-TR",{style:"currency",currency:catalogCurrencyCode(p.currency)})+"</td><td>"+Number(p.stock||0).toLocaleString("tr-TR")+"</td><td>"+escapeHtml(p.status||"—")+"</td><td><button class=\"btn light\" onclick=\"deleteCatalogProduct(\'"+encodeURIComponent(p.id)+"\')\">Sil</button></td></tr>").join(""):"<tr><td colspan='7'>Bu filtrede ürün bulunamadı.</td></tr>";
 }
 async function createCatalogProduct(){
  const msg=document.getElementById("catalogCreateMessage");
