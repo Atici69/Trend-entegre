@@ -6,7 +6,6 @@ import rateLimit from 'express-rate-limit';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-import { getStorage } from 'firebase-admin/storage';
 import { createClient } from '@libsql/client';
 import { randomUUID } from 'node:crypto';
 import { marketplaceStatus } from './src/marketplaces/index.js';
@@ -15,7 +14,7 @@ import { testHepsiburadaConnection } from './src/marketplaces/hepsiburada.js';
 import { registerIyzicoRoutes } from './src/payments/iyzico.js';
 import * as XLSX from 'xlsx';
 import { downloadXml, parseProducts, clampProductLimit } from './src/xml/feed-service.js';
-import { saveTursoXmlFeed, listTursoXmlFeeds, getTursoXmlFeed, getTursoXmlProducts, updateTursoXmlFeed, deleteTursoXmlFeed } from './src/storage/turso-xml.js';
+import { saveTursoXmlFeed, listTursoXmlFeeds, getTursoXmlFeed, getTursoXmlProducts, updateTursoXmlFeed, deleteTursoXmlFeed, isLegacyXmlMigrationDone, markLegacyXmlMigrationDone } from './src/storage/turso-xml.js';
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -766,7 +765,7 @@ app.get('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
   try {
     let feeds = await listTursoXmlFeeds();
     // One-time, non-destructive migration of legacy Firestore XML feeds into Turso.
-    if (!feeds.length) {
+    if (!(await isLegacyXmlMigrationDone())) {
       const legacy = await req.firestore.collection('xml_feeds').get();
       for (const doc of legacy.docs) {
         const feed = { id: doc.id, ...doc.data() };
@@ -778,6 +777,7 @@ app.get('/api/v1/admin/xml/feeds', requireAdmin, async (req, res) => {
         }
         await saveTursoXmlFeed(feed, products);
       }
+      await markLegacyXmlMigrationDone();
       feeds = await listTursoXmlFeeds();
     }
     res.json({ feeds });
