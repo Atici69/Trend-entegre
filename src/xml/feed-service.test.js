@@ -32,6 +32,13 @@ test('rejects DTD and external entity declarations', () => {
   assert.throws(() => parseProducts(xml), /DTD|varlıkları/);
 });
 
+test('allows DTD-like text inside comments and CDATA without allowing DTD declarations', () => {
+  const xml = '<products><!-- <!DOCTYPE is only a comment --><product><name>Test</name><description><![CDATA[The literal text <!ENTITY is not a declaration]]></description></product></products>';
+  const products = parseProducts(xml);
+  assert.equal(products.length, 1);
+  assert.equal(products[0]['Ürün Adı'], 'Test');
+});
+
 test('rejects invalid XML and feeds without product entries', () => {
   assert.throws(() => parseProducts('<products><product></products>'), /geçersiz/i);
   assert.throws(() => parseProducts('<catalog><brand>Only metadata</brand></catalog>'), /Ürün kayıtları/);
